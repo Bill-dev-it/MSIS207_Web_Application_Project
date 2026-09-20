@@ -11,7 +11,7 @@ improve maintainability, scalability, and deployment flexibility.
 
 ## Architecture Diagram
 
-![Aviation B2B E-Commerce System Architecture](./system-architecture.png)
+![Aviation B2B E-Commerce System Architecture](./system_structure.png)
 
 ## Architecture Components
 
