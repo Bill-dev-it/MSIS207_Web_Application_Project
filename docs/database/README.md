@@ -7,6 +7,5 @@ are documented using dbdiagram.io.
 - Schema language: DBML
 - Online documentation: <(https://dbdocs.io/billbush0511/ERD-B2B-ecommerce-RUL-Website?view=relationships)>
 
-![Database ERD](ERD B2B ecommerce Website.png)
 
-![Database ERD](./ERD B2B ecommerce Website.png)
+![Database ERD](./ERD_B2B_ecommerce_Website.png)
