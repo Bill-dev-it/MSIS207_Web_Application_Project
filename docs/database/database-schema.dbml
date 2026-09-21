@@ -1,0 +1,431 @@
+
+// 1. ACCOUNTS: 4 tables
+Table companies {
+  company_id bigint [pk, increment]
+  company_name varchar(255) [not null]
+  company_type varchar(30) [not null, note: 'AIRLINE, MRO, SUPPLIER, MIXED, PLATFORM']
+  tax_id varchar(100)
+  country_code char(2) [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table users {
+  user_id bigint [pk, increment]
+  company_id bigint [not null, ref: > companies.company_id]
+  full_name varchar(150) [not null]
+  email varchar(254) [not null, unique]
+  password_hash varchar(255) [not null]
+  role varchar(20) [not null, note: 'BUYER, SUPPLIER, ADMIN']
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  checks {
+    `role IN ('BUYER', 'SUPPLIER', 'ADMIN')`
+  }
+}
+
+Table addresses {
+  address_id bigint [pk, increment]
+  company_id bigint [not null, ref: > companies.company_id]
+  recipient_name varchar(150) [not null]
+  phone varchar(30) [not null]
+  address_line varchar(500) [not null]
+  city varchar(100) [not null]
+  region varchar(100)
+  postal_code varchar(20)
+  country_code char(2) [not null]
+}
+
+Table suppliers {
+  supplier_id bigint [pk, increment]
+  company_id bigint [not null, unique, ref: > companies.company_id]
+  store_name varchar(150) [not null]
+  slug varchar(150) [not null, unique]
+  description text
+  logo_object_key varchar(1024)
+  status varchar(20) [not null, default: 'PENDING']
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  checks {
+    `status IN ('PENDING', 'APPROVED', 'SUSPENDED')`
+  }
+}
+
+// 2. CATALOG AND STOCK: 6 tables
+Table categories {
+  category_id bigint [pk, increment]
+  category_name varchar(100) [not null, unique]
+  slug varchar(150) [not null, unique]
+  description text
+}
+
+Table engine_models {
+  engine_model_id bigint [pk, increment]
+  manufacturer varchar(150) [not null]
+  model_name varchar(150) [not null, note: 'Include variant in the model name']
+  engine_family varchar(100)
+  engine_type varchar(50)
+  indexes {
+    (manufacturer, model_name) [unique]
+  }
+}
+
+Table products {
+  product_id bigint [pk, increment]
+  category_id bigint [not null, ref: > categories.category_id]
+  product_name varchar(255) [not null]
+  manufacturer varchar(150) [not null]
+  part_number varchar(100) [not null]
+  product_type varchar(20) [not null]
+  description text
+  technical_specs json
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (manufacturer, part_number) [unique]
+    part_number
+  }
+  checks {
+    `product_type IN ('ENGINE', 'MODULE', 'COMPONENT')`
+  }
+  Note: 'Shared product identity. Supplier price, condition and stock are in seller_listings. Admin manages shared catalog.'
+}
+
+Table product_images {
+  image_id bigint [pk, increment]
+  product_id bigint [not null, ref: > products.product_id]
+  object_key varchar(1024) [not null]
+  alt_text varchar(255)
+  sort_order int [not null, default: 0]
+  indexes {
+    (product_id, sort_order) [unique]
+  }
+}
+
+Table product_engine_compatibility {
+  product_id bigint [not null, ref: > products.product_id]
+  engine_model_id bigint [not null, ref: > engine_models.engine_model_id]
+  evidence_reference text [not null]
+  is_demo boolean [not null, default: true]
+  indexes {
+    (product_id, engine_model_id) [pk]
+    engine_model_id
+  }
+  Note: 'Admin-curated relation. Demo mapping is not verified real-world compatibility. RUL does not diagnose faulty components.'
+}
+
+Table seller_listings {
+  listing_id bigint [pk, increment]
+  supplier_id bigint [not null, ref: > suppliers.supplier_id]
+  product_id bigint [not null, ref: > products.product_id]
+  seller_sku varchar(100) [not null]
+  condition varchar(20) [not null]
+  price decimal(18,2) [not null, note: 'USD throughout MVP']
+  stock_quantity int [not null, default: 0]
+  lead_time_days int [not null, default: 0]
+  status varchar(20) [not null, default: 'DRAFT']
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (supplier_id, seller_sku) [unique]
+    (product_id, status, price)
+  }
+  checks {
+    `price >= 0 AND stock_quantity >= 0 AND lead_time_days >= 0`
+    `condition IN ('NEW', 'USED', 'REFURBISHED')`
+    `status IN ('DRAFT', 'ACTIVE', 'HIDDEN')`
+  }
+  Note: 'Stock is managed directly on listing. Checkout locks this row before deducting. No warehouse, reservation, or serialized-unit inventory subsystem.'
+}
+// 3. AIRCRAFT
+Table aircraft {
+  aircraft_id bigint [pk, increment]
+  company_id bigint [not null, ref: > companies.company_id]
+
+  registration_number varchar(50) [not null, unique]
+  manufacturer varchar(100) [not null]
+  model varchar(100) [not null]
+  aircraft_type varchar(100) [not null]
+  year int
+  status varchar(20) [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  Note: 'Aircraft owned or operated by a buyer organization.'
+}
+
+
+// 4. OWNED ENGINES
+Table engines {
+  engine_id bigint [pk, increment]
+
+  aircraft_id bigint [not null, ref: > aircraft.aircraft_id]
+  engine_model_id bigint [not null, ref: > engine_models.engine_model_id]
+
+  engine_code varchar(80) [not null, note: 'For example ENG-037']
+  serial_number varchar(100) [not null]
+  current_cycle bigint [not null, default: 0]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (aircraft_id, engine_code) [unique]
+    (engine_model_id, serial_number) [unique]
+  }
+
+  checks {
+    `current_cycle >= 0`
+  }
+
+  Note: 'Engine installed on an aircraft and monitored for RUL prediction.'
+}
+
+Table ml_model_versions {
+  model_version_id bigint [pk, increment]
+  model_name varchar(100) [not null]
+  version varchar(80) [not null]
+  dataset_subset varchar(30) [not null, note: 'For example CMAPSS FD001']
+  model_object_key varchar(1024) [not null]
+  scaler_object_key varchar(1024) [not null]
+  preprocessing_version varchar(80) [not null]
+  window_size int [not null, default: 30]
+  sensor_schema json [not null, note: 'Ordered sensor/features, units, operating-condition requirements']
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (model_name, version) [unique]
+  }
+  checks {
+    `window_size > 0`
+  }
+  Note: 'Versioned immutable artifacts/config. An active C-MAPSS model does not imply support for real-world engine models.'
+}
+
+Table sensor_uploads {
+  upload_id bigint [pk, increment]
+  engine_id bigint [not null, ref: > engines.engine_id]
+  uploaded_by bigint [not null, ref: > users.user_id]
+  original_file_name varchar(255) [not null]
+  object_key varchar(1024) [not null]
+  file_sha256 char(64) [not null]
+  dataset_subset varchar(30) [not null]
+  dataset_unit_id varchar(80) [not null]
+  first_cycle bigint
+  last_cycle bigint
+  row_count int
+  is_demo boolean [not null, default: true]
+  status varchar(20) [not null, default: 'UPLOADED']
+  validation_error text
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (engine_id, created_at)
+  }
+  checks {
+    `status IN ('UPLOADED', 'VALID', 'INVALID')`
+    `first_cycle IS NULL OR last_cycle IS NULL OR last_cycle >= first_cycle`
+    `row_count IS NULL OR row_count > 0`
+  }
+  Note: 'Raw CSV is in private object storage. One upload contains one engine/unit. C-MAPSS unit-to-engine linkage is an explicit demo mapping.'
+}
+
+Table rul_predictions {
+  prediction_id bigint [pk, increment]
+  upload_id bigint [not null, ref: > sensor_uploads.upload_id]
+  model_version_id bigint [not null, ref: > ml_model_versions.model_version_id]
+  requested_by bigint [not null, ref: > users.user_id]
+  request_key varchar(100) [not null, unique]
+  status varchar(20) [not null, default: 'RUNNING']
+  predicted_rul decimal(12,3) [note: 'Cycles; NULL until successful']
+  cycle_at_prediction bigint
+  urgency varchar(20)
+  decision_rule_snapshot json [not null, note: 'Rule version and demo thresholds, e.g. 20/40/80 cycles']
+  recommendation_config_snapshot json [note: 'Ranking version, weights and buyer criteria for this result set']
+  recommendation_status varchar(20) [not null, default: 'NOT_RUN']
+  explanation text
+  error_message text
+  prediction_date timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Request creation time; completed_at records completion']
+  completed_at timestamp
+  indexes {
+    (upload_id, prediction_date)
+  }
+  checks {
+    `status IN ('RUNNING', 'SUCCEEDED', 'FAILED')`
+    `predicted_rul IS NULL OR predicted_rul >= 0`
+    `urgency IS NULL OR urgency IN ('NORMAL', 'MONITOR', 'PREPARE', 'PRIORITIZE')`
+    `status <> 'SUCCEEDED' OR (predicted_rul IS NOT NULL AND cycle_at_prediction IS NOT NULL AND urgency IS NOT NULL AND completed_at IS NOT NULL)`
+    `recommendation_status IN ('NOT_RUN', 'READY', 'NO_MATCH', 'FAILED')`
+  }
+  Note: 'Engine is reached through upload_id, avoiding duplicated engine_id. One row combines inference status, result and decision. No separate job/policy/assessment tables.'
+}
+
+Table replacement_recommendations {
+  recommendation_id bigint [pk, increment]
+  prediction_id bigint [not null, ref: > rul_predictions.prediction_id]
+  listing_id bigint [not null, ref: > seller_listings.listing_id]
+  rank_position int [not null]
+  ranking_score decimal(12,6) [not null, note: 'Business ranking score, not compatibility probability']
+  reason text [not null]
+  listing_snapshot json [not null, note: 'Price, stock, lead time and compatibility evidence/demo flag at recommendation time']
+  indexes {
+    (prediction_id, listing_id) [unique]
+    (prediction_id, rank_position) [unique]
+  }
+  checks {
+    `rank_position > 0`
+  }
+  Note: 'One saved ranked set per prediction. Preserve it once finalized; current price/stock are rechecked at checkout.'
+}
+
+// 5. SHOPPING: 3 tables
+Table carts {
+  cart_id bigint [pk, increment]
+  user_id bigint [not null, unique, ref: - users.user_id]
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table cart_items {
+  cart_item_id bigint [pk, increment]
+  cart_id bigint [not null, ref: > carts.cart_id]
+  listing_id bigint [not null, ref: > seller_listings.listing_id]
+  quantity int [not null, default: 1]
+  indexes {
+    (cart_id, listing_id) [unique]
+  }
+  checks {
+    `quantity > 0`
+  }
+}
+
+Table wishlist_items {
+  user_id bigint [not null, ref: > users.user_id]
+  listing_id bigint [not null, ref: > seller_listings.listing_id]
+  indexes {
+    (user_id, listing_id) [pk]
+  }
+}
+
+// 6. ORDERS, PAYMENT AND SHIPPING: 5 tables
+Table orders {
+  order_id bigint [pk, increment]
+  order_number varchar(50) [not null, unique]
+  buyer_company_id bigint [not null, ref: > companies.company_id]
+  placed_by bigint [not null, ref: > users.user_id]
+  checkout_key varchar(100) [not null]
+  purchase_reference varchar(100)
+  company_name_snapshot varchar(255) [not null]
+  tax_id_snapshot varchar(100)
+  shipping_address_snapshot json [not null]
+  billing_address_snapshot json [not null]
+  currency char(3) [not null, default: 'USD']
+  subtotal decimal(18,2) [not null]
+  shipping_total decimal(18,2) [not null, default: 0]
+  grand_total decimal(18,2) [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (placed_by, checkout_key) [unique]
+    (buyer_company_id, created_at)
+  }
+  checks {
+    `currency = 'USD'`
+    `subtotal >= 0 AND shipping_total >= 0`
+    `grand_total = subtotal + shipping_total`
+  }
+  Note: 'Successful simulated checkouts only. Parent fulfillment status is derived from seller_orders, not stored twice. Tax/discount calculation, cancellation and refunds are outside MVP.'
+}
+
+Table seller_orders {
+  seller_order_id bigint [pk, increment]
+  order_id bigint [not null, ref: > orders.order_id]
+  supplier_id bigint [not null, ref: > suppliers.supplier_id]
+  supplier_name_snapshot varchar(255) [not null]
+  status varchar(20) [not null, default: 'CONFIRMED']
+  subtotal decimal(18,2) [not null]
+  shipping_fee decimal(18,2) [not null, default: 0]
+  grand_total decimal(18,2) [not null]
+  processing_at timestamp
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (order_id, supplier_id) [unique]
+    (supplier_id, status)
+  }
+  checks {
+    `status IN ('CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED')`
+    `subtotal >= 0 AND shipping_fee >= 0`
+    `grand_total = subtotal + shipping_fee`
+  }
+}
+
+Table order_items {
+  order_item_id bigint [pk, increment]
+  seller_order_id bigint [not null, ref: > seller_orders.seller_order_id]
+  listing_id bigint [not null, ref: > seller_listings.listing_id]
+  product_name_snapshot varchar(255) [not null]
+  part_number_snapshot varchar(100) [not null]
+  seller_sku_snapshot varchar(100) [not null]
+  condition_snapshot varchar(20) [not null]
+  quantity int [not null]
+  unit_price decimal(18,2) [not null]
+  line_total decimal(18,2) [not null]
+  indexes {
+    (seller_order_id, listing_id) [unique]
+  }
+  checks {
+    `quantity > 0 AND unit_price >= 0`
+    `line_total = quantity * unit_price`
+  }
+}
+
+Table payments {
+  payment_id bigint [pk, increment]
+  order_id bigint [not null, unique, ref: - orders.order_id]
+  payment_method varchar(30) [not null, default: 'SIMULATION']
+  amount decimal(18,2) [not null]
+  status varchar(20) [not null, default: 'SUCCEEDED']
+  paid_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  checks {
+    `amount >= 0`
+    `payment_method = 'SIMULATION' AND status = 'SUCCEEDED'`
+  }
+  Note: 'One successful simulated payment per order, created in checkout transaction. A failed simulation rolls back checkout. Real gateways need a separate lifecycle design.'
+}
+
+Table shipments {
+  shipment_id bigint [pk, increment]
+  seller_order_id bigint [not null, unique, ref: - seller_orders.seller_order_id]
+  carrier varchar(100) [not null]
+  tracking_number varchar(150)
+  shipped_at timestamp [not null]
+  estimated_delivery_at timestamp
+  delivered_at timestamp
+  indexes {
+    (carrier, tracking_number) [unique]
+  }
+  checks {
+    `delivered_at IS NULL OR delivered_at >= shipped_at`
+  }
+  Note: 'MVP ships all items of each seller order together; one shipment per seller order. No parcel splitting or event-history table.'
+}
+
+// 7. REVIEWS AND NOTIFICATIONS: 2 tables
+Table reviews {
+  review_id bigint [pk, increment]
+  order_item_id bigint [not null, unique, ref: - order_items.order_item_id]
+  reviewer_id bigint [not null, ref: > users.user_id]
+  product_rating int [not null]
+  supplier_rating int [not null]
+  comment text
+  is_visible boolean [not null, default: true]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  checks {
+    `product_rating BETWEEN 1 AND 5 AND supplier_rating BETWEEN 1 AND 5`
+  }
+  Note: 'One verified purchase review per order item, after delivery. Supplier rating is per purchased line, not a separate supplier review system.'
+}
+
+Table notifications {
+  notification_id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.user_id]
+  title varchar(200) [not null]
+  message text [not null]
+  action_path varchar(500) [note: 'Internal route; destination must still check authorization']
+  read_at timestamp
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (user_id, read_at, created_at)
+  }
+}
