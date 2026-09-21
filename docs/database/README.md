@@ -52,33 +52,7 @@ inventory, and e-commerce transactions together.
 The project uses a lightweight **Medallion-style data pipeline** to transform
 heterogeneous source datasets into application-ready data.
 
-```text
-External Datasets
-       │
-       ▼
-┌───────────────────┐
-│ BRONZE — Raw Data │
-│ Original datasets │
-└─────────┬─────────┘
-          │
-          ▼
-┌──────────────────────┐
-│ SILVER — Clean Data  │
-│ Clean • Validate     │
-│ Standardize • Map    │
-└─────────┬────────────┘
-          │
-          ▼
-┌────────────────────────┐
-│ GOLD — Application Data│
-│ Unified entities       │
-│ Relationships + IDs    │
-│ Ready for database     │
-└─────────┬──────────────┘
-          │
-          ▼
-      PostgreSQL
-```
+![Database ERD](./Data_pipeline.png)
 
 ### Bronze Layer — Raw Data
 
