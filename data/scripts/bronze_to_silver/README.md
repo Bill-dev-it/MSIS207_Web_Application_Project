@@ -1,6 +1,6 @@
 # Bronze to silver
 
-Run `python scripts/bronze_to_silver/clean.py` from the project root.
+Run `python data/scripts/bronze_to_silver/clean.py` from the project root.
 
 The script reads FAA ENGINE/ACFTREF/MASTER and parts_master, trims fields,
 removes invalid identity records, consolidates duplicate engine identities while

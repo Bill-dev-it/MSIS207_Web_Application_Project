@@ -182,4 +182,4 @@ stages used before application-ready data is loaded into PostgreSQL.
 
 ## Local data folders
 
-See [data layer guide](../../data/README.md) for the actual bronze/silver/gold layout and source mapping. Bronze preserves source files; silver contains cleaned references; gold contains schema-aligned custom demo seed data. Transformation folders are in `scripts/bronze_to_silver` and `scripts/silver_to_gold`.
+See [data layer guide](../../data/README.md) for the actual bronze/silver/gold layout and source mapping. Bronze preserves source files; silver contains cleaned references; gold contains schema-aligned custom demo seed data. Transformation folders are in `data/scripts/bronze_to_silver` and `data/scripts/silver_to_gold`.

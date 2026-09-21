@@ -11,7 +11,7 @@ from collections import Counter, defaultdict
 from decimal import Decimal
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 SCHEMA = ROOT / 'docs/database/database-schema.dbml'
 SILVER = ROOT / 'data/silver'
 GOLD = ROOT / 'data/gold'

@@ -45,6 +45,14 @@ Clean & Standardize
 engine_models.csv
 ```
 
+Run the active pipeline from the project root:
+
+```text
+python data/scripts/bronze_to_silver/clean.py
+python data/scripts/silver_to_gold/build_gold.py
+python data/scripts/silver_to_gold/build_gold.py --check
+```
+
 ### Gold Layer — Application-Ready Data
 
 The Gold layer contains data structured according to the application's

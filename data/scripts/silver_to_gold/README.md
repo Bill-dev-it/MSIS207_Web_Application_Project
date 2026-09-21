@@ -1,7 +1,7 @@
 # Silver to gold
 
-Run `python scripts/silver_to_gold/build_gold.py` after the cleaning step.
-Run `python scripts/silver_to_gold/build_gold.py --check` to validate existing CSVs.
+Run `python data/scripts/silver_to_gold/build_gold.py` after the cleaning step.
+Run `python data/scripts/silver_to_gold/build_gold.py --check` to validate existing CSVs.
 
 The builder combines cleaned references with reproducible custom demo data
 (seed 42) into one application-ready Gold seed. Gold is intentionally one
