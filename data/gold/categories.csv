@@ -1,0 +1,10 @@
+category_id,category_name,slug,description
+1,Avionics,avionics,Demo aviation catalog: Avionics.
+2,Cabin,cabin,Demo aviation catalog: Cabin.
+3,Electrical,electrical,Demo aviation catalog: Electrical.
+4,Engine,engine,Demo aviation catalog: Engine.
+5,Fasteners,fasteners,Demo aviation catalog: Fasteners.
+6,Hydraulics,hydraulics,Demo aviation catalog: Hydraulics.
+7,LandingGear,landinggear,Demo aviation catalog: LandingGear.
+8,Structure,structure,Demo aviation catalog: Structure.
+9,Replacement Engines,replacement-engines,Demo aviation catalog: Replacement Engines.

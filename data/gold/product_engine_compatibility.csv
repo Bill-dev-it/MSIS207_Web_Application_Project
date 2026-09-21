@@ -1,0 +1,147 @@
+product_id,engine_model_id,evidence_reference,is_demo
+1,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+4,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+7,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+10,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+11,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+12,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+15,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+19,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+24,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+26,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+28,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+31,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+32,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+34,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+37,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+38,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+41,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+42,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+43,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+45,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+48,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+49,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+52,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+53,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+54,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+62,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+65,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+66,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+70,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+72,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+74,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+75,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+77,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+78,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+79,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+81,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+82,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+83,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+87,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+91,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+93,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+95,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+96,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+98,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+99,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+102,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+103,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+104,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+107,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+109,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+110,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+113,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+117,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+118,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+119,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+120,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+122,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+124,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+126,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+128,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+131,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+132,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+133,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+135,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+137,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+144,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+146,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+148,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+149,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+150,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+152,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+153,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+161,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+164,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+165,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+166,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+168,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+172,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+176,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+178,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+179,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+182,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+186,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+188,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+189,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+193,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+196,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+197,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+202,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+203,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+204,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+206,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+207,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+210,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+211,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+212,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+214,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+215,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+217,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+220,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+221,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+222,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+224,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+228,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+232,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+234,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+235,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+240,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+241,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+242,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+247,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+252,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+255,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+256,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+259,542,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+261,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+266,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+270,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+273,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+275,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+276,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+277,524,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+278,526,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+279,527,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+281,529,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+282,530,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+284,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+285,548,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+286,550,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+288,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+292,528,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+296,547,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+299,553,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+300,554,CUSTOM_DEMO_SEED_42: assigned fitment for application testing,true
+301,524,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+302,526,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+303,527,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+304,528,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+305,529,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+306,530,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+307,542,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+308,547,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+309,548,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+310,550,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+311,553,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
+312,554,CUSTOM_DEMO_SEED_42: same-model replacement scenario,true
