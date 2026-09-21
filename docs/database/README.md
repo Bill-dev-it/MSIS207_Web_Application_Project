@@ -102,11 +102,14 @@ PostgreSQL schema.
 Examples:
 
 ```text
+companies
+addresses
+categories
 engine_models
+suppliers
 aircraft
 engines
 products
-suppliers
 seller_listings
 product_engine_compatibility
 ```
