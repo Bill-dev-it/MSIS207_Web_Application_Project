@@ -9,4 +9,4 @@ are documented using dbdiagram.io.
 
 ![Database ERD](ERD B2B ecommerce Website.png)
 
-![Database ERD](system./ERD B2B ecommerce Website.png)
+![Database ERD](./ERD B2B ecommerce Website.png)
