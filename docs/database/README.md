@@ -8,3 +8,5 @@ are documented using dbdiagram.io.
 - Online documentation: <(https://dbdocs.io/billbush0511/ERD-B2B-ecommerce-RUL-Website?view=relationships)>
 
 ![Database ERD](ERD B2B ecommerce Website.png)
+
+![Database ERD](./ERD B2B ecommerce Website.png)
