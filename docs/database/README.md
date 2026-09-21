@@ -5,6 +5,6 @@ are documented using dbdiagram.io.
 
 - Database: PostgreSQL
 - Schema language: DBML
-- Online documentation: <[your dbdocs link](https://dbdocs.io/billbush0511/ERD-B2B-ecommerce-RUL-Website?view=relationships)>
+- Online documentation: <(https://dbdocs.io/billbush0511/ERD-B2B-ecommerce-RUL-Website?view=relationships)>
 
-![Database ERD](database-erd.png)
+![Database ERD](ERD B2B ecommerce Website.png)
