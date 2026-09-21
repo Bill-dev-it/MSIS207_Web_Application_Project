@@ -142,19 +142,7 @@ to generate records in `replacement_recommendations`.
 Once a suitable spare part is identified, the normal B2B purchasing workflow
 takes place:
 
-```text
-Recommended Part
-      ↓
-Supplier Listing
-      ↓
-Cart
-      ↓
-Order
-      ↓
-Payment
-      ↓
-Shipment
-```
+![E-Commerce Flow](./images/Ecommerce_flow.png)
 
 This creates the main end-to-end business flow of the platform:
 
