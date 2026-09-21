@@ -122,25 +122,7 @@ Unlike an analytical data warehouse, the Gold layer in this project represents
 
 The RUL service connects aircraft condition monitoring with the marketplace.
 
-```text
-Aircraft
-   ↓
-Engine
-   ↓
-Sensor Upload
-   ↓
-RUL Model
-   ↓
-Predicted RUL
-   ↓
-Maintenance Urgency
-   ↓
-Compatible Parts
-   ↓
-Available Supplier Listings
-   ↓
-Recommended Spare Parts
-```
+![Database ERD](./RUL_data_flow.png)
 
 The prediction is stored in `rul_predictions`.
 
