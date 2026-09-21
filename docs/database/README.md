@@ -23,7 +23,7 @@ The database is organized around five main domains:
 
 ### ERD
 
-![Database ERD](./ERD_B2B_ecommerce_Website.png)
+![Database ERD](./images/ERD_B2B_ecommerce_Website.png)
 
 - Schema definition: [`database-schema.dbml`](./database-schema.dbml)
 - Interactive documentation: https://dbdocs.io/billbush0511/ERD-B2B-ecommerce-RUL-Website?view=relationships
@@ -52,7 +52,7 @@ inventory, and e-commerce transactions together.
 The project uses a lightweight **Medallion-style data pipeline** to transform
 heterogeneous source datasets into application-ready data.
 
-![Database ERD](./Data_pipeline.png)
+![Database ERD](./images/Data_pipeline.png)
 
 ### Bronze Layer — Raw Data
 
@@ -125,7 +125,7 @@ Unlike an analytical data warehouse, the Gold layer in this project represents
 
 The RUL service connects aircraft condition monitoring with the marketplace.
 
-![Database ERD](./RUL_data_flow.png)
+![Database ERD](./images/RUL_data_flow.png)
 
 The prediction is stored in `rul_predictions`.
 
@@ -178,3 +178,8 @@ data/
 
 The `bronze`, `silver`, and `gold` directories represent the transformation
 stages used before application-ready data is loaded into PostgreSQL.
+
+
+## Local data folders
+
+See [data layer guide](../../data/README.md) for the actual bronze/silver/gold layout and source mapping. Bronze preserves source files; silver contains cleaned references; gold contains schema-aligned custom demo seed data. Transformation folders are in `scripts/bronze_to_silver` and `scripts/silver_to_gold`.

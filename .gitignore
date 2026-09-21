@@ -1,3 +1,28 @@
-Data/
-Dataset/
 dbml-error.log
+
+# Original downloads and archived repositories stay local.
+/archive/
+/data/bronze/*
+!/data/bronze/README.md
+!/data/bronze/cmapss/
+!/data/bronze/faa/
+!/data/bronze/aviation_parts/
+!/data/bronze/supply_chain/
+!/data/bronze/ecommerce/
+/data/bronze/cmapss/*
+/data/bronze/faa/*
+/data/bronze/aviation_parts/*
+/data/bronze/supply_chain/*
+/data/bronze/ecommerce/*
+!/data/bronze/cmapss/.gitkeep
+!/data/bronze/faa/.gitkeep
+!/data/bronze/aviation_parts/.gitkeep
+!/data/bronze/supply_chain/.gitkeep
+!/data/bronze/ecommerce/.gitkeep
+
+# Generated datasets; folder guides and schema-template generator are tracked.
+/data/silver/**/*.csv
+/data/silver/**/*.parquet
+/data/gold/*.csv
+__pycache__/
+.ipynb_checkpoints/
