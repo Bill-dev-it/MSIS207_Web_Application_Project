@@ -1,4 +1,4 @@
-## 3. Data Pipeline
+## Data Pipeline
 
 The project uses a lightweight **Medallion-style data pipeline** to transform heterogeneous aviation datasets into clean, structured, and application-ready data for the B2B marketplace.
 
@@ -8,41 +8,12 @@ The pipeline consists of three layers:
 
 ![Data Pipeline](./Data_pipeline.png)
 
-### 3.1 Pipeline Overview
-
-```text
-External Aviation Datasets
-          │
-          ▼
-┌─────────────────────┐
-│       BRONZE        │
-│   Original / Raw    │
-│       Datasets      │
-└──────────┬──────────┘
-           │ Clean & Standardize
-           ▼
-┌─────────────────────┐
-│       SILVER        │
-│ Cleaned & Filtered  │
-│    Reference Data   │
-└──────────┬──────────┘
-           │ Transform, Map & Enrich
-           ▼
-┌─────────────────────┐
-│        GOLD         │
-│ Application-Ready   │
-│        Data         │
-└──────────┬──────────┘
-           │
-           ▼
-      PostgreSQL
-```
 
 The Bronze and Silver layers preserve the larger reference datasets, while the Gold layer creates a smaller, consistent dataset specifically designed to seed and demonstrate the application's core business workflows.
 
 ---
 
-### 3.2 Bronze Layer — Raw Source Data
+### Bronze Layer — Raw Source Data
 
 The **Bronze layer** stores the original downloaded datasets without modifying their source content.
 
@@ -63,7 +34,7 @@ The Bronze layer currently contains **111 source files**. Pipeline execution doe
 
 ---
 
-### 3.3 Silver Layer — Cleaned & Standardized Data
+### Silver Layer — Cleaned & Standardized Data
 
 The **Silver layer** converts selected Bronze sources into consistent reference datasets that can be safely used by the application-data transformation stage.
 
@@ -104,7 +75,7 @@ The Silver layer remains primarily **reference-oriented**. It does not yet repre
 
 ---
 
-### 3.4 Gold Layer — Application-Ready Data
+### Gold Layer — Application-Ready Data
 
 The **Gold layer** transforms Silver reference data into records that follow the application's PostgreSQL/ERD structure.
 
@@ -158,7 +129,7 @@ and:
 146 Compatibility Records
 ```
 
-### 3.5 Source Data vs. Demo Data
+### Source Data vs. Demo Data
 
 The Gold layer is intentionally a **hybrid demo seed dataset**.
 
@@ -183,7 +154,7 @@ This approach allows the application to demonstrate realistic B2B e-commerce wor
 
 ---
 
-### 3.6 Data Quality & Validation
+### Data Quality & Validation
 
 The pipeline validates data before it is considered application-ready.
 
@@ -205,7 +176,7 @@ Bronze integrity is preserved throughout the process.
 
 ---
 
-### 3.7 Running the Pipeline
+### Running the Pipeline
 
 Run the pipeline from the project root:
 
