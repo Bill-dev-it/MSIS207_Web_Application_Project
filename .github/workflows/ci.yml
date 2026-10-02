@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-repository-structure:
+    name: Validate repository structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check required directories
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_dirs=(frontend backend rul-service data docs)
+          for dir in "${required_dirs[@]}"; do
+            if [[ ! -d "$dir" ]]; then
+              echo "::error::Required directory '$dir' is missing."
+              exit 1
+            fi
+          done
+
+          echo "Repository structure validation passed."
