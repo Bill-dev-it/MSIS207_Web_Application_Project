@@ -40,7 +40,7 @@ The following diagram shows how the platform services are containerized for
 local development and how those logical services map to the production
 environment.
 
-![Containerization Architecture](./containerization_architecture.png)
+![Containerization Architecture](./Containerization_architecture.png)
 
 
 
