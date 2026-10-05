@@ -26,3 +26,11 @@ dbml-error.log
 /data/gold/*.csv
 __pycache__/
 .ipynb_checkpoints/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Node.js dependencies
+node_modules/
