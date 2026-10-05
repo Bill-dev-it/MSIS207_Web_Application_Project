@@ -14,46 +14,7 @@ Node.js / Express backend through a REST API.
 
 ## 2. Integration Flow
 
-```text
-Engine Sensor Data
-        │
-        ▼
-React Frontend
-        │
-        │ REST API
-        ▼
-Node.js / Express Backend
-        │
-        │ Prediction Request
-        ▼
-AI / RUL Service
-        │
-        ├── Input Validation
-        ├── Sensor Data Preprocessing
-        ├── Trained RUL Model
-        └── RUL Inference
-        │
-        ▼
-Predicted RUL
-        │
-        ▼
-Node.js / Express Backend
-        │
-        ├── Store Prediction
-        │       ↓
-        │   PostgreSQL
-        │
-        └── Recommendation Engine
-                │
-                ├── Maintenance Urgency
-                ├── Engine / Part Compatibility
-                ├── Inventory Availability
-                └── Supplier Selection
-                        │
-                        ▼
-                Spare-Part Recommendations
-```
-
+![RUL integration flow](./RUL_integration.jpg)
 ## 3. Responsibilities
 
 ### Node.js / Express Backend
