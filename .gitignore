@@ -2,28 +2,28 @@ dbml-error.log
 
 # Original downloads and archived repositories stay local.
 /archive/
-/data/bronze/*
-!/data/bronze/README.md
-!/data/bronze/cmapss/
-!/data/bronze/faa/
-!/data/bronze/aviation_parts/
-!/data/bronze/supply_chain/
-!/data/bronze/ecommerce/
-/data/bronze/cmapss/*
-/data/bronze/faa/*
-/data/bronze/aviation_parts/*
-/data/bronze/supply_chain/*
-/data/bronze/ecommerce/*
-!/data/bronze/cmapss/.gitkeep
-!/data/bronze/faa/.gitkeep
-!/data/bronze/aviation_parts/.gitkeep
-!/data/bronze/supply_chain/.gitkeep
-!/data/bronze/ecommerce/.gitkeep
+/data/etl/bronze/*
+!/data/etl/bronze/README.md
+!/data/etl/bronze/cmapss/
+!/data/etl/bronze/faa/
+!/data/etl/bronze/aviation_parts/
+!/data/etl/bronze/supply_chain/
+!/data/etl/bronze/ecommerce/
+/data/etl/bronze/cmapss/*
+/data/etl/bronze/faa/*
+/data/etl/bronze/aviation_parts/*
+/data/etl/bronze/supply_chain/*
+/data/etl/bronze/ecommerce/*
+!/data/etl/bronze/cmapss/.gitkeep
+!/data/etl/bronze/faa/.gitkeep
+!/data/etl/bronze/aviation_parts/.gitkeep
+!/data/etl/bronze/supply_chain/.gitkeep
+!/data/etl/bronze/ecommerce/.gitkeep
 
 # Generated datasets; folder guides and schema-template generator are tracked.
-/data/silver/**/*.csv
-/data/silver/**/*.parquet
-/data/gold/*.csv
+/data/etl/silver/**/*.csv
+/data/etl/silver/**/*.parquet
+/data/etl/gold/*.csv
 __pycache__/
 .ipynb_checkpoints/
 
