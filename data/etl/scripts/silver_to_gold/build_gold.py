@@ -11,10 +11,10 @@ from collections import Counter, defaultdict
 from decimal import Decimal
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 SCHEMA = ROOT / 'docs/database/database-schema.dbml'
-SILVER = ROOT / 'data/silver'
-GOLD = ROOT / 'data/gold'
+SILVER = ROOT / 'data/etl/silver'
+GOLD = ROOT / 'data/etl/gold'
 STAMP = '2026-09-01 00:00:00'
 SEED = 42
 # This order follows the foreign-key dependency order in the DBML schema.
