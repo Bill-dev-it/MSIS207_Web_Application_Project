@@ -5,9 +5,9 @@ from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-BRONZE = ROOT / 'data/bronze'
-SILVER = ROOT / 'data/silver'
+ROOT = Path(__file__).resolve().parents[4]
+BRONZE = ROOT / 'data/etl/bronze'
+SILVER = ROOT / 'data/etl/silver'
 
 
 def read(relative):

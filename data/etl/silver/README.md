@@ -92,7 +92,7 @@ relationships are created later when building the Gold layer.
 Silver data is generated from Bronze data using:
 
 ```bash
-python data/scripts/bronze_to_silver/clean.py
+python data/etl/scripts/bronze_to_silver/clean.py
 ```
 
 The original Bronze files are treated as immutable source data.
@@ -154,7 +154,7 @@ Manual modification of generated Silver files is discouraged. Data-quality
 changes should instead be implemented in:
 
 ```text
-data/scripts/bronze_to_silver/clean.py
+data/etl/scripts/bronze_to_silver/clean.py
 ```
 
 This keeps the transformation process traceable and repeatable.
