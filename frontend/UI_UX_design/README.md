@@ -1,55 +1,56 @@
 # AeroRUL — UI/UX Design System & Specification
 
-Tài liệu thiết kế giao diện người dùng (UI) và trải nghiệm người dùng (UX) cho sàn thương mại điện tử B2B dự đoán Remaining Useful Life (RUL) phụ tùng & động cơ hàng không — **AeroRUL Marketplace**.
+User Interface (UI) and User Experience (UX) design document for the B2B e-commerce platform predicting Remaining Useful Life (RUL) for aviation engine parts & equipment — **AeroRUL Marketplace**.
 
 ---
 
-## 1. Tổng quan tài liệu thiết kế
+## 1. Design Document Overview
 
-| File / Thư mục | Mô tả |
+| File / Folder | Description |
 |---|---|
-| `AeroRUL_UI_UX_All_Screens.pdf` | Toàn bộ bản thiết kế giao diện dạng slide/PDF chất lượng cao cho tất cả các luồng người dùng. |
-| `UI_UX_Frontend_Structure_RUL_Aviation_Marketplace_V2.docx` | Tài liệu đặc tả kiến trúc UI/UX, Sitemap, cấu trúc layout và các trường dữ liệu chi tiết. |
-| `AI_RUL_B2B_Aviation_Ecommerce_Project_Concept_VI_RUL_Replacement_V3.docx` | Tài liệu ý tưởng dự án, logic tích hợp mô hình RUL AI vào hệ thống B2B. |
-| `AeroRUL_Stitch_Prompts.md` | Hệ thống prompt và guideline thiết kế giao diện chi tiết. |
-| `screens/` | Bộ ảnh chụp màn hình (PNG) của toàn bộ 45+ giao diện trong hệ thống. |
+| `AeroRUL_UI_UX_All_Screens.pdf` | Complete high-quality UI design presentation/PDF covering all user flows. |
+| `UI_UX_Frontend_Structure_RUL_Aviation_Marketplace_V2.docx` | UI/UX architecture specification, sitemap, layout structure, and detailed data field descriptions. |
+| `AI_RUL_B2B_Aviation_Ecommerce_Project_Concept_VI_RUL_Replacement_V3.docx` | Project concept document detailing the logic behind integrating the AI RUL model into the B2B system. |
+| `AeroRUL_Stitch_Prompts.md` | Comprehensive design prompts and UI design guidelines. |
+| `screens/` | Collection of 25 core UI mockups and updated sitemap (`AeroRUL_Sitemap_V3.png`). |
 
 ---
 
-## 2. Hệ thống phân quyền người dùng (Role-based Layouts)
+## 2. Role-Based Layouts & Access Control
 
-Hệ thống được thiết kế theo 4 phân hệ người dùng chính:
+The system is designed around 4 primary user roles:
 
-### 2.1. Public (Khách vãng lai & Đăng nhập)
-- **Trang chủ (`04_Home.png`)**: Giới thiệu nền tảng, các động cơ/phụ tùng nổi bật, tích hợp công nghệ RUL AI.
-- **Sàn giao dịch (`05_Marketplace.png`)**: Bộ lọc đa chiều (loại động cơ CFM56, GE90, Trent, trạng thái RUL, nhà cung cấp, chứng chỉ FAA/EASA).
-- **Chi tiết sản phẩm (`06_ProductDetail.png`)**: Thông số kỹ thuật, số giờ bay (Cycles/Hours), giấy tờ kiểm định và lịch sử bảo dưỡng.
-- **Xác thực (`03_Login.png`, `24_Register.png`)**: Đăng nhập đa vai trò, đăng ký tài khoản doanh nghiệp.
+### 2.1. Public (Visitors & Authentication)
+- **Home Page (`04_Home.png`)**: Platform overview, featured engines/components, and RUL AI technology integration.
+- **Marketplace (`05_Marketplace.png`)**: Multi-dimensional filtering (engine types such as CFM56, GE90, Trent; RUL status; suppliers; FAA/EASA certifications).
+- **Product Detail (`06_ProductDetail.png`)**: Technical specifications, flight usage (Cycles/Hours), inspection documentation, and maintenance history.
+- **Authentication (`03_Login.png`, `24_Register.png`)**: Multi-role login and corporate account registration.
 
-### 2.2. Buyer — Hãng hàng không / Đơn vị bảo dưỡng (Airlines / MRO)
-- **Buyer Dashboard (`11_BuyerDashboard.png`)**: Tổng quan sức khỏe đội bay (Fleet health), cảnh báo động cơ có RUL nguy cấp.
-- **Quản lý động cơ (`21_MyEngines.png`, `22_EngineDetail.png`)**: Danh sách động cơ đang theo dõi, biểu đồ RUL trend suy giảm theo thời gian.
-- **Phân tích RUL (`23_RULAnalysis.png`)**: Phân tích chi tiết cảm biến (áp suất, nhiệt độ, độ rung) và dự báo chu kỳ bảo trì tối ưu.
-- **Gợi ý phụ tùng thay thế (`25_Recommendations.png`)**: Hệ thống AI tự động đề xuất phụ tùng/động cơ tương thích sẵn có trên sàn.
-- **Giỏ hàng & Đặt hàng (`07_Cart.png` - `10_Checkout.png`)**: Luồng checkout 4 bước chuẩn B2B (Địa chỉ giao hàng → Phương thức vận chuyển → Điều khoản thanh toán → Xác nhận).
+### 2.2. Buyer — Airlines / Maintenance Organizations (MROs)
+- **Buyer Dashboard (`11_BuyerDashboard.png`)**: Fleet health overview and critical RUL engine alerts.
+- **Engine Management (`16_MyEngines.png`)**: Tracked engine fleet list and RUL degradation status.
+- **RUL Analysis (`12_RULAnalysis.png`)**: Detailed sensor analytics (pressure, temperature, vibration) and optimal maintenance cycle forecasting.
+- **Replacement Recommendations (`13_Recommendations.png`)**: AI-driven automatic suggestions for compatible parts/engines available on the marketplace.
+- **Orders & Tracking (`17_Orders.png`, `18_OrderDetail.png`)**: Purchase order history, delivery milestones, and shipment tracking.
+- **Cart & Checkout (`07_Cart.png` - `10_Checkout.png`, `23_OrderConfirmation.png`)**: Standard B2B checkout flow (Shipping Address → Logistics Method → Payment Terms → Order Confirmation).
 
-### 2.3. Supplier — Nhà cung cấp / OEM / Đại lý phụ tùng
-- **Supplier Dashboard (`31_SupplierDashboard.png`)**: Thống kê doanh thu, số đơn đặt hàng mới, phụ tùng tồn kho.
-- **Quản lý sản phẩm & Kho (`32_SupplierProducts.png`)**: Đăng bán phụ tùng mới, đính kèm chứng nhận FAA Part 145 / EASA Form 1.
-- **Quản lý đơn hàng (`33_SupplierOrders.png`)**: Cập nhật trạng thái xử lý đơn hàng, vận chuyển logistics hàng không.
+### 2.3. Supplier — OEMs / Vendors / Parts Distributors
+- **Supplier Dashboard (`14_SupplierDashboard.png`)**: Revenue metrics, new order counts, and inventory status.
+- **Product & Inventory Management (`20_SupplierProducts.png`, `25_SupplierProductForm.png`, `26_SupplierInventory.png`)**: Listing new parts with FAA/EASA certs, stock tracking, and part pricing.
+- **Order Management (`21_SupplierOrders.png`)**: Tracking and updating order processing stages and air freight logistics.
 
-### 2.4. Admin — Quản trị viên hệ thống sàn
-- **Admin Dashboard (`41_AdminDashboard.png`)**: Giám sát giao dịch toàn sàn, cảnh báo hệ thống RUL inference.
-- **Kiểm duyệt nhà cung cấp & Sản phẩm (`15_AdminModeration.png`)**: Duyệt hồ sơ pháp lý đối tác và niêm yết sản phẩm.
-- **Báo cáo & Cài đặt (`43_AdminReports.png`, `45_AdminSettings.png`)**: Thống kê doanh số, cấu hình tham số hệ thống.
+### 2.4. Admin — Platform System Administrators
+- **Admin Dashboard (`27_AdminDashboard.png`)**: Platform-wide transaction monitoring and key operational metrics.
+- **Supplier & Product Moderation (`15_AdminModeration.png`)**: Verification of partner legal documentation and product listings approval.
+- **System RUL Status (`44_AdminRULStatus.png`)**: Real-time status and health monitoring for the RUL inference engine.
 
 ---
 
-## 3. Quy chuẩn Design Tokens & Typography
+## 3. Design Tokens & Typography Specifications
 
-- **Màu sắc chủ đạo (Primary)**: Deep Navy Blue (`#0F172A`, `#1E293B`) kết hợp Sky Blue (`#0284C7`) thể hiện tính chuyên nghiệp, công nghiệp hàng không.
-- **Màu cảnh báo RUL (Severity Levels)**:
-  - 🟢 **Bình thường (RUL > 60 ngày)**: Emerald Green (`#10B981`)
-  - 🟡 **Cần lưu ý (30 < RUL ≤ 60 ngày)**: Amber (`#F59E0B`)
-  - 🔴 **Nguy cấp (RUL ≤ 30 ngày)**: Crimson Red (`#EF4444`)
-- **Typography**: Inter / Roboto font sans-serif, tối ưu hiển thị số liệu kỹ thuật và bảng dữ liệu lớn.
+- **Primary Colors**: Deep Navy Blue (`#0F172A`, `#1E293B`) paired with Sky Blue (`#0284C7`), reflecting aviation industry professionalism and reliability.
+- **RUL Alert Colors (Severity Levels)**:
+  - 🟢 **Normal (RUL > 60 days)**: Emerald Green (`#10B981`)
+  - 🟡 **Warning (30 < RUL ≤ 60 days)**: Amber (`#F59E0B`)
+  - 🔴 **Critical (RUL ≤ 30 days)**: Crimson Red (`#EF4444`)
+- **Typography**: Inter / Roboto sans-serif fonts, optimized for displaying dense technical telemetry and large data tables.

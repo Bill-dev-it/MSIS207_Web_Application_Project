@@ -16,7 +16,7 @@ frontend/
 │   └── README.md        # Hướng dẫn chạy và cấu trúc chi tiết của mã nguồn Frontend
 │
 └── UI_UX_design/        # Tài liệu thiết kế giao diện và trải nghiệm người dùng
-    ├── screens/         # 45+ ảnh chụp màn hình (PNG) của toàn bộ hệ thống
+    ├── screens/         # 25 ảnh chụp màn hình (PNG) và sitemap của hệ thống
     ├── AeroRUL_UI_UX_All_Screens.pdf  # Toàn bộ slide thiết kế dạng PDF
     ├── UI_UX_Frontend_Structure_RUL_Aviation_Marketplace_V2.docx # Tài liệu đặc tả UI/UX
     ├── AI_RUL_B2B_Aviation_Ecommerce_Project_Concept_VI_RUL_Replacement_V3.docx # Concept dự án
