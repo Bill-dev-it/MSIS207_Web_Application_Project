@@ -12,9 +12,19 @@ and recommend compatible spare parts available from suppliers.
 The RUL model is deployed as an independent service and communicates with the
 Node.js / Express backend through a REST API.
 
+## Architecture diagram references
+
+The RUL integration workflow is visualized in the following diagrams:
+
+- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall system boundary for the RUL workflow.
+- [05 — AI/RUL & Recommendation](<../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — inference pipeline, model input/output, and recommendation process.
+- [07 — End-to-End Integration](<../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — end-to-end request flow from UI through business logic to RUL and cart checkout.
+
+See also: [Architecture overview](../architecture/README.md).
+
 ## 2. Integration Flow
 
-![RUL integration flow](./RUL_integration.jpg)
+![RUL integration flow](./images/RUL_integration.jpg)
 ## 3. Responsibilities
 
 ### Node.js / Express Backend

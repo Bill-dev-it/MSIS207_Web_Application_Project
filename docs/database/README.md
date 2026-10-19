@@ -7,6 +7,17 @@ The database supports three connected domains:
 
 **Aircraft & Engine → RUL Prediction → Spare-Part Recommendation → B2B Purchase**
 
+## Architecture diagram references
+
+The database design connects directly to the main architecture views:
+
+- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — high-level data and application boundaries.
+- [04 — PostgreSQL OLTP](<../architecture/diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>) — the canonical ERD and relational structure.
+- [05 — AI/RUL & Recommendation](<../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — how RUL output and recommendations relate to database records.
+- [06 — Deployment & Runtime](<../architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>) — operational deployment boundary for PostgreSQL and runtime services.
+
+For the full architecture documentation, see [docs/architecture/README.md](../architecture/README.md).
+
 ## 1. Database Design
 
 The system uses **PostgreSQL** as the primary operational database.
