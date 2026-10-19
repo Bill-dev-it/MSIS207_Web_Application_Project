@@ -6,7 +6,18 @@ The architecture consists of four interconnected domains: **Reference ETL (A)**,
 
 **Project:** B2B Aviation Engine & Parts Marketplace with RUL-Based Recommendations
 
-![Overall Data Architecture Diagram](./overall_data_architecture.png)
+![Overall Data Architecture Diagram](./images/overall_data_architecture.png)
+
+## Architecture diagram references
+
+This data engineering section maps to the following architecture diagrams:
+
+- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall runtime and ETL boundaries.
+- [04 — PostgreSQL OLTP](<../architecture/diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>) — operational tables and schema domains.
+- [05 — AI/RUL & Recommendation](<../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — how RUL predictions and recommendation data are produced and stored.
+- [06 — Deployment & Runtime](<../architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>) — ETL and runtime hosting separation.
+
+For the full system context, see [docs/architecture/README.md](../architecture/README.md).
 
 ## How to Read the Architecture Diagram
 

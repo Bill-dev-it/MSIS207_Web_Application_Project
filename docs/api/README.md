@@ -4,6 +4,16 @@ This document defines the REST API structure for the Aviation B2B E-Commerce Pla
 
 The API acts as the communication layer between the React frontend, PostgreSQL database, and the AI/RUL service.
 
+## Related architecture diagrams
+
+The API design is best understood together with the architecture views below:
+
+- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall platform boundaries and the two procurement paths.
+- [03 — REST API & Backend](<../architecture/diagrams/System_Design_ver 1.0-03 REST API & Backend.drawio.svg>) — Express modules, business boundaries, and service interactions.
+- [07 — End-to-End Integration](<../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — request flow across the frontend, backend, database, and RUL service.
+
+See also: [Architecture overview](../architecture/README.md).
+
 ## Base URL
 
 ```text
