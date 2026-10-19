@@ -1,23 +1,29 @@
-
-import { Route, Routes } from "react-router-dom";
-
-function HomePage() {
-  return (
-    <main className="min-h-screen bg-slate-50 p-8">
-      <h1 className="text-3xl font-bold text-slate-900">
-        AeroRUL
-      </h1>
-      <p className="mt-3 text-slate-600">
-        B2B Aviation Marketplace — Frontend Foundation
-      </p>
-    </main>
-  );
-}
+import { Navigate, Route, Routes } from "react-router-dom";
+import AdminHome from "../screens/admin/AdminHome";
+import BuyerHome from "../screens/buyer/BuyerHome";
+import Home from "../screens/public/Home";
+import SupplierHome from "../screens/supplier/SupplierHome";
+import AdminLayout from "../layouts/AdminLayout";
+import BuyerLayout from "../layouts/BuyerLayout";
+import PublicLayout from "../layouts/PublicLayout";
+import SupplierLayout from "../layouts/SupplierLayout";
 
 export default function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Home />} />
+      </Route>
+      <Route element={<BuyerLayout />}>
+        <Route path="/buyer" element={<BuyerHome />} />
+      </Route>
+      <Route element={<SupplierLayout />}>
+        <Route path="/supplier" element={<SupplierHome />} />
+      </Route>
+      <Route element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminHome />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
