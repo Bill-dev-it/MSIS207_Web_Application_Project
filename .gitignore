@@ -34,3 +34,7 @@ __pycache__/
 
 # Node.js dependencies
 node_modules/
+
+# Frontend local environment and build output
+/frontend/.env.local
+/frontend/dist/
