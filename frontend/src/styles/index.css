@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply text-primary-800 antialiased;
+}
+
+.container-page {
+  @apply mx-auto w-full max-w-[1280px] px-4 md:px-6;
+}
+
+.card {
+  @apply rounded-[12px] border border-neutral-200 bg-white;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none;
+}
+.btn-primary {
+  @apply btn bg-primary-700 text-white hover:bg-primary-600;
+}
+.btn-secondary {
+  @apply btn border border-neutral-200 bg-white text-primary-800 hover:bg-neutral-50;
+}
+.btn-accent {
+  @apply btn bg-accent text-white hover:bg-[#2589c2];
+}
+.btn-ghost {
+  @apply btn text-primary-700 hover:bg-neutral-50;
+}
+
+.input {
+  @apply w-full rounded-[10px] border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
+}
+
+.label {
+  @apply mb-1 block text-sm font-medium text-primary-800;
+}
+
+.mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
