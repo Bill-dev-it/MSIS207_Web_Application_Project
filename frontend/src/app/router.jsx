@@ -7,12 +7,19 @@ import AdminLayout from "../layouts/AdminLayout";
 import BuyerLayout from "../layouts/BuyerLayout";
 import PublicLayout from "../layouts/PublicLayout";
 import SupplierLayout from "../layouts/SupplierLayout";
+import Marketplace from "../screens/public/Marketplace";
+import ProductDetail from "../screens/public/ProductDetail";
 
 export default function AppRouter() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route
+          path="/marketplace/products/:productId"
+          element={<ProductDetail />}
+        />
       </Route>
       <Route element={<BuyerLayout />}>
         <Route path="/buyer" element={<BuyerHome />} />
