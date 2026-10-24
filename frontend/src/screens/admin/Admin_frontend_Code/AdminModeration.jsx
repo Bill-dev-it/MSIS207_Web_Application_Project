@@ -303,11 +303,10 @@ export default function AdminModeration() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setActiveTab("suppliers")}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${
-                activeTab === "suppliers"
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${activeTab === "suppliers"
                   ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                   : "border-[#E5E7EB] bg-white text-[#475569] hover:bg-[#F8FAFC]"
-              }`}
+                }`}
             >
               <span>Supplier requests</span>
               <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${activeTab === "suppliers" ? "bg-white/20 text-white" : "bg-[#F1F5F9] text-[#475569]"}`}>
@@ -317,11 +316,10 @@ export default function AdminModeration() {
 
             <button
               onClick={() => setActiveTab("products")}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${
-                activeTab === "products"
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${activeTab === "products"
                   ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                   : "border-[#E5E7EB] bg-white text-[#475569] hover:bg-[#F8FAFC]"
-              }`}
+                }`}
             >
               <span>Product approvals</span>
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${activeTab === "products" ? "bg-[#2563EB] text-white" : "bg-[#F1F5F9] text-[#475569]"}`}>
@@ -331,11 +329,10 @@ export default function AdminModeration() {
 
             <button
               onClick={() => setActiveTab("reported")}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${
-                activeTab === "reported"
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${activeTab === "reported"
                   ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                   : "border-[#E5E7EB] bg-white text-[#475569] hover:bg-[#F8FAFC]"
-              }`}
+                }`}
             >
               <span>Reported items</span>
               <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${activeTab === "reported" ? "bg-white/20 text-white" : "bg-[#FEE2E2] text-[#DC2626]"}`}>
@@ -376,11 +373,10 @@ export default function AdminModeration() {
                       <div
                         key={item.id}
                         onClick={() => handleSelect(item)}
-                        className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                          isSelected
+                        className={`cursor-pointer rounded-xl border p-4 transition-all ${isSelected
                             ? "border-[#2563EB] bg-[#F0F7FF] shadow-sm"
                             : "border-[#E5E7EB] bg-white hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="text-xs font-bold text-[#0B1F3A] leading-snug">

@@ -314,24 +314,24 @@ export default function Recommendations() {
                       {/* Base stand */}
                       <rect x="25" y="145" width="270" height="28" rx="6" fill="#1E293B" />
                       <rect x="235" y="152" width="45" height="14" rx="3" fill="#E2E8F0" />
-                      
+
                       {/* Stage 1 Blades (5 Aerodynamic Turbine Blades) */}
                       {/* Blade 1 */}
                       <path d="M 45 145 C 40 100, 50 45, 62 30 C 74 45, 84 100, 79 145 Z" fill="url(#bladeGrad)" stroke="#94A3B8" strokeWidth="1.5" />
                       <path d="M 62 30 Q 64 90 62 145" stroke="#CBD5E1" strokeWidth="1.2" opacity="0.8" />
-                      
+
                       {/* Blade 2 */}
                       <path d="M 95 145 C 90 95, 100 40, 112 25 C 124 40, 134 95, 129 145 Z" fill="url(#bladeGrad)" stroke="#94A3B8" strokeWidth="1.5" />
                       <path d="M 112 25 Q 114 85 112 145" stroke="#CBD5E1" strokeWidth="1.2" opacity="0.8" />
-                      
+
                       {/* Blade 3 (Center) */}
                       <path d="M 145 145 C 140 90, 150 35, 162 20 C 174 35, 184 90, 179 145 Z" fill="url(#bladeGrad)" stroke="#94A3B8" strokeWidth="1.5" />
                       <path d="M 162 20 Q 164 80 162 145" stroke="#CBD5E1" strokeWidth="1.2" opacity="0.8" />
-                      
+
                       {/* Blade 4 */}
                       <path d="M 195 145 C 190 95, 200 40, 212 25 C 224 40, 234 95, 229 145 Z" fill="url(#bladeGrad)" stroke="#94A3B8" strokeWidth="1.5" />
                       <path d="M 212 25 Q 214 85 212 145" stroke="#CBD5E1" strokeWidth="1.2" opacity="0.8" />
-                      
+
                       {/* Blade 5 */}
                       <path d="M 245 145 C 240 100, 250 45, 262 30 C 274 45, 284 100, 279 145 Z" fill="url(#bladeGrad)" stroke="#94A3B8" strokeWidth="1.5" />
                       <path d="M 262 30 Q 264 90 262 145" stroke="#CBD5E1" strokeWidth="1.2" opacity="0.8" />
