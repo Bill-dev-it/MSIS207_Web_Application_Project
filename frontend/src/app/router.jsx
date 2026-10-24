@@ -13,6 +13,10 @@ import Recommendations from "../screens/admin/Admin_frontend_Code/Recommendation
 import AdminModeration from "../screens/admin/Admin_frontend_Code/AdminModeration";
 import AdminDashboard from "../screens/admin/Admin_frontend_Code/AdminDashboard";
 import AdminRULStatus from "../screens/admin/Admin_frontend_Code/AdminRULStatus";
+import MyEngines from "../screens/buyer/Frontend_code/MyEngines";
+import Orders from "../screens/buyer/Frontend_code/Orders";
+import OrderDetail from "../screens/buyer/Frontend_code/OrderDetail";
+import OrderConfirmation from "../screens/buyer/Frontend_code/OrderConfirmation";
 
 export default function AppRouter() {
   return (
@@ -28,6 +32,10 @@ export default function AppRouter() {
       <Route element={<BuyerLayout />}>
         <Route path="/buyer" element={<BuyerHome />} />
       </Route>
+      <Route path="/buyer/engines" element={<MyEngines />} />
+      <Route path="/buyer/orders" element={<Orders />} />
+      <Route path="/buyer/orders/:orderId" element={<OrderDetail />} />
+      <Route path="/buyer/order-confirmation" element={<OrderConfirmation />} />
       <Route element={<SupplierLayout />}>
         <Route path="/supplier" element={<SupplierHome />} />
       </Route>
