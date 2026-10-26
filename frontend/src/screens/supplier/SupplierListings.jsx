@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import { getSupplierListings } from "../../services/supplierService";
@@ -45,6 +46,14 @@ export default function SupplierListings() {
         eyebrow="Supplier Portal"
         title="My Listings"
         description="View and manage your aviation parts offers."
+        actions={
+          <Link
+            to="/supplier/listings/new"
+            className="btn btn-primary"
+          >
+            Create Listing
+          </Link>
+        }
       />
 
       <p
@@ -156,6 +165,13 @@ export default function SupplierListings() {
                           </p>
                         </div>
                       </div>
+
+                      <Link
+                        to={`/supplier/listings/${listing.listing_id}/edit`}
+                        className="btn btn-secondary mt-5"
+                      >
+                        Edit Listing
+                      </Link>
                     </article>
                   ))}
                 </div>

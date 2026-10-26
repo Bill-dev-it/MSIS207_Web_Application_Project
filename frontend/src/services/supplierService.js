@@ -47,3 +47,11 @@ const demoListings = [
 export async function getSupplierListings() {
   return demoListings;
 }
+
+export async function getSupplierListingById(listingId) {
+  const listings = await getSupplierListings();
+
+  return listings.find(
+    (listing) => String(listing.listing_id) === String(listingId)
+  ) || null;
+}
