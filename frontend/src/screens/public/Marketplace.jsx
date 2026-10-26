@@ -1,29 +1,35 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import PageHeader from "../../components/common/PageHeader";
+import EmptyState from "../../components/common/EmptyState";
 import { getProducts } from "../../services/productApi";
 
-function getProductId(product) {
-  return product.product_id ?? product.id;
-}
-
-function getProductName(product) {
-  return product.name ?? product.product_name ?? "Unnamed product";
-}
+const PAGE_SIZE = 12;
 
 export default function Marketplace() {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const query = searchParams.get("q") || "";
+
   const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState("ALL");
+  const [manufacturer, setManufacturer] = useState("ALL");
+  const [sort, setSort] = useState("NAME_ASC");
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const query = searchParams.get("q") ?? "";
 
   useEffect(() => {
     const controller = new AbortController();
 
     getProducts({ signal: controller.signal })
-      .then(setProducts)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setProducts(data);
+          setError("");
+        }
+      })
       .catch((err) => {
         if (err.name !== "AbortError") {
           setError(err.message);
@@ -38,72 +44,209 @@ export default function Marketplace() {
     return () => controller.abort();
   }, []);
 
-  const filteredProducts = useMemo(() => {
+  // Build options from actual product data
+  const categories = [
+    ...new Set(products.map((p) => p.category_name).filter(Boolean)),
+  ].sort();
+
+  const manufacturers = [
+    ...new Set(products.map((p) => p.manufacturer).filter(Boolean)),
+  ].sort();
+
+  // Filter products
+  const filteredProducts = products.filter((product) => {
     const keyword = query.trim().toLowerCase();
 
-    if (!keyword) return products;
+    const searchableText = [
+      product.product_name,
+      product.name,
+      product.part_number,
+      product.description,
+      product.manufacturer,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-    return products.filter((product) => {
-      const searchableText = [
-        getProductName(product),
-        product.part_number,
-        product.description,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+    const matchesSearch = searchableText.includes(keyword);
 
-      return searchableText.includes(keyword);
-    });
-  }, [products, query]);
+    const matchesCategory =
+      category === "ALL" || product.category_name === category;
+
+    const matchesManufacturer =
+      manufacturer === "ALL" ||
+      product.manufacturer === manufacturer;
+
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesManufacturer
+    );
+  });
+
+  // Sort products
+  const sortedProducts = [...filteredProducts];
+
+  sortedProducts.sort((a, b) => {
+    const nameA = a.product_name || a.name || "";
+    const nameB = b.product_name || b.name || "";
+
+    if (sort === "NAME_DESC") {
+      return nameB.localeCompare(nameA);
+    }
+
+    if (sort === "PART_NUMBER") {
+      return (a.part_number || "").localeCompare(
+        b.part_number || ""
+      );
+    }
+
+    return nameA.localeCompare(nameB);
+  });
+
+  // Pagination
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedProducts.length / PAGE_SIZE)
+  );
+
+  const currentPage = Math.min(page, totalPages);
+
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+
+  const visibleProducts = sortedProducts.slice(
+    startIndex,
+    startIndex + PAGE_SIZE
+  );
+
+  function handleSearch(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const value = String(formData.get("search") || "").trim();
+
+    setSearchParams(value ? { q: value } : {});
+    setPage(1);
+  }
+
+  function resetFilters() {
+    setSearchParams({});
+    setCategory("ALL");
+    setManufacturer("ALL");
+    setSort("NAME_ASC");
+    setPage(1);
+  }
 
   return (
-    <div className="container-page py-12">
-      <header className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-widest text-accent-600">
-          Aviation Parts Catalog
-        </p>
+    <div className="container-page py-8 sm:py-12">
+      <PageHeader
+        eyebrow="Aviation Parts Catalog"
+        title="Marketplace"
+        description="Explore aviation parts and components from the AeroRUL catalog."
+      />
 
-        <h1 className="mt-3 text-3xl font-bold text-primary-800">
-          Marketplace
-        </h1>
-
-        <p className="mt-3 text-neutral-500">
-          Explore aviation parts and components available
-          through AeroRUL.
-        </p>
-      </header>
-
-      <form
-        role="search"
-        className="mb-8 flex flex-col gap-3 sm:flex-row"
-        onSubmit={(event) => {
-          event.preventDefault();
-
-          const formData = new FormData(event.currentTarget);
-          const value = String(formData.get("search") ?? "").trim();
-
-          setSearchParams(value ? { q: value } : {});
-        }}
+      {/* Search and filters */}
+      <section
+        aria-label="Product search and filters"
+        className="card mb-8 p-4 sm:p-6"
       >
-        <label htmlFor="product-search" className="sr-only">
-          Search products
-        </label>
+        <form
+          role="search"
+          onSubmit={handleSearch}
+          className="flex flex-col gap-3 sm:flex-row"
+        >
+          <label htmlFor="product-search" className="sr-only">
+            Search products
+          </label>
 
-        <input
-          id="product-search"
-          key={query}
-          name="search"
-          type="search"
-          defaultValue={query}
-          placeholder="Search by product or part number"
-          className="input flex-1"
-        />
+          <input
+            id="product-search"
+            key={query}
+            name="search"
+            type="search"
+            defaultValue={query}
+            placeholder="Search products or part numbers"
+            className="input min-w-0 flex-1"
+          />
 
-        <button type="submit" className="btn btn-primary">
-          Search
+          <button type="submit" className="btn btn-primary">
+            Search
+          </button>
+        </form>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <label htmlFor="category" className="label">
+              Category
+            </label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setPage(1);
+              }}
+              className="input"
+            >
+              <option value="ALL">All categories</option>
+              {categories.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="manufacturer" className="label">
+              Manufacturer
+            </label>
+            <select
+              id="manufacturer"
+              value={manufacturer}
+              onChange={(e) => {
+                setManufacturer(e.target.value);
+                setPage(1);
+              }}
+              className="input"
+            >
+              <option value="ALL">All manufacturers</option>
+              {manufacturers.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="sort" className="label">
+              Sort by
+            </label>
+            <select
+              id="sort"
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                setPage(1);
+              }}
+              className="input"
+            >
+              <option value="NAME_ASC">Name: A–Z</option>
+              <option value="NAME_DESC">Name: Z–A</option>
+              <option value="PART_NUMBER">Part Number</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={resetFilters}
+          className="btn btn-ghost mt-4"
+        >
+          Clear Filters
         </button>
-      </form>
+      </section>
 
       {loading && (
         <p role="status" className="text-neutral-500">
@@ -119,64 +262,98 @@ export default function Marketplace() {
           <p className="mt-2 text-sm text-neutral-500">
             {error}
           </p>
-          <p className="mt-2 text-sm text-neutral-500">
-            Check the backend connection and API configuration.
-          </p>
         </div>
       )}
 
       {!loading && !error && (
         <>
-          <p className="mb-5 text-sm text-neutral-500">
-            {filteredProducts.length} products found
+          <p role="status" className="mb-5 text-sm text-neutral-500">
+            {sortedProducts.length} products found
           </p>
 
-          {filteredProducts.length === 0 ? (
-            <div className="card p-8 text-center">
-              <p className="font-medium text-primary-800">
-                No matching products
-              </p>
-              <p className="mt-2 text-sm text-neutral-500">
-                Try a different search term.
-              </p>
-            </div>
+          {visibleProducts.length === 0 ? (
+            <EmptyState
+              title="No matching products"
+              description="Try another search term or clear your filters."
+              action={
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="btn btn-secondary"
+                >
+                  Clear Filters
+                </button>
+              }
+            />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.map((product) => {
-                const id = getProductId(product);
+              {visibleProducts.map((product) => (
+                <article
+                  key={product.product_id}
+                  className="card flex flex-col p-5 sm:p-6"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 font-bold text-primary-700">
+                    AR
+                  </div>
 
-                return (
-                  <article key={id} className="card flex flex-col p-6">
-                    <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
-                      <span className="font-mono text-xl font-bold">
-                        AR
-                      </span>
-                    </div>
+                  <p className="break-all font-mono text-xs text-neutral-500">
+                    {product.part_number || "N/A"}
+                  </p>
 
-                    <p className="font-mono text-xs text-neutral-500">
-                      {product.part_number || "Part number unavailable"}
-                    </p>
+                  <h2 className="mt-2 text-lg font-semibold text-primary-800">
+                    {product.product_name || product.name}
+                  </h2>
 
-                    <h2 className="mt-2 text-lg font-semibold text-primary-800">
-                      {getProductName(product)}
-                    </h2>
+                  <p className="mt-2 text-xs text-accent-600">
+                    {product.category_name || "Uncategorized"}
+                  </p>
 
-                    <p className="mt-3 line-clamp-3 flex-1 text-sm text-neutral-500">
-                      {product.description || "No description available."}
-                    </p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {product.manufacturer || "Manufacturer unavailable"}
+                  </p>
 
-                    {id != null && (
-                      <Link
-                        to={`/marketplace/products/${encodeURIComponent(id)}`}
-                        className="btn btn-secondary mt-6"
-                      >
-                        View Details
-                      </Link>
-                    )}
-                  </article>
-                );
-              })}
+                  <p className="mt-4 flex-1 text-sm text-neutral-500">
+                    {product.description || "No description available."}
+                  </p>
+
+                  <Link
+                    to={`/marketplace/products/${product.product_id}`}
+                    className="btn btn-secondary mt-5"
+                  >
+                    View Details
+                  </Link>
+                </article>
+              ))}
             </div>
+          )}
+
+          {sortedProducts.length > PAGE_SIZE && (
+            <nav
+              aria-label="Product pagination"
+              className="mt-8 flex flex-wrap items-center justify-center gap-4"
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={currentPage === 1}
+                onClick={() => setPage(currentPage - 1)}
+              >
+                Previous
+              </button>
+
+              <span className="text-sm text-neutral-500">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage(currentPage + 1)}
+              >
+                Next
+              </button>
+            </nav>
           )}
         </>
       )}

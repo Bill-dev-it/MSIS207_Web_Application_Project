@@ -3,6 +3,11 @@ import AdminHome from "../screens/admin/AdminHome";
 import BuyerHome from "../screens/buyer/BuyerHome";
 import Home from "../screens/public/Home";
 import SupplierHome from "../screens/supplier/SupplierHome";
+import SupplierListings from "../screens/supplier/SupplierListings";
+import SupplierInventory from "../screens/supplier/SupplierInventory";
+import SupplierListingForm from "../screens/supplier/SupplierListingForm";
+import SupplierOrders from "../screens/supplier/SupplierOrders";
+import SupplierOrderDetail from "../screens/supplier/SupplierOrderDetail";
 import AdminLayout from "../layouts/AdminLayout";
 import BuyerLayout from "../layouts/BuyerLayout";
 import PublicLayout from "../layouts/PublicLayout";
@@ -38,6 +43,21 @@ export default function AppRouter() {
       <Route path="/buyer/order-confirmation" element={<OrderConfirmation />} />
       <Route element={<SupplierLayout />}>
         <Route path="/supplier" element={<SupplierHome />} />
+        <Route path="/supplier/listings" element={<SupplierListings />} />
+        <Route path="/supplier/inventory" element={<SupplierInventory />} />
+        <Route
+          path="/supplier/listings/new"
+          element={<SupplierListingForm />}
+        />
+        <Route
+          path="/supplier/listings/:listingId/edit"
+          element={<SupplierListingForm />}
+        />
+        <Route path="/supplier/orders" element={<SupplierOrders />} />
+        <Route
+          path="/supplier/orders/:sellerOrderId"
+          element={<SupplierOrderDetail />}
+        />
       </Route>
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<AdminHome />} />
