@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import SupplierOffers from "../../components/public/SupplierOffers";
 import { getProductById } from "../../services/productApi";
 
 export default function ProductDetail() {
@@ -74,6 +75,36 @@ export default function ProductDetail() {
               {name || "Unnamed product"}
             </h1>
 
+            <div className="mt-5 flex flex-wrap gap-2">
+              {product.category_name && (
+                <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+                  {product.category_name}
+                </span>
+              )}
+
+              {product.product_type && (
+                <span className="rounded-full bg-accent-50 px-3 py-1 text-xs font-medium text-accent-600">
+                  {product.product_type}
+                </span>
+              )}
+            </div>
+
+            <dl className="mt-6 grid gap-4 border-t border-neutral-200 pt-5 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs text-neutral-500">Manufacturer</dt>
+                <dd className="mt-1 font-medium text-primary-800">
+                  {product.manufacturer || "Not available"}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs text-neutral-500">Part Number</dt>
+                <dd className="mt-1 break-all font-mono text-sm text-primary-800">
+                  {product.part_number || "Not available"}
+                </dd>
+              </div>
+            </dl>
+
             <h2 className="mt-8 text-lg font-semibold text-primary-800">
               Product Description
             </h2>
@@ -109,28 +140,8 @@ export default function ProductDetail() {
             )}
           </article>
 
-          <aside className="card h-fit p-6">
-            <h2 className="text-lg font-semibold text-primary-800">
-              Supplier Listings
-            </h2>
-
-            <p className="mt-3 text-sm leading-relaxed text-neutral-500">
-              Supplier offers, pricing, and stock availability
-              will appear here when the listings API is connected.
-            </p>
-
-            <button
-              type="button"
-              className="btn btn-primary mt-6 w-full"
-              disabled
-            >
-              Add to Cart
-            </button>
-
-            <p className="mt-3 text-xs text-neutral-500">
-              Cart actions require a selected supplier listing
-              and buyer authentication.
-            </p>
+          <aside className="card h-fit min-w-0 p-5 sm:p-6">
+            <SupplierOffers productId={productId} />
           </aside>
         </div>
       )}
