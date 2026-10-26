@@ -6,6 +6,8 @@ import SupplierHome from "../screens/supplier/SupplierHome";
 import SupplierListings from "../screens/supplier/SupplierListings";
 import SupplierInventory from "../screens/supplier/SupplierInventory";
 import SupplierListingForm from "../screens/supplier/SupplierListingForm";
+import SupplierOrders from "../screens/supplier/SupplierOrders";
+import SupplierOrderDetail from "../screens/supplier/SupplierOrderDetail";
 import AdminLayout from "../layouts/AdminLayout";
 import BuyerLayout from "../layouts/BuyerLayout";
 import PublicLayout from "../layouts/PublicLayout";
@@ -50,6 +52,11 @@ export default function AppRouter() {
         <Route
           path="/supplier/listings/:listingId/edit"
           element={<SupplierListingForm />}
+        />
+        <Route path="/supplier/orders" element={<SupplierOrders />} />
+        <Route
+          path="/supplier/orders/:sellerOrderId"
+          element={<SupplierOrderDetail />}
         />
       </Route>
       <Route element={<AdminLayout />}>
