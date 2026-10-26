@@ -3,6 +3,7 @@ import AdminHome from "../screens/admin/AdminHome";
 import BuyerHome from "../screens/buyer/BuyerHome";
 import Home from "../screens/public/Home";
 import SupplierHome from "../screens/supplier/SupplierHome";
+import SupplierListings from "../screens/supplier/SupplierListings";
 import AdminLayout from "../layouts/AdminLayout";
 import BuyerLayout from "../layouts/BuyerLayout";
 import PublicLayout from "../layouts/PublicLayout";
@@ -38,6 +39,7 @@ export default function AppRouter() {
       <Route path="/buyer/order-confirmation" element={<OrderConfirmation />} />
       <Route element={<SupplierLayout />}>
         <Route path="/supplier" element={<SupplierHome />} />
+        <Route path="/supplier/listings" element={<SupplierListings />} />
       </Route>
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<AdminHome />} />

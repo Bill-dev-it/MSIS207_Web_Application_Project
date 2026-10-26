@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 
 const workspaceLinks = [
   { to: "/supplier", label: "Overview", end: true },
+  { to: "/supplier/listings", label: "My Listings" },
 ];
 
 export default function SupplierLayout() {
