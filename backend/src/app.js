@@ -38,6 +38,7 @@ function createApp() {
 
   app.use("/api/products", productRoutes);
   app.use("/api/auth", require("./routes/auth.routes"));
+  app.use("/api/buyer", require("./routes/buyer.routes"));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
