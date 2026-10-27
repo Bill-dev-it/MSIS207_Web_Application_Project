@@ -6,6 +6,7 @@
 --   * moderation_decisions  – approve / reject of DRAFT seller_listings
 --   * supplier_inquiries    – buyer → supplier contact requests
 --   * service_health_checks – results of Admin "RUL Health Check"
+--   * auth_sessions         – revocable login sessions
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -89,3 +90,20 @@ CREATE TABLE IF NOT EXISTS service_health_checks (
 
 CREATE INDEX IF NOT EXISTS idx_health_service_time
     ON service_health_checks(service_name, checked_at);
+
+
+-- Server-side sessions: JWT carries session_id; logout sets revoked_at so the
+-- token stops working immediately (a pure stateless JWT cannot be revoked).
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    session_id UUID PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    revoked_at TIMESTAMP,
+
+    CONSTRAINT fk_auth_sessions_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user
+    ON auth_sessions(user_id, revoked_at);

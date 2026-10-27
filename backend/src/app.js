@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const pool = require("./config/db");
 const { notFoundHandler, errorHandler } = require("./middleware/error");
 
@@ -16,6 +17,7 @@ function createApp() {
     })
   );
   app.use(express.json({ limit: "100kb" }));
+  app.use(cookieParser());
 
   app.get("/", (req, res) => {
     res.json({ message: "Aviation B2B API is running" });
@@ -35,6 +37,7 @@ function createApp() {
   });
 
   app.use("/api/products", productRoutes);
+  app.use("/api/auth", require("./routes/auth.routes"));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
