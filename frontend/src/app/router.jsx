@@ -33,6 +33,29 @@ import AdminUsers from "../screens/admin/Admin_frontend_Code/AdminUsers";
 import AdminCompanies from "../screens/admin/Admin_frontend_Code/AdminCompanies";
 import AdminSuppliers from "../screens/admin/Admin_frontend_Code/AdminSuppliers";
 
+export const APP_ROUTES = [
+  "/",
+  "/marketplace",
+  "/marketplace/products/:productId",
+  "/login",
+  "/buyer",
+  "/buyer/engines",
+  "/buyer/orders",
+  "/buyer/orders/:orderId",
+  "/buyer/order-confirmation",
+  "/buyer/recommendations",
+  "/supplier",
+  "/admin",
+  "/admin/dashboard",
+  "/admin/moderation",
+  "/admin/rul-status",
+  "/admin/recommendations",
+  "/admin/users",
+  "/admin/companies",
+  "/admin/suppliers",
+  "*",
+];
+
 export default function AppRouter() {
   return (
     <Routes>
