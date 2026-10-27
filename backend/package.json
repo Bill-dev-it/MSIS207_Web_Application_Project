@@ -5,18 +5,25 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "node --test --test-concurrency=1 test/",
+    "seed:demo": "node db/seed_demo_runtime.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "embedded-postgres": "^18.4.0-beta.17",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.1"
   }
 }
