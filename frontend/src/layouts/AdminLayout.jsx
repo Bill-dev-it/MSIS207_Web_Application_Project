@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { ADMIN_NAV } from "../config/navigation";
 import { TechIcon } from "../components/common/TechIcons";
+import { CommandPalette } from "../components/common/CommandPalette";
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Global Ctrl+K / Cmd+K listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -154,6 +168,20 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Command Palette Button */}
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/40 text-slate-400 hover:text-slate-200 text-xs font-mono transition"
+            >
+              <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="hidden sm:inline">Search...</span>
+              <kbd className="px-1.5 py-0.2 rounded bg-slate-800 text-[10px] text-slate-400 border border-slate-700">
+                ⌘K
+              </kbd>
+            </button>
+
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs font-mono text-slate-300">
               <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               <span>ENVIRONMENT: PROD-GOLD</span>
@@ -162,10 +190,13 @@ export default function AdminLayout() {
         </header>
 
         {/* Screen Outlet */}
-        <main className="flex-1 overflow-y-auto bg-gradient-to-b from-[#070D18] via-[#091124] to-[#070D18]">
+        <main className="flex-1 overflow-y-auto bg-gradient-to-b from-[#070D18] via-[#091124] to-[#070D18] p-4 md:p-8">
           <Outlet />
         </main>
       </div>
+
+      {/* Command Palette Modal */}
+      <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }
