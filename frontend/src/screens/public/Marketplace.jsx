@@ -1,9 +1,13 @@
 
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
-import { getProducts } from "../../services/productApi";
+import {
+  getProducts,
+  getProductFilterOptions,
+} from "../../services/productApi";
 
 const PAGE_SIZE = 12;
 
@@ -11,28 +15,102 @@ export default function Marketplace() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const query = searchParams.get("q") || "";
+  const category = searchParams.get("category") || "ALL";
+  const manufacturer = searchParams.get("manufacturer") || "ALL";
+  const sort = searchParams.get("sort") || "NAME_ASC";
+  const requestedPage = Number(searchParams.get("page"));
+  const page =
+    Number.isSafeInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
 
   const [products, setProducts] = useState([]);
-  const [category, setCategory] = useState("ALL");
-  const [manufacturer, setManufacturer] = useState("ALL");
-  const [sort, setSort] = useState("NAME_ASC");
-  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({
+    total_items: 0,
+    total_pages: 0,
+    page: 1,
+  });
+  const [options, setOptions] = useState({
+    categories: [],
+    manufacturers: [],
+  });
   const [loading, setLoading] = useState(true);
+  const [optionsLoading, setOptionsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [optionsError, setOptionsError] = useState("");
 
+  // Load filter options independently from paginated products.
   useEffect(() => {
     const controller = new AbortController();
 
-    getProducts({ signal: controller.signal })
+    getProductFilterOptions({ signal: controller.signal })
       .then((data) => {
         if (!controller.signal.aborted) {
-          setProducts(data);
-          setError("");
+          setOptions(data);
         }
       })
       .catch((err) => {
-        if (err.name !== "AbortError") {
+        if (!controller.signal.aborted) {
+          setOptionsError(err.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setOptionsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  // Reload the current page whenever search, filters or sorting change.
+  useEffect(() => {
+    const controller = new AbortController();
+    const filter = [];
+
+    if (category !== "ALL") {
+      filter.push({
+        key: "category_name",
+        operator: "=",
+        value: category,
+      });
+    }
+
+    if (manufacturer !== "ALL") {
+      filter.push({
+        key: "manufacturer",
+        operator: "=",
+        value: manufacturer,
+      });
+    }
+
+    const sortMap = {
+      NAME_ASC: "product_name",
+      NAME_DESC: "-product_name",
+      PART_NUMBER: "part_number",
+    };
+
+    setLoading(true);
+    setError("");
+
+    getProducts({
+      q: query,
+      filter,
+      sort: sortMap[sort] || "product_name",
+      page,
+      perPage: PAGE_SIZE,
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!controller.signal.aborted) {
+          setProducts(response.data);
+          setMeta(response.meta);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
           setError(err.message);
+          setProducts([]);
         }
       })
       .finally(() => {
@@ -42,82 +120,21 @@ export default function Marketplace() {
       });
 
     return () => controller.abort();
-  }, []);
+  }, [query, category, manufacturer, sort, page]);
 
-  // Build options from actual product data
-  const categories = [
-    ...new Set(products.map((p) => p.category_name).filter(Boolean)),
-  ].sort();
+  function updateParams(changes) {
+    const next = new URLSearchParams(searchParams);
 
-  const manufacturers = [
-    ...new Set(products.map((p) => p.manufacturer).filter(Boolean)),
-  ].sort();
+    Object.entries(changes).forEach(([key, value]) => {
+      if (!value || value === "ALL" || value === "NAME_ASC") {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+    });
 
-  // Filter products
-  const filteredProducts = products.filter((product) => {
-    const keyword = query.trim().toLowerCase();
-
-    const searchableText = [
-      product.product_name,
-      product.name,
-      product.part_number,
-      product.description,
-      product.manufacturer,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    const matchesSearch = searchableText.includes(keyword);
-
-    const matchesCategory =
-      category === "ALL" || product.category_name === category;
-
-    const matchesManufacturer =
-      manufacturer === "ALL" ||
-      product.manufacturer === manufacturer;
-
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesManufacturer
-    );
-  });
-
-  // Sort products
-  const sortedProducts = [...filteredProducts];
-
-  sortedProducts.sort((a, b) => {
-    const nameA = a.product_name || a.name || "";
-    const nameB = b.product_name || b.name || "";
-
-    if (sort === "NAME_DESC") {
-      return nameB.localeCompare(nameA);
-    }
-
-    if (sort === "PART_NUMBER") {
-      return (a.part_number || "").localeCompare(
-        b.part_number || ""
-      );
-    }
-
-    return nameA.localeCompare(nameB);
-  });
-
-  // Pagination
-  const totalPages = Math.max(
-    1,
-    Math.ceil(sortedProducts.length / PAGE_SIZE)
-  );
-
-  const currentPage = Math.min(page, totalPages);
-
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-
-  const visibleProducts = sortedProducts.slice(
-    startIndex,
-    startIndex + PAGE_SIZE
-  );
+    setSearchParams(next);
+  }
 
   function handleSearch(event) {
     event.preventDefault();
@@ -125,16 +142,15 @@ export default function Marketplace() {
     const formData = new FormData(event.currentTarget);
     const value = String(formData.get("search") || "").trim();
 
-    setSearchParams(value ? { q: value } : {});
-    setPage(1);
+    updateParams({ q: value, page: 1 });
+  }
+
+  function handleFilterChange(key, value) {
+    updateParams({ [key]: value, page: 1 });
   }
 
   function resetFilters() {
     setSearchParams({});
-    setCategory("ALL");
-    setManufacturer("ALL");
-    setSort("NAME_ASC");
-    setPage(1);
   }
 
   return (
@@ -181,15 +197,15 @@ export default function Marketplace() {
             </label>
             <select
               id="category"
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setPage(1);
-              }}
               className="input"
+              value={category}
+              disabled={optionsLoading || Boolean(optionsError)}
+              onChange={(e) =>
+                handleFilterChange("category", e.target.value)
+              }
             >
               <option value="ALL">All categories</option>
-              {categories.map((item) => (
+              {options.categories.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
@@ -203,15 +219,15 @@ export default function Marketplace() {
             </label>
             <select
               id="manufacturer"
-              value={manufacturer}
-              onChange={(e) => {
-                setManufacturer(e.target.value);
-                setPage(1);
-              }}
               className="input"
+              value={manufacturer}
+              disabled={optionsLoading || Boolean(optionsError)}
+              onChange={(e) =>
+                handleFilterChange("manufacturer", e.target.value)
+              }
             >
               <option value="ALL">All manufacturers</option>
-              {manufacturers.map((item) => (
+              {options.manufacturers.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
@@ -225,12 +241,11 @@ export default function Marketplace() {
             </label>
             <select
               id="sort"
-              value={sort}
-              onChange={(e) => {
-                setSort(e.target.value);
-                setPage(1);
-              }}
               className="input"
+              value={sort}
+              onChange={(e) =>
+                handleFilterChange("sort", e.target.value)
+              }
             >
               <option value="NAME_ASC">Name: A–Z</option>
               <option value="NAME_DESC">Name: Z–A</option>
@@ -239,10 +254,16 @@ export default function Marketplace() {
           </div>
         </div>
 
+        {optionsError && (
+          <p role="alert" className="mt-3 text-sm text-red-600">
+            Unable to load filter options: {optionsError}
+          </p>
+        )}
+
         <button
           type="button"
           onClick={resetFilters}
-          className="btn btn-ghost mt-4"
+          className="btn btn-secondary mt-4"
         >
           Clear Filters
         </button>
@@ -268,10 +289,10 @@ export default function Marketplace() {
       {!loading && !error && (
         <>
           <p role="status" className="mb-5 text-sm text-neutral-500">
-            {sortedProducts.length} products found
+            {meta.total_items} products found
           </p>
 
-          {visibleProducts.length === 0 ? (
+          {products.length === 0 ? (
             <EmptyState
               title="No matching products"
               description="Try another search term or clear your filters."
@@ -287,8 +308,8 @@ export default function Marketplace() {
             />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {visibleProducts.map((product) => (
-                <article
+              {products.map((product) => (
+              <article
                   key={product.product_id}
                   className="card flex flex-col p-5 sm:p-6"
                 >
@@ -327,7 +348,7 @@ export default function Marketplace() {
             </div>
           )}
 
-          {sortedProducts.length > PAGE_SIZE && (
+          {meta.total_pages > 1 && (
             <nav
               aria-label="Product pagination"
               className="mt-8 flex flex-wrap items-center justify-center gap-4"
@@ -335,21 +356,21 @@ export default function Marketplace() {
               <button
                 type="button"
                 className="btn btn-secondary"
-                disabled={currentPage === 1}
-                onClick={() => setPage(currentPage - 1)}
+                disabled={loading || page <= 1}
+                onClick={() => updateParams({ page: page - 1 })}
               >
                 Previous
               </button>
 
               <span className="text-sm text-neutral-500">
-                Page {currentPage} of {totalPages}
+                Page {meta.page} of {meta.total_pages}
               </span>
 
               <button
                 type="button"
                 className="btn btn-secondary"
-                disabled={currentPage === totalPages}
-                onClick={() => setPage(currentPage + 1)}
+                disabled={loading || page >= meta.total_pages}
+                onClick={() => updateParams({ page: page + 1 })}
               >
                 Next
               </button>
