@@ -1,5 +1,8 @@
 const express = require("express");
 const productController = require("../controllers/product.controller");
+const publicListingController = require(
+  "../controllers/public-listing.controller"
+);
 
 const router = express.Router();
 
@@ -31,6 +34,61 @@ const router = express.Router();
  * @apiError (500) {Object} error Internal server error.
  */
 router.get("/", productController.getProductsV1);
+
+/**
+ * @api {get} /api/v1/products/filter-options Get Product Filter Options
+ * @apiName GetProductFilterOptions
+ * @apiGroup Products
+ * @apiVersion 1.0.0
+ *
+ * @apiDescription Get available categories and manufacturers.
+ *
+ * @apiSuccess {Boolean} success Request status.
+ * @apiSuccess {Object} data Filter options.
+ * @apiSuccess {String[]} data.categories Categories.
+ * @apiSuccess {String[]} data.manufacturers Manufacturers.
+ *
+ * @apiError (500) {Object} error Server error.
+ */
+router.get(
+  "/filter-options",
+  productController.getProductFilterOptions
+);
+
+/**
+ * @api {get} /api/v1/products/:productId/listings Get Product Supplier Offers
+ * @apiName GetProductSupplierOffers
+ * @apiGroup Products
+ * @apiVersion 1.0.0
+ *
+ * @apiDescription Retrieve active supplier listings
+ * for one active product. Only approved suppliers
+ * and active listings are publicly visible.
+ *
+ * @apiParam {String} productId Positive product identifier.
+ *
+ * @apiSuccess {Boolean} success Request succeeded.
+ * @apiSuccess {Number} count Number of returned offers.
+ * @apiSuccess {Object[]} data Supplier offers.
+ * @apiSuccess {String} data.listing_id Listing identifier.
+ * @apiSuccess {String} data.product_id Product identifier.
+ * @apiSuccess {String} data.supplier_id Supplier identifier.
+ * @apiSuccess {String} data.store_name Supplier store name.
+ * @apiSuccess {String} data.seller_sku Supplier SKU.
+ * @apiSuccess {String} data.condition Part condition.
+ * @apiSuccess {String} data.price Decimal price in USD.
+ * @apiSuccess {Number} data.stock_quantity Available stock.
+ * @apiSuccess {Number} data.lead_time_days Lead time in days.
+ * @apiSuccess {String} data.status Listing status.
+ *
+ * @apiError (400) {Object} error Invalid product ID.
+ * @apiError (404) {Object} error Product not found.
+ * @apiError (500) {Object} error Server error.
+ */
+router.get(
+  "/:productId/listings",
+  publicListingController.getProductOffers
+);
 
 /**
  * @api {get} /api/v1/products/:productId Get Product By ID
