@@ -22,6 +22,30 @@ async function getAllProducts() {
   return result.rows;
 }
 
+async function getProductById(productId) {
+  const sql = `
+    SELECT
+      p.product_id,
+      p.product_name,
+      p.manufacturer,
+      p.part_number,
+      p.product_type,
+      p.description,
+      p.technical_specs,
+      p.is_active,
+      c.category_name
+    FROM products p
+    JOIN categories c
+      ON p.category_id = c.category_id
+    WHERE p.product_id = $1
+      AND p.is_active = TRUE
+  `;
+  const result = await pool.query(sql, [productId]);
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   getAllProducts,
+  getProductById,
 };

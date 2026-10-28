@@ -29,14 +29,22 @@ export async function getProducts({ signal } = {}) {
   return products;
 }
 
-// Temporary lookup until GET /products/:id is implemented.
-export async function getProductById(id, options) {
-  const products = await getProducts(options);
-
-  return (
-    products.find(
-      (product) =>
-        String(product.product_id ?? product.id) === String(id)
-    ) ?? null
+export async function getProductById(id, { signal } = {}) {
+  const response = await fetch(
+    `${API_BASE_URL}/v1/products/${encodeURIComponent(id)}`,
+    { signal }
   );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load product (${response.status})`
+    );
+  }
+
+  const json = await response.json();
+  return json.data;
 }
