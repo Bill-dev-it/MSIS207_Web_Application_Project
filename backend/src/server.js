@@ -38,6 +38,10 @@ app.get("/api/db-test", async (req, res) => {
   }
 });
 
+// Version 1 REST API
+app.use("/api/v1/products", productRoutes);
+
+// Temporary legacy route for frontend compatibility
 app.use("/api/products", productRoutes);
 
 app.listen(PORT, () => {

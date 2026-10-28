@@ -5,7 +5,14 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "doc": "apidoc -i src/routes/ -o docs/apidoc/"
+  },
+  "apidoc": {
+    "name": "AeroRUL REST API",
+    "version": "1.0.0",
+    "description": "RESTful API Documentation for the AeroRUL B2B Aviation Parts Marketplace",
+    "url": "http://localhost:3000"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +24,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "apidoc": "^1.2.0",
     "nodemon": "^3.1.14"
   }
 }
