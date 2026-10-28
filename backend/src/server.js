@@ -5,6 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const productRoutes = require("./routes/product.routes");
+const productV1Routes = require("./routes/product-v1.routes");
 
 app.use(express.json());
 
@@ -37,6 +38,8 @@ app.get("/api/db-test", async (req, res) => {
     });
   }
 });
+
+app.use("/api/v1/products", productV1Routes);
 
 app.use("/api/products", productRoutes);
 
