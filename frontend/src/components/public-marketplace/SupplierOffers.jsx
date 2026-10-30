@@ -8,32 +8,31 @@ export default function SupplierOffers({ productId }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     setLoading(true);
     setError("");
+    setOffers([]);
     setSelectedId(null);
 
-    getProductOffers(productId)
+    getProductOffers(productId, { signal: controller.signal })
       .then((data) => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setOffers(data);
         }
       })
-      .catch(() => {
-        if (!cancelled) {
-          setError("Unable to load supplier offers.");
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          setError(err.message);
         }
       })
       .finally(() => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, [productId]);
 
   function formatPrice(price) {
@@ -44,7 +43,7 @@ export default function SupplierOffers({ productId }) {
   }
 
   const selectedOffer = offers.find(
-    (offer) => offer.listing_id === selectedId
+    (offer) => String(offer.listing_id) === String(selectedId)
   );
 
   return (
@@ -68,31 +67,32 @@ export default function SupplierOffers({ productId }) {
         role="note"
         className="mt-4 rounded-lg bg-accent-50 p-3 text-xs text-primary-800"
       >
-        Demo mode: Prices, suppliers and stock below
-        are sample data, not live availability.
+        Supplier listings are loaded from the AeroRUL database.
+        Current catalog data is for educational demonstration.
+        Availability must be confirmed before checkout.
       </p>
 
       {loading && (
         <p role="status" className="mt-4 text-sm text-neutral-500">
-          Loading offers...
+          Loading supplier offers...
         </p>
       )}
 
       {!loading && error && (
         <p role="alert" className="mt-4 text-sm text-critical">
-          {error}
+          Unable to load supplier offers: {error}
         </p>
       )}
 
       {!loading && !error && offers.length === 0 && (
         <div className="mt-5 rounded-lg border border-neutral-200 p-4">
           <p className="font-medium text-primary-800">
-            No demo offers for this product
+            No supplier offers available
           </p>
 
           <p className="mt-2 text-sm text-neutral-500">
-            Supplier offers will be retrieved from
-            the listings API in a later stage.
+            There are currently no active listings from
+            approved suppliers for this product.
           </p>
         </div>
       )}
@@ -101,7 +101,8 @@ export default function SupplierOffers({ productId }) {
         <>
           <div className="mt-5 space-y-3">
             {offers.map((offer) => {
-              const isSelected = selectedId === offer.listing_id;
+              const isSelected =
+                String(selectedId) === String(offer.listing_id);
 
               return (
                 <label
@@ -124,7 +125,7 @@ export default function SupplierOffers({ productId }) {
                     />
 
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-primary-800">
+                      <p className="break-words font-semibold text-primary-800">
                         {offer.store_name}
                       </p>
 
@@ -147,6 +148,12 @@ export default function SupplierOffers({ productId }) {
                       <p className="text-sm text-neutral-500">
                         Lead time: {offer.lead_time_days} days
                       </p>
+
+                      {offer.stock_quantity === 0 && (
+                        <p className="mt-2 text-sm font-medium text-critical">
+                          Out of stock
+                        </p>
+                      )}
                     </div>
                   </div>
                 </label>
@@ -182,8 +189,8 @@ export default function SupplierOffers({ productId }) {
           </button>
 
           <p className="mt-3 text-xs text-neutral-500">
-            Cart actions require a real supplier listing,
-            buyer authentication and backend integration.
+            Cart and checkout require buyer authentication
+            and backend integration.
           </p>
         </>
       )}
