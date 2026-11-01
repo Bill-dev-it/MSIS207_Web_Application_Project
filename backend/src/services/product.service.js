@@ -168,8 +168,32 @@ async function getProductsCollection(options) {
   };
 }
 
+async function getProductFilterOptions() {
+  const categories = await pool.query(`
+    SELECT DISTINCT c.category_name
+    FROM products p
+    JOIN categories c ON p.category_id = c.category_id
+    WHERE p.is_active = TRUE
+    ORDER BY c.category_name
+  `);
+
+  const manufacturers = await pool.query(`
+    SELECT DISTINCT manufacturer
+    FROM products
+    WHERE is_active = TRUE
+      AND manufacturer IS NOT NULL
+    ORDER BY manufacturer
+  `);
+
+  return {
+    categories: categories.rows.map((row) => row.category_name),
+    manufacturers: manufacturers.rows.map((row) => row.manufacturer),
+  };
+}
+
 module.exports = {
   getAllProducts,
   getProductById,
   getProductsCollection,
+  getProductFilterOptions,
 };
