@@ -175,6 +175,27 @@ async function getProductsV1(req, res) {
   }
 }
 
+async function getProductFilterOptions(req, res) {
+  try {
+    const data = await productService.getProductFilterOptions();
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("Get filter options failed:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Unable to retrieve filter options.",
+      },
+    });
+  }
+}
+
 async function getProductById(req, res) {
   const { productId } = req.params;
   const validId = /^[1-9]\d*$/.test(productId);
@@ -222,5 +243,6 @@ async function getProductById(req, res) {
 module.exports = {
   getProducts,
   getProductsV1,
+  getProductFilterOptions,
   getProductById,
 };
