@@ -1,11 +1,38 @@
 import { SUPPLIER_DEMO_MODE } from "../features/supplier/api";
 import { demoListings } from "../mocks/supplierListings";
 import { fetchListings, fetchListing, createListing, updateListing, hideListing } from "../features/supplier/listings/listingApi";
-import { saveStock } from "../features/supplier/inventory/inventoryApi";
+import { fetchInventory, saveStock } from "../features/supplier/inventory/inventoryApi";
 
 
 export async function getSupplierListings() {
   return SUPPLIER_DEMO_MODE ? demoListings : fetchListings();
+}
+
+/**
+ * @returns {Promise<{
+ *   summary: { total_listings: number, in_stock: number, low_stock: number, out_of_stock: number },
+ *   items: Array<{
+ *     listing_id: string | number,
+ *     seller_sku: string,
+ *     product_id: string | number,
+ *     product_name: string,
+ *     stock_quantity: number,
+ *     status: string,
+ *     updated_at?: string
+ *   }>
+ * }>}
+ */
+export async function getSupplierInventory() {
+  if (!SUPPLIER_DEMO_MODE) return fetchInventory();
+
+  const items = demoListings;
+  const summary = { total_listings: items.length, in_stock: 0, low_stock: 0, out_of_stock: 0 };
+  for (const item of items) {
+    if (item.stock_quantity === 0) summary.out_of_stock++;
+    else if (item.stock_quantity <= 5) summary.low_stock++;
+    else summary.in_stock++;
+  }
+  return { summary, items };
 }
 
 export async function getSupplierListingById(listingId) {
