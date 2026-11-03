@@ -1,4 +1,5 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const pool = require("./config/db");
 
 const app = express();
@@ -6,8 +7,10 @@ const PORT = process.env.PORT || 3000;
 
 const productRoutes = require("./routes/product.routes");
 const productV1Routes = require("./routes/product-v1.routes");
+const authRoutes = require("./routes/auth");
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.json({
@@ -42,6 +45,7 @@ app.get("/api/db-test", async (req, res) => {
 app.use("/api/v1/products", productV1Routes);
 
 app.use("/api/products", productRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
