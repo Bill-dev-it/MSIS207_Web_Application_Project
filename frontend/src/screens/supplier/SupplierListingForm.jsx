@@ -4,6 +4,7 @@ import PageHeader from "../../components/common/PageHeader";
 import { getSupplierListingById, saveSupplierListing } from "../../services/supplierService";
 import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
 import { validateListing } from "../../features/supplier/listings/listingValidation";
+import ProductSelector from "../../features/supplier/listings/ProductSelector";
 
 const emptyForm = {
   product_id: "",
@@ -19,6 +20,7 @@ export default function SupplierListingForm() {
   const { listingId } = useParams();
   const isEdit = Boolean(listingId);
   const [form, setForm] = useState(emptyForm);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(isEdit);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -43,8 +45,13 @@ export default function SupplierListingForm() {
           lead_time_days: String(listing.lead_time_days),
           status: listing.status,
         });
+        setSelectedProduct({
+          product_id: String(listing.product_id),
+          product_name: listing.product_name,
+          part_number: listing.part_number,
+        });
       })
-      .catch(() => setError("Unable to load listing."))
+      .catch((err) => setError(err.message || "Unable to load listing."))
       .finally(() => setLoading(false));
   }, [listingId, isEdit]);
 
@@ -52,6 +59,13 @@ export default function SupplierListingForm() {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
     setMessage("");
+  }
+
+  function handleProductSelect(product) {
+    setSelectedProduct(product);
+    setForm((previous) => ({ ...previous, product_id: String(product.product_id) }));
+    setMessage("");
+    setError("");
   }
 
   async function handleSubmit(event) {
@@ -108,11 +122,9 @@ export default function SupplierListingForm() {
       {!loading && (!isEdit || form.product_id) && (
         <form onSubmit={handleSubmit} className="card p-5 sm:p-8">
           <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label className="label" htmlFor="product_id">Product ID *</label>
-              <input id="product_id" name="product_id" type="number" min="1" step="1" className="input"
-                value={form.product_id} onChange={handleChange} required />
-              <p className="mt-1 text-xs text-neutral-500">Must reference an existing catalog product.</p>
+            <div className="sm:col-span-2">
+              <ProductSelector selectedProduct={selectedProduct} onSelect={handleProductSelect} />
+              <input type="hidden" name="product_id" value={form.product_id} />
             </div>
             <div>
               <label className="label" htmlFor="seller_sku">Seller SKU *</label>
