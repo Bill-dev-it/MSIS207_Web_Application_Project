@@ -2,6 +2,8 @@
 import { Link } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
+import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
+import OverviewCards from "../../features/supplier/overview/OverviewCards";
 
 const workflows = [
   {
@@ -38,7 +40,9 @@ export default function SupplierHome() {
         }
       />
 
-      <section
+      {!SUPPLIER_DEMO_MODE && <OverviewCards />}
+
+      {SUPPLIER_DEMO_MODE && <section
         aria-label="Integration status"
         className="mb-8 rounded-xl border border-accent/30 bg-accent-50 p-4"
       >
@@ -47,7 +51,7 @@ export default function SupplierHome() {
           development. Live supplier data will be available
           after backend integration.
         </p>
-      </section>
+      </section>}
 
       <section aria-labelledby="workflow-heading">
         <h2
@@ -72,7 +76,7 @@ export default function SupplierHome() {
               </p>
 
               <span className="mt-6 w-fit rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-                {workflow.status}
+                {SUPPLIER_DEMO_MODE ? workflow.status : "Available"}
               </span>
             </article>
           ))}
@@ -80,10 +84,10 @@ export default function SupplierHome() {
       </section>
 
       <div className="mt-8">
-        <EmptyState
+        {SUPPLIER_DEMO_MODE && <EmptyState
           title="No supplier data connected"
           description="Your listings, inventory, and orders will appear after authenticated supplier APIs are integrated."
-        />
+        />}
       </div>
     </div>
   );

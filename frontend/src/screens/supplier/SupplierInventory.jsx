@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import { getSupplierListings } from "../../services/supplierService";
+import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
+import StockEditor from "../../features/supplier/inventory/StockEditor";
 
 export default function SupplierInventory() {
   const [listings, setListings] = useState([]);
@@ -68,13 +70,13 @@ export default function SupplierInventory() {
         description="Monitor stock availability across your listings."
       />
 
-      <p
+      {SUPPLIER_DEMO_MODE && <p
         role="note"
         className="mb-6 rounded-lg bg-accent-50 p-3 text-sm text-primary-800"
       >
         Demo mode: Inventory data is not yet connected
         to the backend. Stock updates are not enabled.
-      </p>
+      </p>}
 
       {loading && (
         <p role="status" className="text-neutral-500">
@@ -194,6 +196,12 @@ export default function SupplierInventory() {
                         </span>
                       </div>
 
+                      {!SUPPLIER_DEMO_MODE && (
+                        <StockEditor listingId={item.listing_id} quantity={item.stock_quantity}
+                          onSaved={(quantity) => setListings((items) => items.map((row) =>
+                            row.listing_id === item.listing_id ? { ...row, stock_quantity: quantity } : row
+                          ))} />
+                      )}
                       <p className="mt-4 text-xs text-neutral-500">
                         Listing status: {item.status}
                       </p>

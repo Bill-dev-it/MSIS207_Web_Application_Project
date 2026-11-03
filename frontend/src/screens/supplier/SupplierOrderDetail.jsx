@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import { getSupplierOrderById } from "../../services/supplierOrderService";
+import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
+import OrderStatusButton from "../../features/supplier/orders/OrderStatusButton";
 
 export default function SupplierOrderDetail() {
   const { sellerOrderId } = useParams();
@@ -61,9 +63,9 @@ export default function SupplierOrderDetail() {
 
       {!loading && order && (
         <>
-          <p role="note" className="mb-6 rounded-lg bg-accent-50 p-4 text-sm">
+          {SUPPLIER_DEMO_MODE && <p role="note" className="mb-6 rounded-lg bg-accent-50 p-4 text-sm">
             Demo order. Fulfillment status cannot be changed yet.
-          </p>
+          </p>}
 
           <section className="card p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -117,6 +119,8 @@ export default function SupplierOrderDetail() {
                 </article>
               ))}
             </div>
+
+            {!SUPPLIER_DEMO_MODE && <OrderStatusButton order={order} onUpdated={setOrder} />}
 
             <div className="mt-6 space-y-3 border-t border-neutral-200 pt-5">
               <div className="flex justify-between gap-3 text-sm">
