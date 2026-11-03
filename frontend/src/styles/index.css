@@ -1,53 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  height: 100%;
+/* =================================
+   AERORUL GLOBAL DESIGN SYSTEM
+================================= */
+
+:root {
+  font-family: "Inter", sans-serif;
+
+  color: #1E293B;
+  background: #F8FAFC;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  @apply text-primary-800 antialiased;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  @apply bg-neutral-50 text-primary-800 antialiased;
 }
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* =================================
+   LAYOUT
+================================= */
 
 .container-page {
   @apply mx-auto w-full max-w-[1280px] px-4 md:px-6;
 }
 
+/* =================================
+   CARD
+================================= */
+
 .card {
-  @apply rounded-[12px] border border-neutral-200 bg-white;
-}
-.btn {
-  @apply inline-flex items-center justify-center gap-2
-    rounded-[10px] px-4 py-2 text-sm font-medium
-    transition-colors
-    disabled:pointer-events-none disabled:opacity-50;
+  @apply rounded-card border border-neutral-200 bg-white shadow-card;
 }
 
-.btn-primary {
-  @apply bg-primary-700 text-white hover:bg-primary-600;
+/* =================================
+   BUTTON
+================================= */
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-700 text-white hover:bg-primary-600;
+  }
+
+  .btn-secondary {
+    @apply btn border border-neutral-200 bg-white text-primary-800 hover:bg-neutral-50;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-white hover:bg-sky-600;
+  }
+
+  .btn-ghost {
+    @apply btn text-primary-700 hover:bg-primary-50;
+  }
+
+  /* =================================
+     FORM
+  ================================= */
+
+  .input {
+    @apply w-full rounded-control border border-neutral-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
+
+  .label {
+    @apply mb-1 block text-sm font-medium text-primary-800;
+  }
 }
 
-.btn-secondary {
-  @apply border border-neutral-200 bg-white
-    text-primary-800 hover:bg-neutral-50;
-}
-
-.btn-accent {
-  @apply bg-accent text-white hover:bg-[#2589c2];
-}
-
-.btn-ghost {
-  @apply text-primary-700 hover:bg-neutral-50;
-}
-.input {
-  @apply w-full rounded-[10px] border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
-}
-
-.label {
-  @apply mb-1 block text-sm font-medium text-primary-800;
-}
+/* =================================
+   TECHNICAL TYPOGRAPHY
+================================= */
 
 .mono {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* =================================
+   SCROLLBAR
+================================= */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* =================================
+   ACCESSIBILITY
+================================= */
+
+:focus-visible {
+  outline: 2px solid #00A3E0;
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #BFDBFE;
+  color: #1E3A8A;
 }

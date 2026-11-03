@@ -1,68 +1,55 @@
-import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
-import { checkSupplierApproval } from "../../services/authApi";
+import AccountActions from "./AccountActions";
+
+const buyerLinks = [
+  { to: "/buyer", label: "Buyer Home", end: true },
+  { to: "/buyer/engines", label: "My Engines" },
+  { to: "/buyer/orders", label: "Orders" },
+  { to: "/buyer/recommendations", label: "Recommendations" },
+];
+
+const supplierLinks = [
+  { to: "/supplier", label: "Supplier Home", end: true },
+  { to: "/supplier/listings", label: "Listings" },
+  { to: "/supplier/inventory", label: "Inventory" },
+  { to: "/supplier/orders", label: "Orders" },
+];
+
+const adminLinks = [
+  { to: "/admin", label: "Admin Home", end: true },
+  { to: "/admin/dashboard", label: "Dashboard" },
+  { to: "/admin/moderation", label: "Moderation" },
+  { to: "/admin/rul-status", label: "RUL Status" },
+  { to: "/admin/recommendations", label: "Recommendations" },
+];
 
 export default function RoleNavigation() {
-  const { status, user } = useAuth();
-  const [supplierAccess, setSupplierAccess] = useState({
-    userId: null,
-    status: "idle",
-    message: "",
-  });
+  const { user } = useAuth();
+  const role = user?.role;
 
-  useEffect(() => {
-    if (status !== "authenticated" || user?.role !== "SUPPLIER") {
-      setSupplierAccess({ userId: null, status: "idle", message: "" });
-      return undefined;
-    }
-
-    const controller = new AbortController();
-    const userId = String(user.user_id);
-    setSupplierAccess({ userId, status: "checking", message: "" });
-    checkSupplierApproval({ signal: controller.signal })
-      .then(() => setSupplierAccess({ userId, status: "approved", message: "" }))
-      .catch((error) => {
-        if (controller.signal.aborted) return;
-        setSupplierAccess({
-          userId,
-          status: "error",
-          message: error.message || "Supplier access could not be verified.",
-        });
-      });
-    return () => controller.abort();
-  }, [status, user?.role, user?.user_id]);
-
-  const routes = [{ to: "/", label: "Public", end: true }];
-  if (status === "authenticated" && user?.role === "BUYER") {
-    routes.push({ to: "/buyer", label: "Buyer" });
-  }
-  const currentSupplierAccess =
-    supplierAccess.userId === String(user?.user_id) ? supplierAccess : null;
-  if (
-    status === "authenticated" &&
-    user?.role === "SUPPLIER" &&
-    currentSupplierAccess?.status === "approved"
-  ) {
-    routes.push({ to: "/supplier", label: "Supplier" });
-  }
-  if (status === "authenticated" && user?.role === "ADMIN") {
-    routes.push({ to: "/admin", label: "Admin" });
+  let links = [];
+  if (role === "BUYER") {
+    links = buyerLinks;
+  } else if (role === "SUPPLIER") {
+    links = supplierLinks;
+  } else if (role === "ADMIN") {
+    links = adminLinks;
   }
 
   return (
-    <>
-      <nav aria-label="Main navigation" className="flex flex-wrap gap-2">
-        {routes.map(({ to, label, end }) => (
+    <div className="flex flex-wrap items-center gap-4">
+      <nav aria-label="Portal Navigation" className="flex flex-wrap gap-2">
+        {links.map(({ to, label, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             className={({ isActive }) =>
-              `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              `rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 isActive
-                  ? "bg-primary-700 text-white"
-                  : "text-primary-700 hover:bg-primary-50"
+                  ? "bg-[#0B192C] text-white"
+                  : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
               }`
             }
           >
@@ -70,11 +57,7 @@ export default function RoleNavigation() {
           </NavLink>
         ))}
       </nav>
-      {currentSupplierAccess?.status === "error" && (
-        <span className="text-sm text-red-700" role="alert">
-          {currentSupplierAccess.message}
-        </span>
-      )}
-    </>
+      <AccountActions />
+    </div>
   );
 }

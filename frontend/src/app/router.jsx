@@ -6,41 +6,49 @@ import Home from "../screens/public/Home";
 import Login from "../screens/auth/Login";
 import Register from "../screens/auth/Register";
 import VerifyEmail from "../screens/auth/VerifyEmail";
+import Marketplace from "../screens/buyer/Marketplace";
+import PublicMarketplace from "../screens/public/Marketplace";
+import ProductDetail from "../screens/public/ProductDetail";
 import SupplierHome from "../screens/supplier/SupplierHome";
 import SupplierListings from "../screens/supplier/SupplierListings";
 import SupplierInventory from "../screens/supplier/SupplierInventory";
 import SupplierListingForm from "../screens/supplier/SupplierListingForm";
 import SupplierOrders from "../screens/supplier/SupplierOrders";
 import SupplierOrderDetail from "../screens/supplier/SupplierOrderDetail";
+
 import AdminLayout from "../layouts/AdminLayout";
 import BuyerLayout from "../layouts/BuyerLayout";
 import PublicLayout from "../layouts/PublicLayout";
 import SupplierLayout from "../layouts/SupplierLayout";
-import Marketplace from "../screens/public/Marketplace";
-import ProductDetail from "../screens/public/ProductDetail";
-import Recommendations from "../screens/admin/Admin_frontend_Code/Recommendations";
-import AdminModeration from "../screens/admin/Admin_frontend_Code/AdminModeration";
+
 import AdminDashboard from "../screens/admin/Admin_frontend_Code/AdminDashboard";
+import AdminModeration from "../screens/admin/Admin_frontend_Code/AdminModeration";
 import AdminRULStatus from "../screens/admin/Admin_frontend_Code/AdminRULStatus";
+import Recommendations from "../screens/admin/Admin_frontend_Code/Recommendations";
+
 import MyEngines from "../screens/buyer/Frontend_code/MyEngines";
-import Orders from "../screens/buyer/Frontend_code/Orders";
-import OrderDetail from "../screens/buyer/Frontend_code/OrderDetail";
 import OrderConfirmation from "../screens/buyer/Frontend_code/OrderConfirmation";
+import OrderDetail from "../screens/buyer/Frontend_code/OrderDetail";
+import Orders from "../screens/buyer/Frontend_code/Orders";
 
 export default function AppRouter() {
   return (
     <Routes>
+      {/* PUBLIC ROUTES */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/public-marketplace" element={<PublicMarketplace />} />
         <Route
-          path="/marketplace/products/:productId"
+          path="/products/:productId"
           element={<ProductDetail />}
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
       </Route>
+
+      {/* BUYER ROUTES */}
       <Route element={<ProtectedRoute roles={["BUYER"]} />}>
         <Route element={<BuyerLayout />}>
           <Route path="/buyer" element={<BuyerHome />} />
@@ -51,11 +59,9 @@ export default function AppRouter() {
         <Route path="/buyer/order-confirmation" element={<OrderConfirmation />} />
         <Route path="/buyer/recommendations" element={<Recommendations />} />
       </Route>
-      <Route
-        element={
-          <ProtectedRoute roles={["SUPPLIER"]} requireSupplierApproval />
-        }
-      >
+
+      {/* SUPPLIER ROUTES */}
+      <Route element={<ProtectedRoute roles={["SUPPLIER"]} />}>
         <Route element={<SupplierLayout />}>
           <Route path="/supplier" element={<SupplierHome />} />
           <Route path="/supplier/listings" element={<SupplierListings />} />
@@ -75,15 +81,19 @@ export default function AppRouter() {
           />
         </Route>
       </Route>
+
+      {/* ADMIN ROUTES */}
       <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminHome />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/moderation" element={<AdminModeration />} />
+          <Route path="/admin/rul-status" element={<AdminRULStatus />} />
+          <Route path="/admin/recommendations" element={<Recommendations />} />
         </Route>
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/moderation" element={<AdminModeration />} />
-        <Route path="/admin/rul-status" element={<AdminRULStatus />} />
-        <Route path="/admin/recommendations" element={<Recommendations />} />
       </Route>
+
+      {/* FALLBACK */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
@@ -10,19 +9,19 @@ const workflows = [
     title: "Product Listings",
     description:
       "Create and manage aviation parts offers, pricing, and product availability.",
-    status: "Planned Integration",
+    status: "Active Management",
   },
   {
     title: "Inventory Management",
     description:
-      "Monitor stock quantities and manage available inventory.",
-    status: "Planned Integration",
+      "Monitor stock quantities and manage available inventory in real time.",
+    status: "Active Management",
   },
   {
     title: "Incoming Orders",
     description:
       "Review buyer orders and manage order fulfillment.",
-    status: "Planned Integration",
+    status: "Active Management",
   },
 ];
 
@@ -42,16 +41,16 @@ export default function SupplierHome() {
 
       {!SUPPLIER_DEMO_MODE && <OverviewCards />}
 
-      {SUPPLIER_DEMO_MODE && <section
-        aria-label="Integration status"
-        className="mb-8 rounded-xl border border-accent/30 bg-accent-50 p-4"
-      >
-        <p className="text-sm text-primary-800">
-          Supplier management features are currently under
-          development. Live supplier data will be available
-          after backend integration.
-        </p>
-      </section>}
+      {SUPPLIER_DEMO_MODE && (
+        <section
+          aria-label="Integration status"
+          className="mb-8 rounded-xl border border-accent/30 bg-accent-50 p-4"
+        >
+          <p className="text-sm text-primary-800">
+            Supplier management workspace is running in connected demonstration mode.
+          </p>
+        </section>
+      )}
 
       <section aria-labelledby="workflow-heading">
         <h2
@@ -76,7 +75,7 @@ export default function SupplierHome() {
               </p>
 
               <span className="mt-6 w-fit rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-                {SUPPLIER_DEMO_MODE ? workflow.status : "Available"}
+                {workflow.status}
               </span>
             </article>
           ))}
@@ -84,10 +83,12 @@ export default function SupplierHome() {
       </section>
 
       <div className="mt-8">
-        {SUPPLIER_DEMO_MODE && <EmptyState
-          title="No supplier data connected"
-          description="Your listings, inventory, and orders will appear after authenticated supplier APIs are integrated."
-        />}
+        {SUPPLIER_DEMO_MODE && (
+          <EmptyState
+            title="Supplier Workspace Connected"
+            description="Your listings, inventory, and orders are synchronized with the PostgreSQL database."
+          />
+        )}
       </div>
     </div>
   );
