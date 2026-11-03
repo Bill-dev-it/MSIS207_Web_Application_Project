@@ -6,21 +6,27 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "doc": "apidoc -i src/routes/ -o docs/apidoc/"
+    "doc": "apidoc -i src/ -o docs/apidoc/"
   },
   "apidoc": {
     "name": "AeroRUL REST API",
     "version": "1.0.0",
-    "description": "RESTful API Documentation for the AeroRUL B2B Aviation Parts Marketplace",
-    "url": "http://localhost:3000"
+    "description": "AeroRUL Public, Supplier and System APIs. Supplier endpoints are intentionally unavailable (401) before Login integration.",
+    "url": "http://localhost:3000",
+    "sampleUrl": "http://localhost:3000"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "argon2": "^0.45.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.2",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^10.3.1",
     "pg": "^8.23.1"
   },
   "devDependencies": {

@@ -1,11 +1,12 @@
 
 import { NavLink, Outlet } from "react-router-dom";
+import AccountActions from "../components/common/AccountActions";
 
 export default function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
-        <div className="container-page flex min-h-16 items-center justify-between gap-4 py-3">
+        <div className="container-page flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
           <NavLink
             to="/"
             className="text-xl font-bold tracking-tight text-primary-700"
@@ -14,7 +15,7 @@ export default function PublicLayout() {
             Aero<span className="text-accent">RUL</span>
           </NavLink>
 
-          <nav aria-label="Public navigation">
+          <nav aria-label="Public navigation" className="flex flex-wrap items-center">
             <NavLink
               to="/"
               end
@@ -41,6 +42,7 @@ export default function PublicLayout() {
               Marketplace
             </NavLink>
           </nav>
+          <AccountActions />
         </div>
       </header>
 

@@ -3,16 +3,14 @@ const productService = require("../services/product.service");
 async function getProducts(req, res) {
   try {
     const products = await productService.getAllProducts();
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: products.length,
       data: products,
     });
   } catch (error) {
     console.error("Get products failed:", error);
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to retrieve products",
     });
@@ -28,11 +26,7 @@ async function getProductsV1(req, res) {
     per_page = "12",
   } = req.query;
 
-  if (
-    [q, sort, filter, page, per_page].some(
-      (value) => typeof value !== "string"
-    )
-  ) {
+  if ([q, sort, filter, page, per_page].some((value) => typeof value !== "string")) {
     return res.status(400).json({
       success: false,
       error: {
@@ -44,15 +38,14 @@ async function getProductsV1(req, res) {
 
   const pageNumber = Number(page);
   const perPageNumber = Number(per_page);
+  const validPagination = /^[1-9]\d*$/.test(page) &&
+    /^[1-9]\d*$/.test(per_page) &&
+    Number.isSafeInteger(pageNumber) &&
+    Number.isSafeInteger(perPageNumber) &&
+    perPageNumber <= 100 &&
+    (pageNumber - 1) * perPageNumber <= Number.MAX_SAFE_INTEGER;
 
-  if (
-    !/^[1-9]\d*$/.test(page) ||
-    !/^[1-9]\d*$/.test(per_page) ||
-    !Number.isSafeInteger(pageNumber) ||
-    !Number.isSafeInteger(perPageNumber) ||
-    perPageNumber > 100 ||
-    (pageNumber - 1) * perPageNumber > Number.MAX_SAFE_INTEGER
-  ) {
+  if (!validPagination) {
     return res.status(400).json({
       success: false,
       error: {
@@ -72,22 +65,11 @@ async function getProductsV1(req, res) {
     });
   }
 
-  const allowedSorts = [
-    "product_name",
-    "part_number",
-    "manufacturer",
-    "category_name",
-  ];
-
+  const allowedSorts = ["product_name", "part_number", "manufacturer", "category_name"];
   const sortFields = sort.split(",");
-
-  if (
-    sortFields.length > 4 ||
-    sortFields.some((field) => {
-      const name = field.replace(/^[-+]/, "");
-      return !allowedSorts.includes(name);
-    })
-  ) {
+  if (sortFields.length > 4 || sortFields.some((field) =>
+    !allowedSorts.includes(field.replace(/^[-+]/, ""))
+  )) {
     return res.status(400).json({
       success: false,
       error: {
@@ -98,7 +80,6 @@ async function getProductsV1(req, res) {
   }
 
   let filters;
-
   try {
     filters = JSON.parse(filter);
   } catch {
@@ -111,28 +92,17 @@ async function getProductsV1(req, res) {
     });
   }
 
-  const allowedFilterKeys = [
-    "category_name",
-    "manufacturer",
-    "product_type",
-  ];
-
+  const allowedFilterKeys = ["category_name", "manufacturer", "product_type"];
   const allowedOperators = ["=", "LIKE"];
-
-  if (
-    !Array.isArray(filters) ||
-    filters.length > 10 ||
-    filters.some(
-      (item) =>
-        !item ||
-        typeof item !== "object" ||
-        Array.isArray(item) ||
-        !allowedFilterKeys.includes(item.key) ||
-        !allowedOperators.includes(item.operator) ||
-        typeof item.value !== "string" ||
-        item.value.length > 200
-    )
-  ) {
+  if (!Array.isArray(filters) || filters.length > 10 || filters.some((item) =>
+    !item ||
+    typeof item !== "object" ||
+    Array.isArray(item) ||
+    !allowedFilterKeys.includes(item.key) ||
+    !allowedOperators.includes(item.operator) ||
+    typeof item.value !== "string" ||
+    item.value.length > 200
+  )) {
     return res.status(400).json({
       success: false,
       error: {
@@ -143,7 +113,7 @@ async function getProductsV1(req, res) {
   }
 
   try {
-    const result = await productService.getProductsCollection({
+    const { products, totalItems } = await productService.getProductsCollection({
       q: q.trim(),
       sort,
       filter: filters,
@@ -153,18 +123,17 @@ async function getProductsV1(req, res) {
 
     return res.status(200).json({
       success: true,
-      count: result.products.length,
+      count: products.length,
       meta: {
         page: pageNumber,
         per_page: perPageNumber,
-        total_items: result.totalItems,
-        total_pages: Math.ceil(result.totalItems / perPageNumber),
+        total_items: totalItems,
+        total_pages: Math.ceil(totalItems / perPageNumber),
       },
-      data: result.products,
+      data: products,
     });
   } catch (error) {
     console.error("Get products collection failed:", error);
-
     return res.status(500).json({
       success: false,
       error: {
@@ -178,14 +147,9 @@ async function getProductsV1(req, res) {
 async function getProductFilterOptions(req, res) {
   try {
     const data = await productService.getProductFilterOptions();
-
-    return res.status(200).json({
-      success: true,
-      data,
-    });
+    return res.status(200).json({ success: true, data });
   } catch (error) {
     console.error("Get filter options failed:", error);
-
     return res.status(500).json({
       success: false,
       error: {
@@ -198,9 +162,7 @@ async function getProductFilterOptions(req, res) {
 
 async function getProductById(req, res) {
   const { productId } = req.params;
-  const validId = /^[1-9]\d*$/.test(productId);
-
-  if (!validId || BigInt(productId) > 9223372036854775807n) {
+  if (!/^[1-9]\d*$/.test(productId) || BigInt(productId) > 9223372036854775807n) {
     return res.status(400).json({
       success: false,
       error: {
@@ -212,7 +174,6 @@ async function getProductById(req, res) {
 
   try {
     const product = await productService.getProductById(productId);
-
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -222,14 +183,9 @@ async function getProductById(req, res) {
         },
       });
     }
-
-    return res.status(200).json({
-      success: true,
-      data: product,
-    });
+    return res.status(200).json({ success: true, data: product });
   } catch (error) {
     console.error("Get product by ID failed:", error);
-
     return res.status(500).json({
       success: false,
       error: {

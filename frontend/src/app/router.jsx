@@ -1,7 +1,11 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "../auth/ProtectedRoute";
 import AdminHome from "../screens/admin/AdminHome";
 import BuyerHome from "../screens/buyer/BuyerHome";
 import Home from "../screens/public/Home";
+import Login from "../screens/auth/Login";
+import Register from "../screens/auth/Register";
+import VerifyEmail from "../screens/auth/VerifyEmail";
 import SupplierHome from "../screens/supplier/SupplierHome";
 import SupplierListings from "../screens/supplier/SupplierListings";
 import SupplierInventory from "../screens/supplier/SupplierInventory";
@@ -33,40 +37,53 @@ export default function AppRouter() {
           path="/marketplace/products/:productId"
           element={<ProductDetail />}
         />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
       </Route>
-      <Route element={<BuyerLayout />}>
-        <Route path="/buyer" element={<BuyerHome />} />
+      <Route element={<ProtectedRoute roles={["BUYER"]} />}>
+        <Route element={<BuyerLayout />}>
+          <Route path="/buyer" element={<BuyerHome />} />
+        </Route>
+        <Route path="/buyer/engines" element={<MyEngines />} />
+        <Route path="/buyer/orders" element={<Orders />} />
+        <Route path="/buyer/orders/:orderId" element={<OrderDetail />} />
+        <Route path="/buyer/order-confirmation" element={<OrderConfirmation />} />
+        <Route path="/buyer/recommendations" element={<Recommendations />} />
       </Route>
-      <Route path="/buyer/engines" element={<MyEngines />} />
-      <Route path="/buyer/orders" element={<Orders />} />
-      <Route path="/buyer/orders/:orderId" element={<OrderDetail />} />
-      <Route path="/buyer/order-confirmation" element={<OrderConfirmation />} />
-      <Route element={<SupplierLayout />}>
-        <Route path="/supplier" element={<SupplierHome />} />
-        <Route path="/supplier/listings" element={<SupplierListings />} />
-        <Route path="/supplier/inventory" element={<SupplierInventory />} />
-        <Route
-          path="/supplier/listings/new"
-          element={<SupplierListingForm />}
-        />
-        <Route
-          path="/supplier/listings/:listingId/edit"
-          element={<SupplierListingForm />}
-        />
-        <Route path="/supplier/orders" element={<SupplierOrders />} />
-        <Route
-          path="/supplier/orders/:sellerOrderId"
-          element={<SupplierOrderDetail />}
-        />
+      <Route
+        element={
+          <ProtectedRoute roles={["SUPPLIER"]} requireSupplierApproval />
+        }
+      >
+        <Route element={<SupplierLayout />}>
+          <Route path="/supplier" element={<SupplierHome />} />
+          <Route path="/supplier/listings" element={<SupplierListings />} />
+          <Route path="/supplier/inventory" element={<SupplierInventory />} />
+          <Route
+            path="/supplier/listings/new"
+            element={<SupplierListingForm />}
+          />
+          <Route
+            path="/supplier/listings/:listingId/edit"
+            element={<SupplierListingForm />}
+          />
+          <Route path="/supplier/orders" element={<SupplierOrders />} />
+          <Route
+            path="/supplier/orders/:sellerOrderId"
+            element={<SupplierOrderDetail />}
+          />
+        </Route>
       </Route>
-      <Route element={<AdminLayout />}>
-        <Route path="/admin" element={<AdminHome />} />
+      <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminHome />} />
+        </Route>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/moderation" element={<AdminModeration />} />
+        <Route path="/admin/rul-status" element={<AdminRULStatus />} />
+        <Route path="/admin/recommendations" element={<Recommendations />} />
       </Route>
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/moderation" element={<AdminModeration />} />
-      <Route path="/admin/rul-status" element={<AdminRULStatus />} />
-      <Route path="/admin/recommendations" element={<Recommendations />} />
-      <Route path="/buyer/recommendations" element={<Recommendations />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

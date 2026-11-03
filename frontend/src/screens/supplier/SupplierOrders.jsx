@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import { getSupplierOrders } from "../../services/supplierOrderService";
+import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
 
 const statuses = [
   "ALL",
@@ -57,10 +58,10 @@ export default function SupplierOrders() {
         description="View buyer orders assigned to your supplier account."
       />
 
-      <p role="note" className="mb-6 rounded-lg bg-accent-50 p-4 text-sm text-primary-800">
+      {SUPPLIER_DEMO_MODE && <p role="note" className="mb-6 rounded-lg bg-accent-50 p-4 text-sm text-primary-800">
         Demo mode: These orders are sample data.
         No real orders or fulfillment actions are connected.
-      </p>
+      </p>}
 
       <section className="card p-4 sm:p-6" aria-labelledby="orders-heading">
         <h2 id="orders-heading" className="text-xl font-semibold text-primary-800">
