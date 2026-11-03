@@ -1,4 +1,3 @@
-
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "/api"
 ).replace(/\/$/, "");
@@ -17,16 +16,11 @@ export async function getProducts({
     sort,
   });
 
-  if (q.trim()) {
-    params.set("q", q.trim());
-  }
-
-  if (filter.length > 0) {
-    params.set("filter", JSON.stringify(filter));
-  }
+  if (q.trim()) params.set("q", q.trim());
+  if (filter.length) params.set("filter", JSON.stringify(filter));
 
   const response = await fetch(
-    `${API_BASE_URL}/v1/products?${params.toString()}`,
+    `${API_BASE_URL}/v1/products?${params}`,
     { signal }
   );
 
@@ -35,13 +29,8 @@ export async function getProducts({
   }
 
   const json = await response.json();
-
-  if (
-    !json.success ||
-    !Array.isArray(json.data) ||
-    !json.meta ||
-    typeof json.meta !== "object"
-  ) {
+  if (!json.success || !Array.isArray(json.data) || !json.meta ||
+      typeof json.meta !== "object") {
     throw new Error("Unexpected Products API response");
   }
 
@@ -55,18 +44,12 @@ export async function getProductFilterOptions({ signal } = {}) {
   );
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to load filter options (${response.status})`
-    );
+    throw new Error(`Failed to load filter options (${response.status})`);
   }
 
   const json = await response.json();
-
-  if (
-    !json.success ||
-    !Array.isArray(json.data?.categories) ||
-    !Array.isArray(json.data?.manufacturers)
-  ) {
+  if (!json.success || !Array.isArray(json.data?.categories) ||
+      !Array.isArray(json.data?.manufacturers)) {
     throw new Error("Unexpected Filter Options API response");
   }
 
@@ -79,14 +62,9 @@ export async function getProductById(id, { signal } = {}) {
     { signal }
   );
 
-  if (response.status === 404) {
-    return null;
-  }
-
+  if (response.status === 404) return null;
   if (!response.ok) {
-    throw new Error(
-      `Failed to load product (${response.status})`
-    );
+    throw new Error(`Failed to load product (${response.status})`);
   }
 
   const json = await response.json();
