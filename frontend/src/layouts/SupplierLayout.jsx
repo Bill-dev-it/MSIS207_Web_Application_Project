@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import AccountActions from "../components/common/AccountActions";
 
 const workspaceLinks = [
   { to: "/supplier", label: "Overview", end: true },
@@ -21,6 +22,7 @@ export default function SupplierLayout() {
           <span className="rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary-700">
             Supplier workspace
           </span>
+          <AccountActions />
         </div>
       </header>
       <div className="container-page grid gap-6 py-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8 lg:py-10">

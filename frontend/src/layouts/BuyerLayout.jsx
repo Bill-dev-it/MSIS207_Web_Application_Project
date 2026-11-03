@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import RoleNavigation from "../components/common/RoleNavigation";
+import AccountActions from "../components/common/AccountActions";
 
 export default function BuyerLayout() {
   return (
@@ -8,6 +9,7 @@ export default function BuyerLayout() {
         <div className="container-page flex flex-wrap items-center justify-between gap-4 py-4">
           <span className="text-lg font-bold text-primary-800">Buyer Portal</span>
           <RoleNavigation />
+          <AccountActions />
         </div>
       </header>
       <Outlet />
