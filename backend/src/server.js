@@ -10,13 +10,6 @@ const productV1Routes = require("./routes/product-v1.routes");
 const supplierRoutes = require("./routes/supplier");
 const authRoutes = require("./routes/auth");
 
-const cartRoutes = require("./modules/buyers/cart/cart.routes");
-const checkoutRoutes = require("./modules/buyers/checkout/checkout.routes");
-const ordersRoutes = require("./modules/buyers/orders/orders.routes");
-const dashboardRoutes = require("./modules/buyers/dashboard/dashboard.routes");
-const enginesRoutes = require("./modules/buyers/engines/engines.routes");
-const rulRoutes = require("./modules/buyers/rul-analysis/rul.routes");
-
 app.use(express.json());
 app.use(cookieParser());
 
@@ -89,13 +82,6 @@ app.use("/api/v1/supplier", supplierRoutes);
 
 app.use("/api/products", productRoutes);
 app.use("/api/v1/auth", authRoutes);
-
-app.use("/api/v1/cart", cartRoutes);
-app.use("/api/v1/checkout", checkoutRoutes);
-app.use("/api/v1/orders", ordersRoutes);
-app.use("/api/v1/dashboard", dashboardRoutes);
-app.use("/api/v1/engines", enginesRoutes);
-app.use("/api/v1/rul", rulRoutes);
 
 if (process.env.NODE_ENV !== "production") {
   const path = require("path");
