@@ -1,44 +1,46 @@
 
 import { useEffect, useState } from "react";
-import PageHeader from "../../components/common/PageHeader";
-import EmptyState from "../../components/common/EmptyState";
-import { getSupplierInventory } from "../../services/supplierService";
-import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
-import StockEditor from "../../features/supplier/inventory/StockEditor";
+import PageHeader from "../../shared/components/common/PageHeader";
+import EmptyState from "../../shared/components/common/EmptyState";
+import { getSupplierListings } from "../../services/supplierService";
 
 export default function SupplierInventory() {
-  const [inventory, setInventory] = useState({
-    summary: { total_listings: 0, in_stock: 0, low_stock: 0, out_of_stock: 0 },
-    items: [],
-  });
+  const [listings, setListings] = useState([]);
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    let active = true;
-    getSupplierInventory()
-      .then((data) => {
-        if (active) setInventory(data);
-      })
-      .catch((err) => {
-        if (active) setError(err.message || "Unable to load inventory.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
+    getSupplierListings()
+      .then((data) => setListings(data))
+      .catch(() => setError("Unable to load inventory."))
+      .finally(() => setLoading(false));
   }, []);
 
+  // Stock classification
   function getStockStatus(quantity) {
     if (quantity === 0) return "OUT OF STOCK";
     if (quantity <= 5) return "LOW STOCK";
     return "IN STOCK";
   }
 
-  const filteredListings = inventory.items.filter((item) => {
-    const keyword = search.toLowerCase().trim();
+  // Summary
+  const totalListings = listings.length;
+  const inStock = listings.filter(
+    (item) => item.stock_quantity > 5
+  ).length;
+  const lowStock = listings.filter(
+    (item) => item.stock_quantity > 0 &&
+      item.stock_quantity <= 5
+  ).length;
+  const outOfStock = listings.filter(
+    (item) => item.stock_quantity === 0
+  ).length;
+
+  // Search and filter
+  const filteredListings = listings.filter((item) => {
+    const keyword = search.toLowerCase();
 
     const matchesSearch =
       item.product_name.toLowerCase().includes(keyword) ||
@@ -52,28 +54,11 @@ export default function SupplierInventory() {
   });
 
   const filters = [
-    { value: "ALL", label: "All", count: inventory.summary.total_listings },
-    { value: "IN STOCK", label: "In Stock", count: inventory.summary.in_stock },
-    { value: "LOW STOCK", label: "Low Stock", count: inventory.summary.low_stock },
-    { value: "OUT OF STOCK", label: "Out of Stock", count: inventory.summary.out_of_stock },
+    { value: "ALL", label: "All", count: totalListings },
+    { value: "IN STOCK", label: "In Stock", count: inStock },
+    { value: "LOW STOCK", label: "Low Stock", count: lowStock },
+    { value: "OUT OF STOCK", label: "Out of Stock", count: outOfStock },
   ];
-
-  function updateStockSummary(previousSummary, previousQuantity, nextQuantity) {
-    const previousStatus = getStockStatus(previousQuantity);
-    const nextStatus = getStockStatus(nextQuantity);
-    if (previousStatus === nextStatus) return previousSummary;
-
-    const summaryKey = {
-      "IN STOCK": "in_stock",
-      "LOW STOCK": "low_stock",
-      "OUT OF STOCK": "out_of_stock",
-    };
-    return {
-      ...previousSummary,
-      [summaryKey[previousStatus]]: previousSummary[summaryKey[previousStatus]] - 1,
-      [summaryKey[nextStatus]]: previousSummary[summaryKey[nextStatus]] + 1,
-    };
-  }
 
   return (
     <div>
@@ -83,13 +68,13 @@ export default function SupplierInventory() {
         description="Monitor stock availability across your listings."
       />
 
-      {SUPPLIER_DEMO_MODE && <p
+      <p
         role="note"
         className="mb-6 rounded-lg bg-accent-50 p-3 text-sm text-primary-800"
       >
         Demo mode: Inventory data is not yet connected
         to the backend. Stock updates are not enabled.
-      </p>}
+      </p>
 
       {loading && (
         <p role="status" className="text-neutral-500">
@@ -171,10 +156,8 @@ export default function SupplierInventory() {
 
             {filteredListings.length === 0 ? (
               <EmptyState
-                title={inventory.items.length === 0 ? "No inventory yet" : "No inventory found"}
-                description={inventory.items.length === 0
-                  ? "Inventory will appear here after you add supplier listings."
-                  : "Try another search term or stock filter."}
+                title="No inventory found"
+                description="Try another search term or stock filter."
               />
             ) : (
               <div className="grid gap-4 xl:grid-cols-2">
@@ -211,22 +194,6 @@ export default function SupplierInventory() {
                         </span>
                       </div>
 
-                      {!SUPPLIER_DEMO_MODE && (
-                        <StockEditor listingId={item.listing_id} quantity={item.stock_quantity}
-                          onSaved={(quantity) => setInventory((current) => {
-                            const currentItem = current.items.find((row) => row.listing_id === item.listing_id);
-                            if (!currentItem) return current;
-                            return {
-                              ...current,
-                              summary: updateStockSummary(current.summary, currentItem.stock_quantity, quantity),
-                              items: current.items.map((row) =>
-                                row.listing_id === item.listing_id
-                                  ? { ...row, stock_quantity: quantity }
-                                  : row
-                              ),
-                            };
-                          })} />
-                      )}
                       <p className="mt-4 text-xs text-neutral-500">
                         Listing status: {item.status}
                       </p>

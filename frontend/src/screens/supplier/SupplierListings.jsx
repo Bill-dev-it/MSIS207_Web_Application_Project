@@ -1,11 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import PageHeader from "../../components/common/PageHeader";
-import EmptyState from "../../components/common/EmptyState";
+import PageHeader from "../../shared/components/common/PageHeader";
+import EmptyState from "../../shared/components/common/EmptyState";
 import { getSupplierListings } from "../../services/supplierService";
-import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
-import HideListingButton from "../../features/supplier/listings/HideListingButton";
 
 export default function SupplierListings() {
   const [listings, setListings] = useState([]);
@@ -58,13 +56,13 @@ export default function SupplierListings() {
         }
       />
 
-      {SUPPLIER_DEMO_MODE && <p
+      <p
         role="note"
         className="mb-5 rounded-lg bg-accent-50 p-3 text-sm text-primary-800"
       >
         Demo mode: Listing data is not yet connected
         to the backend.
-      </p>}
+      </p>
 
       <section aria-labelledby="listings-heading">
         <div className="card p-4 sm:p-6">
@@ -174,12 +172,6 @@ export default function SupplierListings() {
                       >
                         Edit Listing
                       </Link>
-                      {!SUPPLIER_DEMO_MODE && listing.status !== "HIDDEN" && (
-                        <HideListingButton listingId={listing.listing_id}
-                          onHidden={() => setListings((items) => items.map((item) =>
-                            item.listing_id === listing.listing_id ? { ...item, status: "HIDDEN" } : item
-                          ))} />
-                      )}
                     </article>
                   ))}
                 </div>
