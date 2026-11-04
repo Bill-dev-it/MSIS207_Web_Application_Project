@@ -3,61 +3,56 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,jsx}",
   ],
 
   theme: {
     extend: {
+      // AeroRUL brand colors
       colors: {
         primary: {
-          50: "#EFF6FF",
-          100: "#DBEAFE",
-          200: "#BFDBFE",
-          300: "#93C5FD",
-          400: "#60A5FA",
-          500: "#3B82F6",
-          600: "#2563EB",
-          700: "#1D4ED8",
-          800: "#1E40AF",
-          900: "#1E3A8A",
+          DEFAULT: "#0B1F3A",
+          50: "#EEF2F7",
+          100: "#D8E0EC",
+          600: "#132C52",
+          700: "#0B1F3A",
+          800: "#081730",
+          900: "#050F20",
         },
 
-        accent: "#00A3E0",
+        accent: {
+          DEFAULT: "#2D9CDB",
+          50: "#EAF6FD",
+          100: "#CDEAFB",
+          600: "#2589C2",
+        },
 
+        // Semantic status colors
+        success: "#27AE60",
+        warning: "#F2C94C",
+        critical: "#EB5757",
+
+        // Neutral UI colors
         neutral: {
           50: "#F8FAFC",
-          100: "#F1F5F9",
-          200: "#E2E8F0",
-          300: "#CBD5E1",
-          400: "#94A3B8",
+          200: "#E5E7EB",
           500: "#64748B",
-          600: "#475569",
-          700: "#334155",
-          800: "#1E293B",
-          900: "#0F172A",
-        },
-
-        status: {
-          success: "#10B981",
-          warning: "#F59E0B",
-          danger: "#EF4444",
-          info: "#0EA5E9",
         },
       },
 
+      // Typography
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
 
-      boxShadow: {
-        card: "0 2px 12px rgba(15, 23, 42, 0.05)",
-        dropdown: "0 8px 24px rgba(15, 23, 42, 0.12)",
-      },
-
+      // Shared shape and spacing
       borderRadius: {
-        card: "12px",
-        control: "10px",
+        DEFAULT: "12px",
+      },
+
+      spacing: {
+        4.5: "18px",
       },
     },
   },
