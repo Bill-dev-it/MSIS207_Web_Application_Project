@@ -1,0 +1,26 @@
+{
+  "checkpoint_filename": "best_model.weights.h5",
+  "checkpoint_type": "Keras HDF5 Model Weights",
+  "model_architecture": "Condition-Aware iTransformer (v3)",
+  "dataset_subset": "NASA C-MAPSS FD002",
+  "provenance": {
+    "source_campaign": "proposed_model/condition_token_pc_v3",
+    "relative_source_path": "output/itransformer/FD002/seed_42/best_model.weights.h5",
+    "seed": 42,
+    "best_epoch": 59,
+    "total_epochs": 74,
+    "training_duration_seconds": 156.4
+  },
+  "verified_metrics": {
+    "validation_eb_rmse_cycles": 16.82,
+    "test_rmse_cycles": 13.9368,
+    "target_clip_rul": 125.0,
+    "subset_10seed_mean_test_rmse": 14.1659,
+    "subset_10seed_std_test_rmse": 0.2982
+  },
+  "compatibility": {
+    "cpu_compatible": true,
+    "gpu_required": false,
+    "operating_system": "OS-independent (Windows, Linux, macOS)"
+  }
+}

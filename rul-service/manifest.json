@@ -1,0 +1,160 @@
+{
+  "package_name": "AeroRUL_RUL_Inference_Transfer",
+  "version": "1.0.0",
+  "creation_date": "2026-11-04",
+  "model_identity": {
+    "model_name": "Condition-Aware iTransformer (v3)",
+    "dataset_subset": "NASA C-MAPSS FD002",
+    "checkpoint": "checkpoints/best_model.weights.h5",
+    "checkpoint_seed": 42,
+    "test_rmse_cycles": 13.94,
+    "mean_10seed_test_rmse_cycles": 14.17
+  },
+  "hardware_target": "CPU Only (AMD64 / x86_64)",
+  "runtime": "Python 3.10 - 3.12 with TensorFlow 2.x",
+  "total_files": 20,
+  "total_size_bytes": 558586,
+  "total_size_kb": 545.49,
+  "files": [
+    {
+      "path": "api.py",
+      "size_bytes": 8229,
+      "sha256": "fb8e87af7f0d90ba0cdb004ba23738fca90044b749152ead1480088a5642c360",
+      "description": "Internal FastAPI service for authenticated model inference",
+      "essential_for_inference": true
+    },
+    {
+      "path": "checkpoints/best_model.weights.h5",
+      "size_bytes": 477184,
+      "sha256": "d70781d8ba4941cac432034fa2dea2e40bb5873002b350d72d729ecd25c21208",
+      "description": "Trained model weights (NASA C-MAPSS FD002 seed 42)",
+      "essential_for_inference": true
+    },
+    {
+      "path": "checkpoints/checkpoint_metadata.json",
+      "size_bytes": 844,
+      "sha256": "dfaf7e0af2877158f7472809848623b2b3652650e07378953fbc24f42302171e",
+      "description": "Training provenance, hyperparameter details, and evaluation metrics",
+      "essential_for_inference": true
+    },
+    {
+      "path": "inference/__init__.py",
+      "size_bytes": 73,
+      "sha256": "8677866c1e75d5a1bd5cc1e310256275895967602d0a71352d7d1fda54c4c7d9",
+      "description": "Inference package initialization",
+      "essential_for_inference": true
+    },
+    {
+      "path": "inference/predict_cli.py",
+      "size_bytes": 3451,
+      "sha256": "67810797f9076975e025ae8d91b6fe0965e55b965d1b21167f6a2bd34cb8b7ec",
+      "description": "Standalone offline CLI runner; web inference uses the internal FastAPI service",
+      "essential_for_inference": true
+    },
+    {
+      "path": "inference/runner.py",
+      "size_bytes": 3957,
+      "sha256": "46bf3d7298078382345d635dc4c5ee333252f977b50af0be012aecb7ab9b093f",
+      "description": "High-level RULInferenceEngine API class",
+      "essential_for_inference": true
+    },
+    {
+      "path": "inference_contract.json",
+      "size_bytes": 1982,
+      "sha256": "1f04913244e68e79435c48a49959318044dbc911dddb086b369e6232e6238a91",
+      "description": "Machine-readable internal FastAPI HTTP contract",
+      "essential_for_inference": true
+    },
+    {
+      "path": "model/__init__.py",
+      "size_bytes": 291,
+      "sha256": "75cc1776414beec5420934b97fb07c733ce8819a0176c92d5a81d0ef1bcb5769",
+      "description": "Model package initialization",
+      "essential_for_inference": true
+    },
+    {
+      "path": "model/architecture.py",
+      "size_bytes": 3285,
+      "sha256": "867f011791f368308183aba031cdee152d99c432fab46608748ea04c96a44d10",
+      "description": "Condition-Aware iTransformer model architecture definition",
+      "essential_for_inference": true
+    },
+    {
+      "path": "model/config.json",
+      "size_bytes": 622,
+      "sha256": "c1d71348a40a3e55c158ddb940928b28f5ffa342c715eb381555a0dc67125bdb",
+      "description": "Model architectural parameters and hyperparameter configuration",
+      "essential_for_inference": true
+    },
+    {
+      "path": "model/layers.py",
+      "size_bytes": 4357,
+      "sha256": "9fed5dfb85653dbb785e8495753ef68256357b8dbcac76d10335b6ed0e317617",
+      "description": "Custom Keras layers (SensorProjection, TransformerEncoderBlock, SensorIdentityEmbedding)",
+      "essential_for_inference": true
+    },
+    {
+      "path": "preprocessing/__init__.py",
+      "size_bytes": 95,
+      "sha256": "8fa32a7fcb5daf0b40d02caa447c00d3c5ffca6ce2ab41fd0e661178e02889fd",
+      "description": "Preprocessing package initialization",
+      "essential_for_inference": true
+    },
+    {
+      "path": "preprocessing/preprocessor.py",
+      "size_bytes": 7546,
+      "sha256": "9e9c9f07d591ca0fc6b76f004cac84247f56cb3028eea95e0d20752cce327074",
+      "description": "ConditionAwarePreprocessor: CSV validation, KMeans regime clustering, sensor normalization",
+      "essential_for_inference": true
+    },
+    {
+      "path": "preprocessing/scaler_artifacts.json",
+      "size_bytes": 7023,
+      "sha256": "b8f8dd6e395ebafd813907e9c9bd718badf278b81d48588c0c8350529e25bfbb",
+      "description": "Frozen pre-fitted KMeans centroids and per-regime sensor standard scalers",
+      "essential_for_inference": true
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 667,
+      "sha256": "37c71022a21cd93f0f02b03de5fd5f20182a6b76b2b5cbb7551b227ac66ddb5e",
+      "description": "Project-specific FastAPI runtime and setup documentation",
+      "essential_for_inference": false
+    },
+    {
+      "path": "requirements.txt",
+      "size_bytes": 302,
+      "sha256": "59f286d7c9ba2b2be6f051947cbeee86c93f9aedcf495d70a437d4b829852361",
+      "description": "CPU inference and internal FastAPI/Uvicorn dependencies",
+      "essential_for_inference": true
+    },
+    {
+      "path": "samples/invalid_engine_sample.csv",
+      "size_bytes": 1241,
+      "sha256": "03639a8297e7bb9267e8b79328d8961818616d7ec34f904ec55a7ec8d187c71a",
+      "description": "Corrupt sample for automated error-handling testing",
+      "essential_for_inference": true
+    },
+    {
+      "path": "samples/valid_engine_sample.csv",
+      "size_bytes": 32235,
+      "sha256": "7bcd0aa4db8245e592914e49ff532bc8da8b2163198de2a35535efbbcc9c338f",
+      "description": "Authentic C-MAPSS FD002 test sample (Unit 1, 258 cycles)",
+      "essential_for_inference": true
+    },
+    {
+      "path": "tests/__init__.py",
+      "size_bytes": 23,
+      "sha256": "4d25f5d959685698db6f339545a0b2197051a1114b2f6854eef24b1d7f0795f7",
+      "description": "Tests package initialization",
+      "essential_for_inference": false
+    },
+    {
+      "path": "tests/test_offline_inference.py",
+      "size_bytes": 5179,
+      "sha256": "9a3153225611f4656f09cd920bfccef78b29e63a14a2ab149466664de7d8dfa4",
+      "description": "Automated unit test suite verifying CPU execution and reproducibility",
+      "essential_for_inference": false
+    }
+  ]
+}

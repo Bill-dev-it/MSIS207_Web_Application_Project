@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AeroRUL_Condition_Aware_iTransformer_Inference_Contract",
+  "version": "1.0.0",
+  "entrypoint": "api.py",
+  "runtime": {
+    "python_version_min": "3.10",
+    "python_version_tested": "3.11.15",
+    "framework": "TensorFlow/Keras",
+    "device": "CPU",
+    "average_latency_ms": 115.0,
+    "cold_start_latency_s": 1.5
+  },
+  "http_api": {
+    "bind_host_local_development": "127.0.0.1",
+    "port_default": 8000,
+    "authentication": "X-RUL-Service-Token using RUL_SERVICE_TOKEN",
+    "routes": {
+      "health": "GET /health",
+      "model_info": "GET /v1/model-info",
+      "predict": "POST /v1/predict"
+    },
+    "prediction_content_type": "text/csv; charset=utf-8",
+    "maximum_request_bytes": 1048576,
+    "error_envelope": {
+      "success": false,
+      "error": {
+        "code": "ERROR_CODE",
+        "message": "Human-readable error"
+      }
+    }
+  },
+  "model_info": {
+    "model_id": "condition_aware_itransformer_v3",
+    "architecture": "Condition Token iTransformer (14 Inverted Sensor Tokens + 1 Condition Token)",
+    "dataset": "NASA_CMAPSS_FD002",
+    "window_size": 30,
+    "sensor_features_count": 14,
+    "operating_conditions_count": 3,
+    "flight_regimes_count": 6,
+    "checkpoint_path": "checkpoints/best_model.weights.h5",
+    "scaler_artifacts_path": "preprocessing/scaler_artifacts.json",
+    "target_metric": "Remaining Useful Life (RUL) in flight cycles",
+    "target_clipping_ceiling": 125.0
+  },
+  "verified_evaluation": {
+    "metric": "Test RMSE_125",
+    "checkpoint_seed_42_rmse_cycles": 13.94,
+    "subset_10seed_mean_rmse_cycles": 14.17,
+    "subset_10seed_std_rmse_cycles": 0.30,
+    "baseline_comparison_improvement": "-7.20 cycles vs No-Condition Arm A (21.37)"
+  },
+  "io_contract": {
+    "input_format": "CSV with header row",
+    "required_columns_count": 19,
+    "stdout": "Machine-readable JSON only",
+    "stderr": "Diagnostic logs and tracebacks only"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "model_name": "Condition-Aware iTransformer (v3)",
+  "model_type": "Keras/TensorFlow",
+  "task": "Remaining Useful Life (RUL) Regression",
+  "dataset_subset": "NASA C-MAPSS FD002",
+  "window_size": 30,
+  "n_sensors": 14,
+  "n_regimes": 6,
+  "d_model": 32,
+  "n_heads": 2,
+  "n_layers": 1,
+  "ff_dim": 64,
+  "dropout": 0.2,
+  "dense_units": 32,
+  "loss_function": "Huber (delta=5.0)",
+  "optimizer": "Adam (lr=1e-4)",
+  "target_clipping": {
+    "is_clipped": true,
+    "max_rul": 125.0
+  },
+  "input_shapes": {
+    "sensor_input": [null, 30, 14],
+    "condition_input": [null, 30, 6]
+  },
+  "output_shape": [null, 1]
+}
