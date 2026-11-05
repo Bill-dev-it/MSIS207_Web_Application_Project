@@ -89,11 +89,13 @@ upload and prediction in the existing `sensor_uploads` and `rul_predictions`
 tables. Raw files are private under `backend/storage/rul/`, which is ignored by
 Git and is not served as static content.
 
-This is a NASA C-MAPSS educational simulation, not actual aircraft telemetry,
-airworthiness advice, or proof of engine/model compatibility. Marketplace
-recommendations from RUL are not implemented. Python dependencies and model
-metadata registration still require operator setup; do not execute the
-provided SQL seed as part of static checks.
+This is a NASA C-MAPSS educational simulation, not actual aircraft telemetry
+or airworthiness advice. The Replace & Buy MVP can recommend only active,
+stocked ENGINE listings with explicit compatibility evidence for the engine
+model; the evidence may be demo-only and is not certified installation
+approval. Trade-in and valuation are not implemented. Python dependencies
+and model metadata registration still require operator setup; do not execute
+the provided SQL seed as part of static checks.
 
 The repository does not run live database checks or inference as part of the
 frontend build or static checks. Manually verify the Buyer session, registered

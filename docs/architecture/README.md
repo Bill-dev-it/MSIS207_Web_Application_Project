@@ -137,10 +137,12 @@ the public Express API.
 
 ### Replacement Recommendations
 
-RUL-based replacement recommendations and engine/part compatibility claims
-are not implemented. Standard marketplace offers and Supplier inventory
-remain available through their existing workflows, independently of demo RUL
-results.
+The Replace & Buy MVP recommends up to five ENGINE listings after a successful
+Buyer RUL prediction, using exact engine-model compatibility records,
+approved Supplier listings, positive stock, and deterministic price/lead-time
+ranking. Evidence may be demo-only and is not certified installation
+approval. Trade-in, buyback, old-asset collection, valuation, and exchange
+credit remain out of scope.
 
 The C-MAPSS FD002 RUL workflow uses simulated data and must not be interpreted
 as actual aircraft telemetry or a certified maintenance diagnosis.

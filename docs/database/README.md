@@ -140,12 +140,14 @@ The RUL service connects aircraft condition monitoring with the marketplace.
 
 The prediction is stored in `rul_predictions`.
 
-The planned Recommendation Engine would combine:
+The Replace & Buy recommendation MVP combines:
 
-**RUL + Engine Compatibility + Inventory + Supplier Listings**
+**Engine Model + Recorded Compatibility Evidence + Inventory + Supplier Listings**
 
-to generate records in `replacement_recommendations`. This RUL-based
-recommendation flow is not implemented by the current Buyer RUL feature.
+to generate up to five ranked records in `replacement_recommendations` for a
+successful company-owned prediction. Compatibility is an evidence-based
+eligibility gate, not a score or installation certification. Trade-in,
+buyback, and valuation remain deferred.
 
 ---
 

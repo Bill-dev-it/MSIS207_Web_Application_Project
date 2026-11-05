@@ -85,4 +85,44 @@ router.get("/engines/:engineId/history", controller.history);
  */
 router.post("/engines/:engineId/predict", parseCsvBody, controller.predict);
 
+/**
+ * @api {post} /api/v1/rul/predictions/:predictionId/recommendations Generate replacement engine recommendations
+ * @apiName GenerateBuyerEngineReplacementRecommendations
+ * @apiGroup Buyer RUL
+ * @apiVersion 1.0.0
+ * @apiPermission Buyer
+ * @apiDescription Generates and saves up to five eligible replacement engine listings for a successfully stored prediction owned by the authenticated Buyer's company. Eligibility requires exact engine-model compatibility evidence, an active ENGINE product, ACTIVE listing, APPROVED supplier, and positive stock. Ranking is lower actual listing price, then shorter lead time, then listing ID. Generation is transactional and idempotent. Requires the existing session cookie and X-AeroRUL-Request: 1.
+ * @apiParam {String} predictionId Positive BIGINT ID of a successful company-owned prediction.
+ * @apiSuccess {Boolean} success true
+ * @apiSuccess {Object} data Includes prediction_id, recommendation_status (READY or NO_MATCH), already_saved, and saved ranked recommendations.
+ * @apiSuccessExample {json} 200 OK:
+ *     { "success": true, "data": { "prediction_id": "51", "recommendation_status": "READY", "already_saved": false, "recommendations": [{ "rank_position": 1, "listing_id": "81", "product_id": "12", "product_name": "Replacement Engine", "manufacturer": "Example Aero", "supplier_name": "Approved Engines", "condition": "NEW", "price": "120000.00", "currency": "USD", "stock_quantity": 2, "lead_time_days": 14, "compatibility": { "evidence_reference": "compatibility record 12/4", "is_demo": true }, "reason": "Top 1: Recorded demo compatibility evidence links this engine model to the listed engine. Ranked by lower actual listing price, then shorter lead time, then listing ID. Compatibility is not certified for aircraft installation." }] } }
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or invalid Buyer session.
+ * @apiError (403 Forbidden) BUYER_REQUIRED or UNTRUSTED_REQUEST Buyer role or trusted mutation required.
+ * @apiError (400 Bad Request) INVALID_PREDICTION_ID Prediction ID must be a positive BIGINT.
+ * @apiError (404 Not Found) RUL_PREDICTION_NOT_FOUND No successful prediction is visible to this Buyer company.
+ * @apiError (409 Conflict) RUL_PREDICTION_NOT_SUCCESSFUL The prediction has not succeeded.
+ * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Recommendation generation failed; the saved RUL prediction remains successful.
+ */
+router.post("/predictions/:predictionId/recommendations", controller.generateRecommendations);
+
+/**
+ * @api {get} /api/v1/rul/predictions/:predictionId/recommendations Get saved replacement engine recommendations
+ * @apiName GetBuyerEngineReplacementRecommendations
+ * @apiGroup Buyer RUL
+ * @apiVersion 1.0.0
+ * @apiPermission Buyer
+ * @apiDescription Retrieves only persisted recommendations for a successful prediction owned by the authenticated Buyer's company. This read-only request never runs inference or generates recommendations.
+ * @apiParam {String} predictionId Positive BIGINT ID of a successful company-owned prediction.
+ * @apiSuccess {Boolean} success true
+ * @apiSuccess {Object} data Includes prediction_id, recommendation_status (NOT_RUN, READY, NO_MATCH, or FAILED), already_saved, and saved ranked recommendations.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or invalid Buyer session.
+ * @apiError (403 Forbidden) BUYER_REQUIRED Buyer role required.
+ * @apiError (400 Bad Request) INVALID_PREDICTION_ID Prediction ID must be a positive BIGINT.
+ * @apiError (404 Not Found) RUL_PREDICTION_NOT_FOUND No successful prediction is visible to this Buyer company.
+ * @apiError (409 Conflict) RUL_PREDICTION_NOT_SUCCESSFUL The prediction has not succeeded.
+ * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unable to retrieve saved recommendations.
+ */
+router.get("/predictions/:predictionId/recommendations", controller.getRecommendations);
+
 module.exports = router;

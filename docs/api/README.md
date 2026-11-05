@@ -148,10 +148,20 @@ evaluated on FD002, using the seed-42 checkpoint and frozen scaler. Accepted
 CSV source compatibility does not guarantee prediction accuracy. Prediction values and the
 20/40/80-cycle planning thresholds are educational simulation output only,
 not actual aircraft telemetry, airworthiness guidance, or verified part
-compatibility. Recommendation generation and RUL-based marketplace matching
-are not implemented. Model metadata must be registered by the approved
-deployment operator using the reviewed script in `docs/rul/`; do not run it as
-part of static verification.
+compatibility. The Replace & Buy MVP exposes
+`POST /api/v1/rul/predictions/:predictionId/recommendations` to generate and
+persist eligible engine listings and
+`GET /api/v1/rul/predictions/:predictionId/recommendations` to retrieve saved
+snapshots. Eligibility requires exact `engine_model_id` compatibility
+evidence, an active `ENGINE` product, an ACTIVE listing, an APPROVED supplier,
+and positive stock. Ranking is by lower actual listing price, shorter lead
+time, then stable listing ID; at most five results are saved. Compatibility
+evidence can be demo data and is not certified installation approval. Prices
+are actual listing prices, not fair-market valuations. Trade-in, buyback,
+old-asset collection, valuation and exchange credit are not implemented.
+Model metadata must be registered by the approved deployment operator using
+[`database/seed/03_ml_model_version_seed.sql`](../../database/seed/03_ml_model_version_seed.sql);
+do not run it as part of static verification.
 
 For the request/response and setup details, see
 [Buyer RUL integration](../rul/README.md).
@@ -163,9 +173,9 @@ APIDoc. React calls Express only.
 
 ## Deferred capabilities
 
-The engine APIs expose company-owned engine records, sensor-upload metadata,
-and stored RUL predictions. RUL-based part recommendations and compatibility
-claims remain deferred.
+The RUL recommendation MVP is restricted to replacement ENGINE listings and
+recorded compatibility evidence. Full replacement-parts recommendations,
+trade-in, buyback and exchange-credit workflows remain deferred.
 
 Buyer route APIDoc annotations live in `backend/src/routes/buyer/`. From
 `backend/`, run `npm run doc` to generate the local APIDoc site under

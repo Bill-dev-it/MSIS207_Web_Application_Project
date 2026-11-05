@@ -36,3 +36,19 @@ export async function predictRul({ engineId, file, requestKey, sourceClassificat
   );
   return response.data;
 }
+
+export async function generateReplacementRecommendations(predictionId, { signal } = {}) {
+  const response = await buyerRequest(
+    `/v1/rul/predictions/${encodeURIComponent(predictionId)}/recommendations`,
+    { method: "POST", signal }
+  );
+  return response.data;
+}
+
+export async function getReplacementRecommendations(predictionId, { signal } = {}) {
+  const response = await buyerRequest(
+    `/v1/rul/predictions/${encodeURIComponent(predictionId)}/recommendations`,
+    { signal }
+  );
+  return response.data;
+}

@@ -83,7 +83,7 @@ async function saveSuccess({ engineId, userId, filename, objectKey, fileSha256,
 
 async function getHistory(engineId, companyId, limit) {
   const result = await pool.query(`
-    SELECT p.prediction_id, p.request_key, p.status, p.predicted_rul,
+    SELECT p.prediction_id, p.request_key, p.status, p.recommendation_status, p.predicted_rul,
            p.cycle_at_prediction, p.urgency, p.prediction_date, p.completed_at,
            p.explanation, u.upload_id, u.original_file_name,
            u.dataset_subset AS source_classification,

@@ -8,7 +8,8 @@
 > model and scaler once per worker. The standalone
 > `inference/predict_cli.py` is for offline use, not Express web requests. The
 > public Buyer endpoints and internal inference contract are described in
-> [`README.md`](./README.md); compatible-part recommendations are not implemented.
+> [`README.md`](./README.md). The Replace & Buy recommendation MVP is
+> implemented by Express; trade-in and exchange-credit workflows are deferred.
 
 ---
 

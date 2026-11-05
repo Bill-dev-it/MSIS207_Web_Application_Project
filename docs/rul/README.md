@@ -6,6 +6,8 @@
 
 - `POST /api/v1/rul/engines/:engineId/predict` — raw UTF-8 `Content-Type: text/csv`, max 1 MiB; `X-RUL-Source` is required and must be `NASA_CMAPSS_FD002`, `CUSTOM_SYNTHETIC`, or `EXTERNAL_MAPPED`; also requires `X-AeroRUL-Request: 1`, `Idempotency-Key: UUID`, and `X-RUL-Filename: sample.csv`. The browser includes the existing HttpOnly JWT cookie. Returns `201` on a new saved inference and `200` on a same-key, same-user, same-engine, same-content, same-source replay. Different input or source with an existing key returns `409`.
 - `GET /api/v1/rul/engines/:engineId/history?limit=10` — returns saved records for only engines owned by the logged-in Buyer company.
+- `POST /api/v1/rul/predictions/:predictionId/recommendations` — generates and transactionally stores up to five replacement ENGINE listings for a successful company-owned prediction. Repeated calls return the existing saved result.
+- `GET /api/v1/rul/predictions/:predictionId/recommendations` — reads saved recommendation snapshots only; it does not rerun inference or write to the database.
 
 Source: `backend/src/routes/buyer/rul.routes.js` and
 `frontend/src/features/buyer/rul-analysis/services/rulApi.js`. The actual
@@ -91,13 +93,14 @@ The Python preprocessor uses the frozen FD002 scaler and condition token for eve
 - `ml_model_versions`: one manually registered active model row (see [`03_ml_model_version_seed.sql`](../../database/seed/03_ml_model_version_seed.sql); only an authorized operator executes it after approval).
 - `sensor_uploads`: engine FK, uploaded_by, sanitized filename, private object key, SHA-256, declared upload-source classification in the existing `dataset_subset` field, unit, cycle bounds and row count, `is_demo=true`, `status='VALID'`.
 - `rul_predictions`: one successful inference result linked by upload, model and request key, demo decision rule snapshot and `SUCCEEDED` status.
+- `replacement_recommendations`: up to five saved, ranked listing snapshots per prediction. `recommendation_status` becomes `READY`, `NO_MATCH`, or `FAILED`; recommendation failures do not change the RUL prediction's `SUCCEEDED` status.
 - Raw CSV under private `backend/storage/rul/<authenticated-user-id>/`
   (ignored in Git, not a public static directory). Failed requests remove their
   private upload when cleanup succeeds. No frontend direct DB access.
 
 ## Limitations
 
-C-MAPSS units are simulator identifiers; they do **not** provide a verified mapping to real aircraft or manufacturer/engine models. The association to a company engine is a user-selected **demo mapping**, not physical sensor verification. The model was trained/evaluated on FD002, but uploaded files may be FD002 samples, custom synthetic data, or externally sourced data mapped by the submitter. Do not update `engines.current_cycle` from uploaded CSV. Planning urgency thresholds 20/40/80 are project-defined demo thresholds, not FAA/EASA requirements. Never assert compatible parts simply because they appear in the marketplace. `replacement_recommendations` remains untouched in this RUL-prediction-only feature. Product recommendation is a separate, carefully verified integration concern.
+C-MAPSS units are simulator identifiers; they do **not** provide a verified mapping to real aircraft or manufacturer/engine models. The association to a company engine is a user-selected **demo mapping**, not physical sensor verification. The model was trained/evaluated on FD002, but uploaded files may be FD002 samples, custom synthetic data, or externally sourced data mapped by the submitter. Do not update `engines.current_cycle` from uploaded CSV. Planning urgency thresholds 20/40/80 are project-defined demo thresholds, not FAA/EASA requirements. The Replace & Buy recommendation MVP uses only explicit `product_engine_compatibility` evidence as an eligibility gate and may return demo-only evidence. It does not certify installation compatibility, infer interchangeability from names, or provide fair-market valuations. Trade-in, buyback, old-asset collection, valuation and exchange credit remain deferred.
 
 ## Verification status
 
@@ -116,7 +119,7 @@ This directory is the single canonical location for detailed RUL documentation:
 - [Scientific artifact audit](./AUDIT_REPORT.md)
 - [RUL integration diagram](./images/RUL_integration.jpg)
 
-The application runtime and public API behavior documented above are current;
-historical research results and planned recommendation architecture are clearly
-identified in their respective documents and are not claims of deployed
-recommendation functionality.
+The application runtime and public API behavior documented above are current.
+Historical research and future trade-in or exchange-credit concepts are
+identified separately and are not claims of functionality included in the
+Replace & Buy recommendation MVP.
