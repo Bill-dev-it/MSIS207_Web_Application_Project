@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext";
+import { useCart } from "../../features/buyer/cart";
 import { getProductOffers } from "../../services/supplierOfferService";
 
 export default function SupplierOffers({ productId }) {
@@ -6,6 +9,11 @@ export default function SupplierOffers({ productId }) {
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cartMessage, setCartMessage] = useState("");
+  const [adding, setAdding] = useState(false);
+  const { status, user } = useAuth();
+  const { addItem } = useCart();
+  const isBuyer = status === "authenticated" && user?.role === "BUYER";
 
   useEffect(() => {
     const controller = new AbortController();
@@ -45,6 +53,20 @@ export default function SupplierOffers({ productId }) {
   const selectedOffer = offers.find(
     (offer) => String(offer.listing_id) === String(selectedId)
   );
+
+  async function handleAddToCart() {
+    if (!selectedOffer || !isBuyer) return;
+    setAdding(true);
+    setCartMessage("");
+    try {
+      await addItem(selectedOffer.listing_id, 1);
+      setCartMessage("Added to your cart.");
+    } catch (err) {
+      setCartMessage(err.message || "Unable to add this offer to your cart.");
+    } finally {
+      setAdding(false);
+    }
+  }
 
   return (
     <section aria-labelledby="supplier-offers-heading">
@@ -180,18 +202,31 @@ export default function SupplierOffers({ productId }) {
             </div>
           )}
 
-          <button
-            type="button"
-            className="btn btn-primary mt-5 w-full"
-            disabled
-          >
-            Add to Cart — Coming Soon
-          </button>
+          {isBuyer ? (
+            <button
+              type="button"
+              className="btn btn-primary mt-5 w-full"
+              onClick={handleAddToCart}
+              disabled={!selectedOffer || Number(selectedOffer.stock_quantity) < 1 || adding}
+            >
+              {adding ? "Adding..." : "Add selected offer to cart"}
+            </button>
+          ) : status === "anonymous" ? (
+            <p className="mt-5 text-sm text-neutral-600">
+              <Link className="font-semibold text-primary-700 underline" to="/login">
+                Sign in as a Buyer
+              </Link>{" "}
+              to add an offer to your cart.
+            </p>
+          ) : (
+            <p className="mt-5 text-sm text-neutral-600">
+              Cart purchasing is available to signed-in Buyer accounts.
+            </p>
+          )}
 
-          <p className="mt-3 text-xs text-neutral-500">
-            Cart and checkout require buyer authentication
-            and backend integration.
-          </p>
+          {cartMessage && (
+            <p className="mt-3 text-sm text-primary-800" role="status">{cartMessage}</p>
+          )}
         </>
       )}
     </section>
