@@ -64,7 +64,7 @@ Because the platform contains three application components with different techno
 |---|---|---|
 | Frontend | React | Install dependencies → Lint → Test → Production build |
 | Backend | Node.js / Express | Install dependencies → Lint → Test → Application validation |
-| RUL Service | Python / FastAPI | Install dependencies → Code validation → Test → Service verification |
+| RUL inference service | Python / FastAPI (internal HTTP service) | Install dependencies → Code validation → Test → Service verification |
 
 The workflow first determines which application components are affected by the change. The relevant CI checks are then executed for those components.
 

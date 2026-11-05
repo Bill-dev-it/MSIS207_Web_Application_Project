@@ -1,26 +1,46 @@
 # RUL Service Integration Design
 
+> **Current runtime status:** The approved architecture is implemented as
+> React → authenticated Express Buyer API → internal FastAPI HTTP API →
+> Condition-Aware iTransformer. Express calls FastAPI over HTTP and persists
+> successful results in the existing PostgreSQL schema; FastAPI does not access
+> Buyer authentication or the database. The service loads its frozen model and
+> scaler once at startup. The standalone Python CLI remains for offline use
+> only. Compatible-part recommendations are not implemented. See the current
+> [Buyer RUL runtime contract](./README.md) and
+> [REST API documentation](../api/README.md) for authoritative behavior.
+
 ## 1. Overview
 
 The Aviation B2B E-Commerce Platform integrates a Remaining Useful Life (RUL)
 prediction service with the e-commerce backend.
 
 The RUL service estimates the remaining operating cycles of an aircraft engine.
-The prediction is then used by the application to determine maintenance urgency
-and recommend compatible spare parts available from suppliers.
+The current application stores successful predictions and derives a project
+demo urgency label. The compatible-parts recommendation workflow described
+later in this document is a planned design, not an implemented feature.
 
 The RUL model is deployed as an independent service and communicates with the
 Node.js / Express backend through a REST API.
 
 ## Architecture diagram references
 
-The RUL integration workflow is visualized in the following diagrams:
+The system diagrams preserve the broader architecture and workflow, including
+future recommendation concepts:
 
 - [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall system boundary for the RUL workflow.
 - [05 — AI/RUL & Recommendation](<../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — inference pipeline, model input/output, and recommendation process.
 - [07 — End-to-End Integration](<../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — end-to-end request flow from UI through business logic to RUL and cart checkout.
 
 See also: [Architecture overview](../architecture/README.md).
+
+## Original System Design and Responsibilities
+
+The original System Design's service boundary is now the implemented runtime:
+Express sends validated CSV to an internal FastAPI REST service. The detailed
+current endpoint contracts and local startup instructions are in the linked
+runtime documentation above. Recommendation-generation items below remain
+deferred and are not part of the current application behavior.
 
 ## 2. Integration Flow
 
@@ -29,18 +49,22 @@ See also: [Architecture overview](../architecture/README.md).
 
 ### Node.js / Express Backend
 
-The main backend is responsible for:
+The current backend is responsible for:
 
 - authenticating and authorizing users;
 - identifying the aircraft and engine;
-- retrieving engine metadata;
 - sending prediction requests to the RUL service;
 - receiving prediction results;
 - storing prediction records;
-- applying business rules;
+- deriving the project's demo urgency label;
+- returning prediction history and results to the frontend.
+
+The following recommendation responsibilities are planned and are not part of
+the current RUL implementation:
+
 - finding compatible products;
-- checking seller inventory;
-- returning recommendations to the frontend.
+- checking seller inventory for recommendation candidates;
+- returning RUL-based recommendations to the frontend.
 
 ### AI / RUL Service
 
@@ -55,103 +79,45 @@ The RUL service is responsible only for machine-learning inference:
 The AI service does **not** manage products, suppliers, orders, inventory,
 or e-commerce business logic.
 
-## 4. RUL Prediction API
+## 4. Internal FastAPI REST API
 
-The Node.js / Express backend communicates with the RUL inference service
-through an internal REST API.
+The public React client calls only the authenticated Express Buyer endpoints.
+Express sends the raw CSV to FastAPI on the private service network using the
+shared `X-RUL-Service-Token`.
 
-### Endpoint
+| Method | Internal path | Contract |
+|---|---|---|
+| GET | `/health` | Authenticated readiness status and model-loaded state |
+| GET | `/v1/model-info` | Authenticated model metadata and input contract |
+| POST | `/v1/predict` | Authenticated raw `text/csv; charset=utf-8` body, maximum 1 MiB |
 
-```http
-POST /predict
-Content-Type: application/json
-```
-
-### Prediction Request
-
-Each prediction request contains the engine identifier and the latest
-30-cycle sensor window required by the trained RUL model.
-
-```json
-{
-  "engine_id": 24,
-  "engine_model_id": 102,
-  "current_cycle": 185,
-  "sensor_window": [
-    {
-      "cycle": 156,
-      "sensor_2": 642.15,
-      "sensor_3": 1589.70,
-      "...": "remaining selected sensor values"
-    },
-    {
-      "cycle": 157,
-      "sensor_2": 642.32,
-      "sensor_3": 1590.12,
-      "...": "remaining selected sensor values"
-    }
-  ]
-}
-```
-
-The `sensor_window` contains exactly **30 consecutive cycles**.
-
-Each cycle contains the **14 sensor features selected during model
-preprocessing**. The production implementation must use the exact feature
-names and ordering defined by the deployed model.
-
-### RUL Service Processing
-
-```text
-Prediction Request
-        ↓
-Input Validation
-        ↓
-30-cycle Sensor Window
-        ↓
-Model Preprocessing
-        ↓
-Trained RUL Model
-        ↓
-RUL Inference
-        ↓
-Prediction Response
-```
-
-The service validates that the request contains the required window and sensor
-features before inference.
-
-### Prediction Response
-
-A successful prediction returns:
+`POST /v1/predict` requires 19 input columns, unique headers, one unit, at
+least 30 observations, no ground-truth labels, and valid numeric data accepted
+by the frozen preprocessor. It returns the existing inference result as JSON:
 
 ```json
 {
-  "engine_id": 24,
-  "predicted_rul": 42.7,
-  "unit": "cycles",
-  "model_version": "rul-v1",
-  "status": "success"
+  "success": true,
+  "model_id": "condition_aware_itransformer_v3",
+  "dataset": "NASA_CMAPSS_FD002",
+  "predicted_rul_cycles": 19.33,
+  "unit": "engine_cycles",
+  "input_summary": {
+    "engine_id": 1,
+    "total_cycles_provided": 30,
+    "window_length_used": 30
+  }
 }
 ```
 
-The RUL service returns the prediction only. Product recommendation and
-maintenance business logic remain responsibilities of the Node.js backend.
+Failures use `{ "success": false, "error": { "code": "...", "message": "..." } }`.
+The internal FastAPI contract and local service startup are documented in
+[`./README.md`](./README.md). It is separate from the public Express
+Buyer API and does not receive Buyer identity or connect to PostgreSQL.
 
-### Error Response
-
-Example:
-
-```json
-{
-  "status": "error",
-  "error": "INVALID_SENSOR_WINDOW",
-  "message": "Expected 30 consecutive sensor cycles."
-}
-```
-
-No prediction is generated when the input does not satisfy the model
-requirements.
+The existing FastAPI service reuses the actual inference runner and loads the
+frozen model/scaler once per worker at startup. The standalone
+`predict_cli.py` is for offline use only.
 ## 5. Prediction Storage
 
 Successful predictions are stored in the `rul_predictions` table.
@@ -174,7 +140,10 @@ version produced each result.
 
 ## Database Mapping
 
-The RUL workflow is mapped to four main database entities.
+The implemented prediction workflow uses `sensor_uploads`, `rul_predictions`,
+and `ml_model_versions`. The diagram also includes
+`replacement_recommendations` as a planned extension; current RUL prediction
+does not write or generate recommendation records.
 
 ```text
 sensor_uploads
@@ -241,10 +210,10 @@ Predicted RUL
 Each prediction records the model and input dataset used to produce the result,
 together with the predicted RUL and prediction status.
 
-### Replacement Recommendation
+### Planned: Replacement Recommendation
 
-After a successful prediction, the backend uses the RUL result as an input to
-the recommendation process.
+The original design proposes using a successful prediction as an input to a
+future recommendation process. This flow is not implemented.
 
 ```text
 RUL Prediction
@@ -258,8 +227,8 @@ Seller Inventory
 Replacement Recommendations
 ```
 
-`replacement_recommendations` stores the ranked marketplace listings associated
-with a prediction.
+In the planned design, `replacement_recommendations` would store ranked
+marketplace listings associated with a prediction.
 
 The recommendation therefore remains separate from the ML model:
 
@@ -268,7 +237,7 @@ The recommendation therefore remains separate from the ML model:
   recommended for purchase.
 
 
-## 6. Recommendation Flow
+## 6. Planned Recommendation Flow
 
 RUL prediction alone does not directly select a product.
 
@@ -294,7 +263,7 @@ The resulting recommendations can then be displayed in the buyer portal.
 
 If the RUL service is unavailable or inference fails:
 
-- the failed prediction request is recorded;
+- the request returns an error and does not create a successful prediction;
 - no fabricated RUL value is generated;
 - existing marketplace functionality remains available;
 - the frontend receives an appropriate error response;
@@ -304,7 +273,7 @@ This keeps the AI component isolated from the core e-commerce workflow.
 
 ## 8. Scope
 
-This document defines the **integration contract and system responsibilities**.
-
-The actual trained model, preprocessing implementation, deployment configuration,
-and production inference service will be implemented separately.
+This document records the broader system design and current service boundary.
+The frozen model, preprocessing, FastAPI inference service, Express integration,
+and PostgreSQL persistence are implemented. The recommendation flow remains
+planned and deferred; see the [current RUL runtime contract](./README.md).

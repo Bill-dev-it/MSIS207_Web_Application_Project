@@ -4,9 +4,10 @@ Project documentation is organized by system area:
 
 - [Architecture](./architecture/README.md) — system design and editable diagram source.
 - [API](./api/README.md) — REST API design.
+- [Buyer integration](./buyer/README.md) — authenticated cart, checkout, orders, dashboard, engine records, and FD002 RUL prediction.
+- [Buyer RUL documentation](./rul/README.md) — canonical RUL documentation, public Express API, internal FastAPI service, model input contract, persistence, setup, scientific evaluation, and limitations.
 - [Database](./database/README.md) — schema and data pipeline documentation.
 - [Data](./data/README.md) — reference data architecture.
-- [RUL integration](./RUL_integration/README.md) — inference and recommendation integration.
 - [UI/UX](./ui-ux/README.md) — interface and experience design.
 - [DevOps](./devops/README.md) — project operations and delivery.
 

@@ -140,11 +140,12 @@ The RUL service connects aircraft condition monitoring with the marketplace.
 
 The prediction is stored in `rul_predictions`.
 
-The Recommendation Engine combines:
+The planned Recommendation Engine would combine:
 
 **RUL + Engine Compatibility + Inventory + Supplier Listings**
 
-to generate records in `replacement_recommendations`.
+to generate records in `replacement_recommendations`. This RUL-based
+recommendation flow is not implemented by the current Buyer RUL feature.
 
 ---
 
@@ -157,7 +158,11 @@ takes place:
 
 This creates the main end-to-end business flow of the platform:
 
-> **Engine Condition → Predictive Maintenance → Spare-Part Recommendation → B2B Procurement**
+> **Engine Condition → FD002 Demo Prediction → B2B Procurement**
+
+The demo prediction does not verify compatibility and does not create
+`replacement_recommendations`; standard marketplace procurement is a separate
+existing flow.
 
 ---
 
