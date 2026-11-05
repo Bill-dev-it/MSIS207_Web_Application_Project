@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "../auth/ProtectedRoute";
 import AdminHome from "../screens/admin/AdminHome";
-import BuyerHome from "../screens/buyer/BuyerHome";
 import Home from "../screens/public/Home";
 import Login from "../screens/auth/Login";
 import Register from "../screens/auth/Register";
@@ -22,10 +21,17 @@ import Recommendations from "../screens/admin/Admin_frontend_Code/Recommendation
 import AdminModeration from "../screens/admin/Admin_frontend_Code/AdminModeration";
 import AdminDashboard from "../screens/admin/Admin_frontend_Code/AdminDashboard";
 import AdminRULStatus from "../screens/admin/Admin_frontend_Code/AdminRULStatus";
-import MyEngines from "../screens/buyer/Frontend_code/MyEngines";
-import Orders from "../screens/buyer/Frontend_code/Orders";
-import OrderDetail from "../screens/buyer/Frontend_code/OrderDetail";
-import OrderConfirmation from "../screens/buyer/Frontend_code/OrderConfirmation";
+import BuyerDashboard from "../screens/buyer/BuyerDashboard";
+import MyEngines from "../screens/buyer/MyEngines";
+import EngineDetail from "../screens/buyer/EngineDetail";
+import CartPage from "../screens/buyer/CartPage";
+import CheckoutShippingPage from "../screens/buyer/CheckoutShippingPage";
+import CheckoutPaymentPage from "../screens/buyer/CheckoutPaymentPage";
+import CheckoutReviewPage from "../screens/buyer/CheckoutReviewPage";
+import OrdersPage from "../screens/buyer/OrdersPage";
+import OrderDetailPage from "../screens/buyer/OrderDetailPage";
+import OrderConfirmationPage from "../screens/buyer/OrderConfirmationPage";
+import RULAnalysis from "../screens/buyer/RULAnalysis";
 
 export default function AppRouter() {
   return (
@@ -43,13 +49,22 @@ export default function AppRouter() {
       </Route>
       <Route element={<ProtectedRoute roles={["BUYER"]} />}>
         <Route element={<BuyerLayout />}>
-          <Route path="/buyer" element={<BuyerHome />} />
+          <Route path="/buyer" element={<BuyerDashboard />} />
+          <Route path="/buyer/dashboard" element={<BuyerDashboard />} />
+          <Route path="/buyer/engines" element={<MyEngines />} />
+          <Route path="/buyer/engines/:engineId" element={<EngineDetail />} />
+          <Route path="/buyer/rul" element={<RULAnalysis />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout/shipping" element={<CheckoutShippingPage />} />
+          <Route path="/checkout/payment" element={<CheckoutPaymentPage />} />
+          <Route path="/checkout/review" element={<CheckoutReviewPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="/orders/:orderId/confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/buyer/orders" element={<Navigate to="/orders" replace />} />
+          <Route path="/buyer/orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="/buyer/order-confirmation" element={<Navigate to="/orders" replace />} />
         </Route>
-        <Route path="/buyer/engines" element={<MyEngines />} />
-        <Route path="/buyer/orders" element={<Orders />} />
-        <Route path="/buyer/orders/:orderId" element={<OrderDetail />} />
-        <Route path="/buyer/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/buyer/recommendations" element={<Recommendations />} />
       </Route>
       <Route
         element={

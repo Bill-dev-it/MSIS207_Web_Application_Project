@@ -41,3 +41,7 @@ backend/docs/apidoc/
 # Frontend local environment and build output
 /frontend/.env.local
 /frontend/dist/
+
+# Private Buyer sensor uploads and local RUL Python environment
+/backend/storage/rul/
+/rul-service/.venv/
