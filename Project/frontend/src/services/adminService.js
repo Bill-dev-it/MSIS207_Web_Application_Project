@@ -441,3 +441,84 @@ export async function fetchReplacementRecommendations(engineId = "ENG-037") {
   await new Promise((resolve) => setTimeout(resolve, 80));
   return { ...RECOMMENDATIONS_DATA, engineId };
 }
+
+/**
+ * Fetch suppliers for Admin Moderation.
+ *
+ * GET /api/v1/admin/suppliers
+ *
+ * @param {Object} params
+ * @param {string} params.status - PENDING, APPROVED, SUSPENDED or ALL
+ * @param {string} params.search - Search keyword
+ * @param {number} params.page - Page number
+ * @param {number} params.limit - Items per page
+ */
+export async function fetchAdminSuppliers({
+    status = "PENDING",
+    search = "",
+    page = 1,
+    limit = 10,
+} = {}) {
+    const queryParams = new URLSearchParams();
+
+    if (status && status !== "ALL") {
+        queryParams.set("status", status);
+    }
+
+    if (search.trim()) {
+        queryParams.set("search", search.trim());
+    }
+
+    queryParams.set("page", String(page));
+    queryParams.set("limit", String(limit));
+
+    const queryString = queryParams.toString();
+
+    return apiClient.get(
+        `/v1/admin/suppliers?${queryString}`
+    );
+}
+
+/**
+ * Fetch detailed supplier information.
+ *
+ * GET /api/v1/admin/suppliers/:supplierId
+ *
+ * @param {string|number} supplierId
+ */
+export async function fetchAdminSupplierDetail(supplierId) {
+    if (!supplierId) {
+        throw new Error("Supplier ID is required.");
+    }
+
+    return apiClient.get(
+        `/v1/admin/suppliers/${encodeURIComponent(supplierId)}`
+    );
+}
+
+/**
+ * Update supplier moderation status.
+ *
+ * PATCH /api/v1/admin/suppliers/:supplierId/status
+ *
+ * Allowed transitions are enforced by the Backend.
+ *
+ * @param {string|number} supplierId
+ * @param {"APPROVED"|"SUSPENDED"} status
+ */
+export async function updateSupplierStatus(supplierId, status) {
+    if (!supplierId) {
+        throw new Error("Supplier ID is required.");
+    }
+
+    const allowedStatuses = ["APPROVED", "SUSPENDED"];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new Error(`Invalid supplier target status: ${status}`);
+    }
+
+    return apiClient.patch(
+        `/v1/admin/suppliers/${encodeURIComponent(supplierId)}/status`,
+        { status }
+    );
+}

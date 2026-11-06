@@ -18,6 +18,7 @@ const enginesRoutes = require("./modules/buyers/engines/engines.routes");
 const rulRoutes = require("./modules/buyers/rul-analysis/rul.routes");
 
 const adminDashboardRoutes = require("./modules/admin/dashboard/dashboard.routes");
+const adminSupplierRoutes = require("./modules/admin/supplier/supplier.routes");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -100,6 +101,7 @@ app.use("/api/v1/engines", enginesRoutes);
 app.use("/api/v1/rul", rulRoutes);
 
 app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
+app.use("/api/v1/admin/suppliers", adminSupplierRoutes);
 
 if (process.env.NODE_ENV !== "production") {
   const path = require("path");
