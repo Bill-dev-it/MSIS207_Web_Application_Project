@@ -38,6 +38,18 @@ async function updateStatus(req, res) {
   try {
     const current = await service.getOne(req.supplierId, id);
     if (!current) return missing(res);
+    if (current.payment_status !== "SUCCEEDED") {
+      const cancelled = current.payment_status === "CANCELLED";
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: cancelled ? "PAYMENT_CANCELLED" : "PAYMENT_PENDING",
+          message: cancelled
+            ? "Cannot advance fulfillment because the order payment was cancelled."
+            : "Cannot advance fulfillment until the order payment is confirmed as SUCCEEDED.",
+        },
+      });
+    }
     const nextByStatus = { CONFIRMED: "PROCESSING", PROCESSING: "SHIPPED", SHIPPED: "DELIVERED" };
     if (nextByStatus[current.status] !== next) {
       return res.status(409).json({ success: false, error: { code: "INVALID_TRANSITION", message: "Order status must advance one step." } });

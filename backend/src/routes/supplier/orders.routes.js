@@ -13,6 +13,9 @@ const controller = require("../../controllers/supplier/orders.controller");
  * @apiSuccess {Object[]} data Supplier order rows with items.
  * @apiSuccess {String} data.order_number Order number.
  * @apiSuccess {String} data.status CONFIRMED, PROCESSING, SHIPPED or DELIVERED.
+ * @apiSuccess {String="SIMULATION","BANK_TRANSFER"} [data.payment_method] Order payment method.
+ * @apiSuccess {String="PENDING","SUCCEEDED","CANCELLED"} [data.payment_status] Order payment status.
+ * @apiSuccess {String} [data.paid_at] Payment timestamp when SUCCEEDED.
  * @apiSuccess {Object[]} data.items Purchased line item snapshots.
  * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
@@ -34,6 +37,9 @@ const controller = require("../../controllers/supplier/orders.controller");
  *           "shipping_fee": "35.00",
  *           "grand_total": "675.00",
  *           "currency": "USD",
+ *           "payment_method": "BANK_TRANSFER",
+ *           "payment_status": "PENDING",
+ *           "paid_at": null,
  *           "items": [
  *             {
  *               "order_item_id": "301",
@@ -89,6 +95,9 @@ router.get("/", controller.getAll);
  *         "shipping_fee": "35.00",
  *         "grand_total": "675.00",
  *         "currency": "USD",
+ *         "payment_method": "BANK_TRANSFER",
+ *         "payment_status": "PENDING",
+ *         "paid_at": null,
  *         "items": [
  *           {
  *             "order_item_id": "301",
@@ -129,6 +138,7 @@ router.get("/:sellerOrderId", controller.getOne);
  * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
  * @apiError (404 Not Found) ORDER_NOT_FOUND Missing or not owned.
  * @apiError (409 Conflict) INVALID_TRANSITION Not the next permitted status.
+ * @apiError (409 Conflict) PAYMENT_PENDING or PAYMENT_CANCELLED Order payment is not SUCCEEDED.
  * @apiError (409 Conflict) ORDER_CHANGED Order changed concurrently.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
@@ -147,6 +157,9 @@ router.get("/:sellerOrderId", controller.getOne);
  *         "shipping_fee": "35.00",
  *         "grand_total": "675.00",
  *         "currency": "USD",
+ *         "payment_method": "BANK_TRANSFER",
+ *         "payment_status": "PENDING",
+ *         "paid_at": null,
  *         "items": [
  *           {
  *             "order_item_id": "301",
