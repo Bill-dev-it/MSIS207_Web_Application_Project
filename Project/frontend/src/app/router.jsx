@@ -13,7 +13,7 @@ import { MyEngines, EngineDetail } from "../features/buyer/engines";
 import { RULAnalysis } from "../features/buyer/rul-analysis";
 import AdminHome from "../features/admin/dashboard/AdminHome";
 import Home from "../screens/public/Home";
-import Login from "../screens/public/Login";
+import Login from "../screens/auth/Login";
 import Register from "../screens/auth/Register";
 import VerifyEmail from "../screens/auth/VerifyEmail";
 import Forbidden from "../screens/public/Forbidden";
