@@ -1,32 +1,160 @@
-name: CI
+name: AeroRUL CI
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
+      - Bao_Chinh_main
+      - week-3
       - main
+  pull_request:
+    branches:
+      - Bao_Chinh_main
+      - week-3
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  validate-repository-structure:
-    name: Validate repository structure
+  repository-structure:
+    name: Repository structure
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - name: Check required directories
+      - name: Verify tracked project layout
         shell: bash
         run: |
           set -euo pipefail
+          for dir in frontend backend rul-service data database docs; do
+            test -d "$dir" || { echo "::error::Missing directory: $dir"; exit 1; }
+          done
+          for file in \
+            frontend/package-lock.json \
+            backend/package-lock.json \
+            database/schema/01_schema.sql \
+            database/migrations/04_b2b_payment_mvp.sql \
+            rul-service/checksums.sha256; do
+            test -f "$file" || { echo "::error::Missing file: $file"; exit 1; }
+          done
+          echo 'Project layout verified.'
 
-          required_dirs=(frontend backend rul-service data docs)
-          for dir in "${required_dirs[@]}"; do
-            if [[ ! -d "$dir" ]]; then
-              echo "::error::Required directory '$dir' is missing."
-              exit 1
-            fi
+      - name: Block tracked private environment files
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracked_env_files="$(git ls-files | grep -E '(^|/)\.env(\.|$)' | grep -v -E '(^|/)\.env\.example$' || true)"
+          if [[ -n "$tracked_env_files" ]]; then
+            echo '::error::Private .env files must not be committed.'
+            printf '%s\n' "$tracked_env_files"
+            exit 1
+          fi
+          echo 'No tracked private .env files.'
+
+  backend:
+    name: Backend - syntax, unit tests, APIDoc
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Check backend JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find src -type f -name '*.js' -print0 | xargs -0 -r -n 1 node --check
+
+      - name: Run offline Node.js unit tests
+        run: node --test tests/*.test.cjs
+
+      - name: Generate and validate API reference
+        run: npm run doc
+
+  frontend:
+    name: Frontend - unit tests and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Run offline frontend unit tests
+        run: node --test tests/*.test.mjs
+
+      - name: Build production frontend
+        run: npm run build
+
+  rul-integrity:
+    name: RUL - package integrity and Python syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Compile Python source without inference
+        run: python -m compileall -q rul-service
+
+      - name: Validate RUL JSON metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in \
+            rul-service/inference_contract.json \
+            rul-service/manifest.json \
+            rul-service/checkpoints/checkpoint_metadata.json \
+            rul-service/model/config.json \
+            rul-service/preprocessing/scaler_artifacts.json; do
+            python -m json.tool "$path" > /dev/null
           done
 
-          echo "Repository structure validation passed."
+      - name: Verify frozen model package checksums
+        working-directory: rul-service
+        run: sha256sum --check checksums.sha256
