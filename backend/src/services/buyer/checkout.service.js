@@ -3,6 +3,7 @@
 const repository = require("./checkout.repository");
 
 const MAX_ID = 9223372036854775807n;
+const PAYMENT_METHODS = new Set(["SIMULATION", "BANK_TRANSFER"]);
 const ADDRESS_FIELDS = new Set([
   "recipient_name", "phone", "address_line", "city",
   "region", "postal_code", "country_code",
@@ -82,8 +83,8 @@ async function placeOrder(details) {
       (typeof details.purchaseReference !== "string" || details.purchaseReference.trim().length > 100)) {
     failure(400, "INVALID_PURCHASE_REFERENCE", "Purchase reference must be at most 100 characters.");
   }
-  if (details.paymentMethod !== "SIMULATION") {
-    failure(400, "UNSUPPORTED_PAYMENT_METHOD", "Only simulated payment is available.");
+  if (!PAYMENT_METHODS.has(details.paymentMethod)) {
+    failure(400, "UNSUPPORTED_PAYMENT_METHOD", "Payment method must be SIMULATION or BANK_TRANSFER.");
   }
   return repository.placeOrderTransaction({
     ...details,

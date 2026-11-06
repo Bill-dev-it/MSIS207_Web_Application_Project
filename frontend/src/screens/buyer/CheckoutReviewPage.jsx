@@ -97,6 +97,7 @@ export default function CheckoutReviewPage() {
                 onPlaceOrder={handlePlaceOrder}
                 isSubmitting={isSubmitting}
                 disabled={items.length === 0}
+                paymentMethodId={paymentMethodId}
               />
 
               {/* Navigation Back */}

@@ -1,8 +1,23 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import reviewApi from "../services/reviewApi";
+import { isSupportedPaymentMethod } from "../../payment/services/paymentApi";
 import { useCart } from "../../../cart";
 
 const CHECKOUT_KEY_STORAGE = "aerorul_checkout_key";
+const CHECKOUT_KEY_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
+const POSITIVE_BIGINT_PATTERN = /^[1-9]\d*$/;
+const MAX_BIGINT = 9223372036854775807n;
+
+function isValidBigIntId(value) {
+  if (typeof value !== "string" || !POSITIVE_BIGINT_PATTERN.test(value)) {
+    return false;
+  }
+  try {
+    return BigInt(value) <= MAX_BIGINT;
+  } catch {
+    return false;
+  }
+}
 
 function createCheckoutKey() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -22,7 +37,7 @@ export function useCheckoutReview() {
   const [submitError, setSubmitError] = useState("");
   const checkoutKey = useMemo(() => {
     const stored = sessionStorage.getItem(CHECKOUT_KEY_STORAGE);
-    if (stored) return stored;
+    if (stored && CHECKOUT_KEY_PATTERN.test(stored)) return stored;
     const key = createCheckoutKey();
     sessionStorage.setItem(CHECKOUT_KEY_STORAGE, key);
     return key;
@@ -43,12 +58,19 @@ export function useCheckoutReview() {
         reviewApi.getCompany({ signal }),
       ]);
       if (signal?.aborted) return;
-      const selectedAddress = addresses.find(
-        (candidate) => String(candidate.address_id) === String(addressId)
-      );
+      const normalizedAddressId = String(addressId ?? "").trim();
+      const selectedAddress = isValidBigIntId(normalizedAddressId)
+        ? addresses.find(
+            (candidate) => String(candidate.address_id) === normalizedAddressId
+          )
+        : null;
       const selectedDelivery = methods.find((method) => method.id === deliveryMethodId);
       if (!selectedAddress || !selectedDelivery) {
         setError("Checkout details are missing. Return to shipping and select a saved address and delivery option.");
+        return;
+      }
+      if (!isSupportedPaymentMethod(paymentMethodId)) {
+        setError("Payment method is missing or unsupported. Return to payment and choose Simulated Payment or Bank Transfer (Demo).");
         return;
       }
       setAddress(selectedAddress);
@@ -59,7 +81,7 @@ export function useCheckoutReview() {
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, [addressId, deliveryMethodId]);
+  }, [addressId, deliveryMethodId, paymentMethodId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -68,19 +90,21 @@ export function useCheckoutReview() {
   }, [loadReviewData]);
 
   const placeOrder = async () => {
-    if (!address?.address_id || !deliveryMethod?.id) {
+    const shippingAddressId = String(address?.address_id ?? "").trim();
+    if (!isValidBigIntId(shippingAddressId) || !deliveryMethod?.id) {
       setSubmitError("Checkout details are missing. Please return to Shipping.");
       return null;
     }
-    if (paymentMethodId !== "SIMULATION") {
-      setSubmitError("Only the development payment simulation is supported.");
+    if (!isSupportedPaymentMethod(paymentMethodId)) {
+      setSubmitError("Select a supported payment method (Simulated Payment or Bank Transfer (Demo)).");
       return null;
     }
     if (items.length === 0) {
       setSubmitError("Your cart is empty.");
       return null;
     }
-    if (purchaseReference.length > 100) {
+    const cleanPurchaseReference = purchaseReference.trim();
+    if (cleanPurchaseReference.length > 100) {
       setSubmitError("Purchase reference must be 100 characters or fewer.");
       return null;
     }
@@ -89,11 +113,11 @@ export function useCheckoutReview() {
       setIsSubmitting(true);
       setSubmitError("");
       const result = await reviewApi.placeOrder({
-        shipping_address_id: String(address.address_id),
-        billing_address_id: String(address.address_id),
+        shipping_address_id: shippingAddressId,
+        billing_address_id: shippingAddressId,
         delivery_method_id: deliveryMethod.id,
-        purchase_reference: purchaseReference.trim() || null,
-        payment_method: "SIMULATION",
+        purchase_reference: cleanPurchaseReference || null,
+        payment_method: paymentMethodId,
         checkout_key: checkoutKey,
       });
 

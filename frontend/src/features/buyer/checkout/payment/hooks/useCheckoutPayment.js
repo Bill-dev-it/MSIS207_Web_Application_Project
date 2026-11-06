@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import paymentApi from "../services/paymentApi";
+import paymentApi, { isSupportedPaymentMethod } from "../services/paymentApi";
 import shippingApi from "../../shipping/services/shippingApi";
+
+const PAYMENT_STORAGE_KEY = "aerorul_checkout_payment_id";
+
+function getInitialPaymentMethodId() {
+  const stored = sessionStorage.getItem(PAYMENT_STORAGE_KEY);
+  if (isSupportedPaymentMethod(stored)) {
+    return stored;
+  }
+  return "SIMULATION";
+}
 
 export function useCheckoutPayment() {
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -9,9 +19,7 @@ export function useCheckoutPayment() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [selectedMethodId, setSelectedMethodId] = useState(() => {
-    return sessionStorage.getItem("aerorul_checkout_payment_id") || "SIMULATION";
-  });
+  const [selectedMethodId, setSelectedMethodId] = useState(getInitialPaymentMethodId);
 
   const loadData = useCallback(async (signal) => {
     try {
@@ -27,10 +35,16 @@ export function useCheckoutPayment() {
       setCompany(comp);
       setDeliveryMethods(deliveries);
 
-      const selectedMethod = methods.find((method) => method.id === "SIMULATION");
-      if (!selectedMethod) throw new Error("Simulated payment is not available.");
-      setSelectedMethodId("SIMULATION");
-      sessionStorage.setItem("aerorul_checkout_payment_id", "SIMULATION");
+      const storedMethodId = sessionStorage.getItem(PAYMENT_STORAGE_KEY);
+      const validStoredMethod = methods.find((method) => method.id === storedMethodId);
+      const fallbackMethod =
+        methods.find((method) => method.id === "SIMULATION") || methods[0];
+      const activeMethod = validStoredMethod || fallbackMethod;
+      if (!activeMethod) {
+        throw new Error("No supported payment methods are available.");
+      }
+      setSelectedMethodId(activeMethod.id);
+      sessionStorage.setItem(PAYMENT_STORAGE_KEY, activeMethod.id);
 
       const storedDeliveryId = sessionStorage.getItem("aerorul_checkout_delivery_id");
       const selectedDelivery = deliveries.find((method) => method.id === storedDeliveryId) || deliveries[0];
@@ -51,9 +65,9 @@ export function useCheckoutPayment() {
   }, [loadData]);
 
   const selectPaymentMethod = (id) => {
-    if (id !== "SIMULATION") return;
+    if (!isSupportedPaymentMethod(id)) return;
     setSelectedMethodId(id);
-    sessionStorage.setItem("aerorul_checkout_payment_id", id);
+    sessionStorage.setItem(PAYMENT_STORAGE_KEY, id);
   };
 
   const selectedDeliveryMethod =

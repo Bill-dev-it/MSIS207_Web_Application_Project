@@ -4,8 +4,10 @@ export default function PlaceOrderButton({
   onPlaceOrder,
   isSubmitting = false,
   disabled = false,
+  paymentMethodId = "SIMULATION",
 }) {
   const [agreed, setAgreed] = useState(false);
+  const isBankTransfer = paymentMethodId === "BANK_TRANSFER";
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-4">
@@ -17,8 +19,9 @@ export default function PlaceOrderButton({
           className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 mt-0.5"
         />
         <span className="text-xs text-slate-600 leading-relaxed">
-          I confirm the shipping and billing information is accurate. I understand payment is
-          simulated and no real funds will be collected.
+          {isBankTransfer
+            ? "I confirm the shipping and billing information is accurate. I understand this Bank Transfer (Demo) order will be recorded as PENDING until confirmed by an administrator, and that no real money should be transferred."
+            : "I confirm the shipping and billing information is accurate. I understand payment is a demonstration simulation and no real funds will be collected."}
         </span>
       </label>
 
@@ -44,7 +47,9 @@ export default function PlaceOrderButton({
       </button>
 
       <p className="text-center text-[11px] text-slate-400">
-        Order and inventory updates are saved together. Payment is simulated; no funds are transferred.
+        {isBankTransfer
+          ? "Order and inventory reservations are saved together with payment PENDING. Demo only — do not transfer real money."
+          : "Order and inventory updates are saved together. Payment is simulated; no funds are transferred."}
       </p>
     </div>
   );

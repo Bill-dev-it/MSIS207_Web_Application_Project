@@ -19,6 +19,32 @@ const DELIVERY_METHODS = [
     description: "Demonstration-only freight estimate; not a carrier quote.",
   },
 ];
+const SUPPORTED_PAYMENT_METHODS = new Set(["SIMULATION", "BANK_TRANSFER"]);
+
+function formatOrderWithPayment(order, payment) {
+  return {
+    order_id: order.order_id,
+    order_number: order.order_number,
+    checkout_key: order.checkout_key,
+    grand_total: order.grand_total,
+    currency: order.currency,
+    created_at: order.created_at,
+    payment_method: payment ? payment.payment_method : null,
+    payment_status: payment ? payment.status : null,
+    paid_at: payment ? payment.paid_at : null,
+    payment: payment
+      ? {
+          payment_id: payment.payment_id,
+          order_id: order.order_id,
+          payment_method: payment.payment_method,
+          amount: payment.amount,
+          status: payment.status,
+          paid_at: payment.paid_at,
+          transfer_reference: order.order_number,
+        }
+      : null,
+  };
+}
 
 function getDeliveryMethod(id) {
   return DELIVERY_METHODS.find((method) => method.id === id) || null;
@@ -86,8 +112,8 @@ async function placeOrderTransaction({
 }) {
   const deliveryMethod = getDeliveryMethod(deliveryMethodId);
   if (!deliveryMethod) throw failure(400, "INVALID_DELIVERY_METHOD", "Select a supported delivery option.");
-  if (paymentMethod !== "SIMULATION") {
-    throw failure(400, "UNSUPPORTED_PAYMENT_METHOD", "Only simulated payment is available.");
+  if (!SUPPORTED_PAYMENT_METHODS.has(paymentMethod)) {
+    throw failure(400, "UNSUPPORTED_PAYMENT_METHOD", "Payment method must be SIMULATION or BANK_TRANSFER.");
   }
 
   const client = await pool.connect();
@@ -104,14 +130,31 @@ async function placeOrderTransaction({
     const cartId = cartResult.rows[0].cart_id;
 
     const existing = await client.query(`
-      SELECT order_id, order_number, checkout_key, grand_total, currency, created_at
-      FROM orders
-      WHERE placed_by = $1 AND buyer_company_id = $2 AND checkout_key = $3
+      SELECT o.order_id, o.order_number, o.checkout_key, o.grand_total, o.currency, o.created_at,
+             p.payment_id, p.payment_method, p.amount, p.status, p.paid_at
+      FROM orders o
+      LEFT JOIN payments p ON p.order_id = o.order_id
+      WHERE o.placed_by = $1 AND o.buyer_company_id = $2 AND o.checkout_key = $3
     `, [userId, companyId, checkoutKey]);
     if (existing.rowCount) {
+      const row = existing.rows[0];
       await client.query("COMMIT");
       transactionOpen = false;
-      return { order: existing.rows[0], created: false };
+      return {
+        order: formatOrderWithPayment(
+          row,
+          row.payment_id
+            ? {
+                payment_id: row.payment_id,
+                payment_method: row.payment_method,
+                amount: row.amount,
+                status: row.status,
+                paid_at: row.paid_at,
+              }
+            : null
+        ),
+        created: false,
+      };
     }
 
     const companyResult = await client.query(
@@ -252,14 +295,25 @@ async function placeOrderTransaction({
       }
     }
 
-    await client.query(`
-      INSERT INTO payments (order_id, payment_method, amount, status)
-      VALUES ($1, 'SIMULATION', $2, 'SUCCEEDED')
-    `, [order.order_id, centsToMoney(grandTotalCents)]);
+    const paymentStatus = paymentMethod === "SIMULATION" ? "SUCCEEDED" : "PENDING";
+    const paymentResult = await client.query(`
+      INSERT INTO payments (order_id, payment_method, amount, status, paid_at)
+      VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        CASE WHEN $4 = 'SUCCEEDED' THEN CURRENT_TIMESTAMP ELSE NULL END
+      )
+      RETURNING payment_id, order_id, payment_method, amount, status, paid_at
+    `, [order.order_id, paymentMethod, centsToMoney(grandTotalCents), paymentStatus]);
     await client.query("DELETE FROM cart_items WHERE cart_id = $1", [cartId]);
     await client.query("COMMIT");
     transactionOpen = false;
-    return { order, created: true };
+    return {
+      order: formatOrderWithPayment(order, paymentResult.rows[0]),
+      created: true,
+    };
   } catch (error) {
     if (transactionOpen) await client.query("ROLLBACK");
     throw error;

@@ -4,6 +4,7 @@ import CheckoutOrderSummary from "../../features/buyer/checkout/components/Check
 import PaymentMethodSelector from "../../features/buyer/checkout/payment/components/PaymentMethodSelector";
 import BillingInformation from "../../features/buyer/checkout/payment/components/BillingInformation";
 import { useCheckoutPayment } from "../../features/buyer/checkout/payment/hooks/useCheckoutPayment";
+import { isSupportedPaymentMethod } from "../../features/buyer/checkout/payment/services/paymentApi";
 import { useCart } from "../../features/buyer/cart";
 
 export default function CheckoutPaymentPage() {
@@ -19,8 +20,13 @@ export default function CheckoutPaymentPage() {
     selectPaymentMethod,
   } = useCheckoutPayment();
 
+  const canContinue =
+    isSupportedPaymentMethod(selectedMethodId) &&
+    Boolean(selectedDeliveryMethod) &&
+    items.length > 0;
+
   const handleContinue = () => {
-    if (selectedMethodId !== "SIMULATION" || !selectedDeliveryMethod) {
+    if (!canContinue) {
       return;
     }
     navigate("/checkout/review");
@@ -35,10 +41,10 @@ export default function CheckoutPaymentPage() {
         {/* Heading */}
         <div className="mb-8">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Payment simulation
+            Payment Method (Demo)
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Review the development-only payment simulation and the selected freight estimate.
+            Choose between Simulated Payment and Bank Transfer (Demo) and review your freight estimate.
           </p>
         </div>
 
@@ -91,7 +97,7 @@ export default function CheckoutPaymentPage() {
                 <button
                   type="button"
                   onClick={handleContinue}
-                  disabled={selectedMethodId !== "SIMULATION" || !selectedDeliveryMethod || items.length === 0}
+                  disabled={!canContinue}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition shadow-sm flex items-center gap-2 cursor-pointer"
                 >
                   <span>Continue to Review</span>
