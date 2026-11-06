@@ -125,7 +125,7 @@ seller_listings
 product_engine_compatibility
 ```
 
-Gold data can then be loaded into PostgreSQL as seed/reference data.
+Gold data can then be loaded into PostgreSQL as seed/reference data using [`database/seed/load_gold.py`](../../database/seed/load_gold.py). For the complete table-by-table column specification and foreign-key load order, see [`GOLD_SEED_MAPPING.md`](./GOLD_SEED_MAPPING.md).
 
 Unlike an analytical data warehouse, the Gold layer in this project represents
 **application-ready operational data**, not analytical data marts.
@@ -173,16 +173,28 @@ existing flow.
 ```text
 database/
 ├── README.md
-├── database-schema.dbml
-└── ERD_B2B_ecommerce_Website.png
+├── schema/
+│   └── 01_schema.sql
+├── migrations/
+│   └── 04_b2b_payment_mvp.sql
+├── authentication/
+│   ├── 01_authentication_setup.sql
+│   ├── 02_authentication_validation.sql
+│   └── README.md
+├── seed/
+│   ├── 03_ml_model_version_seed.sql
+│   └── load_gold.py
+└── validation/
+    └── 03_validation.sql
 
-data/
-├── bronze/
-├── silver/
-└── gold/
+docs/database/
+├── README.md
+├── GOLD_SEED_MAPPING.md
+├── database-schema.dbml
+└── images/
 ```
 
-The `bronze`, `silver`, and `gold` directories represent the transformation
+The `bronze`, `silver`, and `gold` directories under `data/etl/` represent the transformation
 stages used before application-ready data is loaded into PostgreSQL.
 
 
