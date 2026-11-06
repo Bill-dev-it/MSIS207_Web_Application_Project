@@ -6,13 +6,13 @@ AeroRUL is an AI-enhanced B2B aviation parts marketplace that connects airlines
 and Maintenance, Repair, and Overhaul (MRO) organizations with aviation parts
 suppliers.
 
-The platform integrates conventional B2B procurement with Remaining Useful Life
-(RUL) predictions to support maintenance planning and replacement-part
-recommendations.
+The platform integrates conventional B2B procurement with a simulated
+Remaining Useful Life (RUL) workflow for educational maintenance planning.
+RUL-based replacement recommendations are deferred.
 
 The system is organized around a **React/Vite frontend, a
-Node.js/Express modular monolith, PostgreSQL transactional storage, and an
-independent Python/FastAPI inference service**.
+Node.js/Express modular monolith, PostgreSQL transactional storage, and a
+private Python/FastAPI inference service for the integrated RUL model**.
 
 The architecture separates user interfaces, business logic, persistent data,
 and AI inference while maintaining a single backend entry point for application
@@ -53,16 +53,20 @@ checkout process.
 Buyers browse aviation parts, compare available supplier listings, and place
 orders through the marketplace.
 
-### Path B — AI-Assisted Procurement
+### Path B — Buyer RUL Simulation
 
-**Buyer → Aircraft Engine → Sensor Data Upload → RUL Inference → Replacement
-Recommendations → Shared Cart → Checkout**
+**Buyer → Company Engine → FD002 Simulation CSV → RUL Inference → Saved
+Prediction History**
 
-Buyers upload engine sensor data to obtain RUL predictions. The backend combines
-prediction results with compatibility information and available supplier
-listings to generate replacement recommendations.
+Buyers associate a selected company-owned engine with one simulated NASA
+C-MAPSS FD002 unit. The Express backend invokes the frozen Python model and
+stores the successful prediction. This association does not establish that the
+CSV is real aircraft telemetry or that a marketplace listing is compatible.
+RUL-based replacement recommendations are deferred.
 
-Both paths use the same checkout transaction and order-processing workflow.
+Standard procurement uses the shared cart and checkout. RUL results do not
+automatically create orders, supplier recommendations, or compatibility
+claims.
 
 ## 4. Architecture Components
 
@@ -72,12 +76,11 @@ The frontend provides role-based interfaces for buyers, suppliers, and
 administrators.
 
 Core functionality includes marketplace browsing, supplier listings, cart and
-checkout, order management, engine management, RUL analysis, and replacement
-recommendations.
+checkout, order management, engine management, and RUL analysis. RUL-based
+replacement recommendations remain future work.
 
 The React application communicates with the Express backend through HTTP REST
-APIs. It does not connect directly to PostgreSQL or the FastAPI inference
-service.
+APIs. It does not connect directly to PostgreSQL or invoke the Python model.
 
 ### Backend — Node.js/Express
 
@@ -87,11 +90,11 @@ microservices.
 
 Its responsibilities include authentication, organization-based access
 control, catalog and supplier listings, inventory, cart and checkout, order
-fulfillment, fleet management, RUL orchestration, and replacement
-recommendations.
+fulfillment, fleet management, and RUL orchestration. RUL-based replacement
+recommendations are not part of the current runtime.
 
-The backend is the main application API and coordinates database operations and
-external service communication.
+The backend is the main application API and coordinates database operations
+and internal FastAPI HTTP inference for RUL requests.
 
 ### Database — PostgreSQL
 
@@ -108,26 +111,41 @@ coordinate order creation and inventory updates.
 
 For schema details, see the [Database Documentation](../database/README.md).
 
-### AI Inference — Python/FastAPI
+### AI Inference — Internal FastAPI Service
 
-The FastAPI service is responsible for processing sensor input and executing
-the trained RUL model. Its responsibilities include input validation, sensor
-preprocessing, model loading, and inference.
+The current RUL request path is:
 
-FastAPI returns prediction results to Express. It does not directly manage
-orders, inventory, supplier listings, or PostgreSQL business transactions.
+```text
+React Buyer UI -> Express Buyer REST API -> internal FastAPI REST API -> model
+```
 
-### Replacement Recommendation Logic
+Express enforces session authorization and engine-company ownership, validates
+the public upload contract, handles idempotency, and persists successful
+uploads/predictions in the existing PostgreSQL schema. It sends raw CSV to
+`rul-service/api.py` over an authenticated internal HTTP request. FastAPI loads
+the frozen checkpoint and scaler once per worker at startup, validates the
+model-specific inputs, preprocesses them and runs the existing
+Condition-Aware iTransformer. It has no Buyer database or authentication
+responsibility. The standalone `predict_cli.py` remains for offline use and is
+not invoked by the normal web prediction path.
 
-Replacement recommendations are managed by Express.
+The internal FastAPI endpoints are `GET /health`, `GET /v1/model-info`, and
+`POST /v1/predict`. They require the shared `RUL_SERVICE_TOKEN`. Locally the
+service binds to `127.0.0.1:8000`; deployments must keep it on a private service
+network and use HTTPS for remote service-to-service traffic. React calls only
+the public Express API.
 
-The recommendation process combines RUL predictions with engine-part
-compatibility, active supplier listings, and inventory availability.
-Recommended listings can be added to the same shopping cart used by standard
-marketplace purchases.
+### Replacement Recommendations
 
-The C-MAPSS-based RUL workflow uses demonstration data and must not be
-interpreted as a certified aircraft maintenance diagnosis.
+The Replace & Buy MVP recommends up to five ENGINE listings after a successful
+Buyer RUL prediction, using exact engine-model compatibility records,
+approved Supplier listings, positive stock, and deterministic price/lead-time
+ranking. Evidence may be demo-only and is not certified installation
+approval. Trade-in, buyback, old-asset collection, valuation, and exchange
+credit remain out of scope.
+
+The C-MAPSS FD002 RUL workflow uses simulated data and must not be interpreted
+as actual aircraft telemetry or a certified maintenance diagnosis.
 
 ### Data Engineering
 
@@ -162,16 +180,17 @@ Offline ETL and data-init details are documented separately under [Data Engineer
 ## 6. Deployment Architecture
 
 The architecture separates frontend hosting, backend execution, database
-persistence, and AI inference.
+persistence, and Python inference. Express communicates with the internal
+FastAPI inference service over HTTP.
 
 | Component | Technology / Hosting |
 |---|---|
 | Frontend | React/Vite — Vercel |
 | Backend | Node.js/Express — Render |
 | Database | PostgreSQL — managed database hosting |
-| AI Inference | Python/FastAPI — Docker container |
+| AI Inference | Private Python/FastAPI HTTP service called by Express |
 | Edge | Cloudflare DNS/TLS |
-| Object Storage | Private storage for sensor files and model artifacts |
+| RUL files | Private backend filesystem path; external object storage is future deployment work |
 
 Hosting and storage configurations are documented separately in
 [DevOps](../devops/README.md).
@@ -182,7 +201,7 @@ Hosting and storage configurations are documented separately in
 - [REST API](../api/README.md)
 - [Database Design](../database/README.md)
 - [Data Engineering](../data/README.md)
-- [RUL Integration](../RUL_integration/README.md)
+- [RUL System Design](../rul/SYSTEM_DESIGN.md)
 - [UI/UX Design](../ui-ux/README.md)
 - [DevOps & Deployment](../devops/README.md)
 

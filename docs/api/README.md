@@ -1,326 +1,193 @@
 # REST API Design
 
-This document defines the REST API structure for the Aviation B2B E-Commerce Platform.
+The Express API connects the React application to PostgreSQL-backed public,
+Authentication, Supplier and Buyer workflows. For Buyer RUL prediction,
+Express calls the internal FastAPI service, which runs the frozen FD002 model;
+RUL-based part recommendations remain deferred.
 
-The API acts as the communication layer between the React frontend, PostgreSQL database, and the AI/RUL service.
+## Related documentation
 
-## Related architecture diagrams
+- [Buyer integration](../buyer/README.md)
+- [Architecture overview](../architecture/README.md)
+- [Authentication design](../auth/AUTHENTICATION_DESIGN.md)
 
-The API design is best understood together with the architecture views below:
+## Base URL and responses
 
-- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall platform boundaries and the two procurement paths.
-- [03 — REST API & Backend](<../architecture/diagrams/System_Design_ver 1.0-03 REST API & Backend.drawio.svg>) — Express modules, business boundaries, and service interactions.
-- [07 — End-to-End Integration](<../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — request flow across the frontend, backend, database, and RUL service.
+The API base path is `/api/v1`. Requests and responses normally use JSON; the
+Buyer RUL prediction endpoint accepts a raw `text/csv` request body.
 
-See also: [Architecture overview](../architecture/README.md).
+Successful responses use `{ "success": true, "data": ... }`; list endpoints may
+also return `count` and/or `meta`. Errors use
+`{ "success": false, "error": { "code": "...", "message": "..." } }`.
 
-## Base URL
+## Authentication and mutations
 
-```text
-/api/v1
-```
+Protected endpoints use the JWT in the browser-managed HttpOnly session cookie.
+These APIs do not use Bearer tokens. Frontend code must not read or store the
+JWT. Authenticated mutations include `X-AeroRUL-Request: 1`, which is checked
+alongside the request origin by the existing trusted-mutation middleware.
+Buyer requests are authorized from the verified session role and identity;
+role authorization and ownership are enforced by the backend, not by client
+supplied user or company IDs.
 
-All API requests and responses use JSON unless otherwise specified.
+## Implemented endpoint overview
 
-## Authentication
-
-Protected endpoints require a JWT access token:
-
-```http
-Authorization: Bearer <access_token>
-```
-
-The platform supports three main user roles:
-
-- Buyer
-- Supplier
-- Administrator
-
-## Standard Response Format
-
-Successful response:
-
-```json
-{
-  "success": true,
-  "data": {}
-}
-```
-
-Error response:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "RESOURCE_NOT_FOUND",
-    "message": "Requested resource was not found."
-  }
-}
-```
-
-## API Endpoint Overview
+Paths in this table are relative to `/api/v1`.
 
 | Module | Method | Endpoint | Access | Purpose |
 |---|---|---|---|---|
-| Authentication | POST | `/auth/register` | Public | Register a new account |
-| Authentication | POST | `/auth/login` | Public | Authenticate user |
-| Authentication | GET | `/auth/me` | Authenticated | Get current user |
-| Products | GET | `/products` | Public | Browse and search products |
-| Products | GET | `/products/:productId` | Public | View product details |
-| Listings | GET | `/products/:productId/listings` | Public | View seller offers |
-| Supplier | GET | `/supplier/listings` | Supplier | View own listings |
-| Supplier | POST | `/supplier/listings` | Supplier | Create a seller listing |
-| Supplier | PATCH | `/supplier/listings/:listingId` | Supplier | Update a listing |
-| Cart | GET | `/cart` | Buyer | View shopping cart |
-| Cart | POST | `/cart/items` | Buyer | Add listing to cart |
-| Cart | PATCH | `/cart/items/:cartItemId` | Buyer | Change quantity |
-| Cart | DELETE | `/cart/items/:cartItemId` | Buyer | Remove cart item |
-| Orders | POST | `/orders` | Buyer | Create an order |
-| Orders | GET | `/orders` | Buyer | View order history |
-| Orders | GET | `/orders/:orderId` | Buyer | View order details |
-| Aircraft | GET | `/aircraft` | Buyer | View company aircraft |
-| Aircraft | GET | `/aircraft/:aircraftId` | Buyer | View aircraft details |
-| Engines | GET | `/aircraft/:aircraftId/engines` | Buyer | View aircraft engines |
-| Engines | GET | `/engines/:engineId` | Buyer | View engine details |
-| RUL | POST | `/engines/:engineId/rul-predictions` | Buyer | Request RUL prediction |
-| RUL | GET | `/engines/:engineId/rul-predictions/latest` | Buyer | Get latest RUL result |
-| Recommendation | GET | `/engines/:engineId/recommendations` | Buyer | Get recommended spare parts |
+| Authentication | POST | `/auth/register` | Public | Register a Buyer or Supplier account |
+| Authentication | POST | `/auth/login` | Public | Create an authenticated session |
+| Authentication | POST | `/auth/logout` | Authenticated | Revoke the current session |
+| Authentication | GET | `/auth/me` | Authenticated | Read the current session user |
+| Products | GET | `/products` | Public | Search and paginate active products |
+| Products | GET | `/products/filter-options` | Public | Read marketplace filter values |
+| Products | GET | `/products/:productId` | Public | View an active product |
+| Products | GET | `/products/:productId/listings` | Public | View active offers from approved Suppliers |
+| Supplier | — | See Supplier route annotations in `backend/src/routes/supplier/` | Supplier | Manage owned listings, inventory and orders |
+| Cart | GET | `/cart` | Buyer | Read the authenticated user's cart |
+| Cart | POST | `/cart/items` | Buyer | Add an available supplier listing |
+| Cart | PUT | `/cart/items/:cartItemId` | Buyer | Change an owned cart item quantity |
+| Cart | DELETE | `/cart/items/:cartItemId` | Buyer | Remove an owned cart item |
+| Cart | DELETE | `/cart` | Buyer | Clear the authenticated user's cart |
+| Checkout | GET | `/checkout/addresses` | Buyer | List company-owned addresses |
+| Checkout | POST | `/checkout/addresses` | Buyer | Save an address for the authenticated company |
+| Checkout | GET | `/checkout/delivery-methods` | Buyer | Read demonstration-only delivery estimates |
+| Checkout | GET | `/checkout/company` | Buyer | Read the authenticated Buyer company |
+| Checkout | POST | `/checkout/orders` | Buyer | Place an order from the authenticated cart (`SIMULATION` or `BANK_TRANSFER`) |
+| Admin Payments | POST | `/admin/payments/:orderId/confirm` | Admin | Confirm a `PENDING` `BANK_TRANSFER` payment (`SUCCEEDED`) |
+| Admin Payments | POST | `/admin/payments/:orderId/cancel` | Admin | Cancel a `PENDING` `BANK_TRANSFER` payment (`CANCELLED`) and restore reserved stock |
+| Orders | GET | `/orders` | Buyer | Search/filter company orders |
+| Orders | GET | `/orders/:orderId` | Buyer | Read company-scoped order details |
+| Orders | GET | `/orders/:orderId/confirmation` | Buyer | Read company-scoped order confirmation |
+| Dashboard | GET | `/dashboard/summary` | Buyer | Read company and user-specific summary data |
+| Dashboard | GET | `/dashboard/engine-health` | Buyer | Read company engines and stored predictions |
+| Dashboard | GET | `/dashboard/recent-orders` | Buyer | Read recent company orders |
+| Engines | GET | `/engines` | Buyer | Search/filter company-owned engines |
+| Engines | GET | `/engines/:engineId` | Buyer | Read company-scoped engine details |
+| Engines | GET | `/engines/:engineId/sensor-uploads` | Buyer | Read company-scoped upload metadata |
+| RUL | POST | `/rul/engines/:engineId/predict` | Buyer | Validate a classified compatible sensor CSV, run local model inference and save the successful result |
+| RUL | GET | `/rul/engines/:engineId/history` | Buyer | List saved predictions for an engine owned by the company |
 
-## Product Marketplace
+Buyer routes require the authenticated `BUYER` role. Cart operations use the
+authenticated user ID; address, order, dashboard and engine access use the
+authenticated company ID. Clients cannot select another user or company by
+sending identity fields.
 
-The marketplace API allows buyers to browse aviation parts and compare offers
-from multiple suppliers.
+The Buyer route annotations document each method, request fields, access
+permission, response envelope and relevant error codes. Cart and checkout
+mutations use POST/PUT/DELETE request bodies where applicable. IDs backed by
+PostgreSQL `BIGINT` are sent as decimal strings.
 
-### Search Products
+## Marketplace contract
 
-```http
-GET /api/v1/products
-```
+`GET /api/v1/products` uses query parameters documented in
+`backend/src/routes/product-v1.routes.js` (`q`, `sort`, `filter`, `page`, and
+`per_page`). Product IDs and listing IDs are decimal strings because PostgreSQL
+uses BIGINT identifiers.
 
-Optional query parameters:
+## Checkout constraints
 
-```text
-search
-category
-manufacturer
-page
-limit
-```
+`POST /api/v1/checkout/orders` accepts saved address IDs belonging to the
+authenticated company, a supported delivery-estimate ID, a stable
+`checkout_key`, and `payment_method` (`"SIMULATION"` or `"BANK_TRANSFER"`). The
+server validates current offer status and stock, creates the order and seller
+orders, decrements stock, records the explicit payment state (`SUCCEEDED` with
+`paid_at` for development-only `SIMULATION`, or `PENDING` with `paid_at = NULL`
+for the `BANK_TRANSFER` manual reconciliation demonstration), and clears the
+cart in one transaction. Authorized `ADMIN` sessions can reconcile a `PENDING`
+`BANK_TRANSFER` order via `POST /api/v1/admin/payments/:orderId/confirm` or
+cancel it (atomically restoring reserved stock once) via
+`POST /api/v1/admin/payments/:orderId/cancel`. Supplier fulfillment transitions
+(`CONFIRMED -> PROCESSING -> SHIPPED -> DELIVERED`) require the order's payment
+`status` to be `SUCCEEDED`. AeroRUL does not collect cardholder data, integrate
+live card acquiring or banking rails, transfer real funds, or claim PCI DSS
+compliance. Delivery fees are demonstration estimates, not carrier quotes or
+guarantees; taxes are not calculated.
 
-Example:
+The checkout transaction creates one `orders` row and one `seller_orders` row
+per supplier represented in the cart, then writes the corresponding
+`order_items` snapshots. The unique `orders.order_number` constraint prevents
+duplicate order numbers; the unique `(placed_by, checkout_key)` constraint and
+cart-row lock make a retry by the same Buyer return its original order instead
+of charging or decrementing stock twice. Each `seller_orders` row is the
+Supplier-facing fulfillment record consumed by the existing Supplier Orders
+API. Buyers see company-scoped parent orders and their seller-order children;
+Suppliers see only seller orders for their authenticated Supplier identity.
 
-```http
-GET /api/v1/products?search=fuel+pump&page=1&limit=20
-```
+These are AeroRUL implementation choices for the project, not additional
+requirements attributed to the lecturer: Argon2id password hashing, JWT cookie
+storage, the CSRF request header, and the JSON envelope conventions.
 
-Example response:
+## Buyer RUL prediction
 
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "productId": 101,
-        "productName": "Aircraft Fuel Pump",
-        "partNumber": "AFP-1001",
-        "manufacturer": "Example Manufacturer"
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 1
-    }
-  }
-}
-```
+`POST /api/v1/rul/engines/:engineId/predict` accepts a raw UTF-8 `text/csv`
+request body, not JSON or multipart data. The authenticated Buyer selects a
+company-owned engine and must provide `X-RUL-Source` with one of
+`NASA_CMAPSS_FD002`, `CUSTOM_SYNTHETIC`, or `EXTERNAL_MAPPED`. The file must have
+the 19 required input columns, one unit, at least 30 observations, no
+ground-truth RUL labels, UTF-8 without BOM, and raw unscaled values in
+compatible physical units. The request is limited to 1 MiB and also requires
+`X-AeroRUL-Request: 1`, a safe `.csv` `X-RUL-Filename`, and a UUID
+`Idempotency-Key`. The browser includes the existing HttpOnly session cookie.
+The source classification is user-declared provenance, not verified by the
+server, and changing the source while reusing an idempotency key returns
+`409 IDEMPOTENCY_CONFLICT`.
 
-### View Seller Offers
+The Express Buyer route calls the internal FastAPI service over HTTP using the
+configured service address and shared service token. FastAPI loads the model
+and scaler once per worker; Express does not launch a Python process and no
+FastAPI route is exposed to the browser. Successful uploads are stored
+privately under `backend/storage/rul/<authenticated-user-id>/`; the SQL
+transaction creates a `sensor_uploads` row and a `rul_predictions` row using
+the existing schema. The upload classification is stored in the existing
+`sensor_uploads.dataset_subset` field; `ml_model_versions.dataset_subset`
+continues to identify the FD002-trained model. Prediction and history data
+return `source_classification` separately from the model's `dataset_subset`.
+A new prediction returns HTTP 201; a same-key, same-user, same-engine,
+same-content and same-source replay returns HTTP 200; reusing the key for
+different content or source returns HTTP 409. Oversized bodies and unsupported
+media types return the standard JSON error envelope. Historical uploads from
+before source classification was added return
+`source_classification: LEGACY_UNCLASSIFIED`; their stored `FD002` value is not treated as verified
+provenance. `GET /api/v1/rul/engines/:engineId/history`
+returns company-scoped stored records and does not invoke inference.
 
-```http
-GET /api/v1/products/:productId/listings
-```
+The integrated model is the single Condition-Aware iTransformer trained and
+evaluated on FD002, using the seed-42 checkpoint and frozen scaler. Accepted
+CSV source compatibility does not guarantee prediction accuracy. Prediction values and the
+20/40/80-cycle planning thresholds are educational simulation output only,
+not actual aircraft telemetry, airworthiness guidance, or verified part
+compatibility. The Replace & Buy MVP exposes
+`POST /api/v1/rul/predictions/:predictionId/recommendations` to generate and
+persist eligible engine listings and
+`GET /api/v1/rul/predictions/:predictionId/recommendations` to retrieve saved
+snapshots. Eligibility requires exact `engine_model_id` compatibility
+evidence, an active `ENGINE` product, an ACTIVE listing, an APPROVED supplier,
+and positive stock. Ranking is by lower actual listing price, shorter lead
+time, then stable listing ID; at most five results are saved. Compatibility
+evidence can be demo data and is not certified installation approval. Prices
+are actual listing prices, not fair-market valuations. Trade-in, buyback,
+old-asset collection, valuation and exchange credit are not implemented.
+Model metadata must be registered by the approved deployment operator using
+[`database/seed/03_ml_model_version_seed.sql`](../../database/seed/03_ml_model_version_seed.sql);
+do not run it as part of static verification.
 
-A product can have multiple seller listings. Each listing represents an offer
-from a specific supplier with its own price, condition, inventory and lead time.
+For the request/response and setup details, see
+[Buyer RUL integration](../rul/README.md).
 
-## Supplier Management
+The internal FastAPI inference routes (`GET /health`, `GET /v1/model-info`,
+`POST /v1/predict`) are service-to-service endpoints, require the internal
+service token, and are not part of this public `/api/v1` API or the Buyer
+APIDoc. React calls Express only.
 
-Suppliers manage their marketplace offers through seller listings.
+## Deferred capabilities
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/supplier/listings` | View supplier's listings |
-| POST | `/supplier/listings` | Create a listing |
-| PATCH | `/supplier/listings/:listingId` | Update price, stock or listing status |
-| DELETE | `/supplier/listings/:listingId` | Remove/deactivate a listing |
+The RUL recommendation MVP is restricted to replacement ENGINE listings and
+recorded compatibility evidence. Full replacement-parts recommendations,
+trade-in, buyback and exchange-credit workflows remain deferred.
 
-A seller listing connects a supplier with a product and stores commercial
-information such as price, stock quantity, condition and lead time.
-
-## Cart & Order Management
-
-Buyers purchase specific seller listings rather than products directly.
-
-### Add Item to Cart
-
-```http
-POST /api/v1/cart/items
-```
-
-Request:
-
-```json
-{
-  "listingId": 501,
-  "quantity": 3
-}
-```
-
-### Create Order
-
-```http
-POST /api/v1/orders
-```
-
-The backend validates listing availability and creates the corresponding order,
-seller orders and order items.
-
-Order flow:
-
-```text
-Cart
-  ↓
-Order
-  ↓
-Seller Order
-  ↓
-Order Items
-  ↓
-Payment / Shipment
-```
-
-## Aircraft & Engine Management
-
-Buyer organizations can access aircraft and engine information associated with
-their company.
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/aircraft` | List buyer company's aircraft |
-| GET | `/aircraft/:aircraftId` | View aircraft details |
-| GET | `/aircraft/:aircraftId/engines` | List engines installed on aircraft |
-| GET | `/engines/:engineId` | View engine details |
-
-## RUL Prediction
-
-The Express backend acts as the gateway between the web application and the
-independent AI/RUL service.
-
-The frontend does not communicate with the AI service directly.
-
-### Request RUL Prediction
-
-```http
-POST /api/v1/engines/:engineId/rul-predictions
-```
-
-Example request:
-
-```json
-{
-  "sensorUploadId": 1024
-}
-```
-
-Processing flow:
-
-```text
-React Frontend
-      ↓
-Express REST API
-      ↓
-Validate Engine & Sensor Data
-      ↓
-AI / RUL Service
-      ↓
-RUL Prediction
-      ↓
-Store Prediction
-      ↓
-Return Result
-```
-
-Example response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "predictionId": 321,
-    "engineId": 24,
-    "predictedRul": 37.4,
-    "urgency": "HIGH"
-  }
-}
-```
-
-### Latest Prediction
-
-```http
-GET /api/v1/engines/:engineId/rul-predictions/latest
-```
-
-## Spare-Part Recommendations
-
-RUL prediction and spare-part recommendation are separate responsibilities.
-
-RUL prediction estimates engine remaining useful life, while the recommendation
-logic combines the prediction with compatibility and marketplace information.
-
-```http
-GET /api/v1/engines/:engineId/recommendations
-```
-
-Recommendation flow:
-
-```text
-Latest RUL Prediction
-        ↓
-Maintenance Urgency
-        ↓
-Engine Model
-        ↓
-Product-Engine Compatibility
-        ↓
-Compatible Products
-        ↓
-Seller Listings
-        ↓
-Inventory / Supplier / Price
-        ↓
-Recommended Spare Parts
-```
-
-Example response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "engineId": 24,
-    "predictedRul": 37.4,
-    "urgency": "HIGH",
-    "recommendedParts": [
-      {
-        "productId": 101,
-        "partNumber": "AFP-1001",
-        "productName": "Aircraft Fuel Pump",
-        "availableListings": 3
-      }
-    ]
-  }
-}
-```
+Buyer route APIDoc annotations live in `backend/src/routes/buyer/`. From
+`backend/`, run `npm run doc` to generate the local APIDoc site under
+`backend/docs/apidoc/`. Contract audit evidence and runtime-test limitations
+are recorded in [the Buyer API contract audit](../buyer/BUYER_API_CONTRACT_AUDIT.md).

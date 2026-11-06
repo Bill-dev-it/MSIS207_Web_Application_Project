@@ -9,6 +9,15 @@ const productRoutes = require("./routes/product.routes");
 const productV1Routes = require("./routes/product-v1.routes");
 const supplierRoutes = require("./routes/supplier");
 const authRoutes = require("./routes/auth");
+const requireAdmin = require("./middleware/require-admin");
+const requireBuyer = require("./middleware/require-buyer");
+const adminPaymentRoutes = require("./routes/admin/payments.routes");
+const buyerCartRoutes = require("./routes/buyer/cart.routes");
+const buyerCheckoutRoutes = require("./routes/buyer/checkout.routes");
+const buyerOrderRoutes = require("./routes/buyer/orders.routes");
+const buyerDashboardRoutes = require("./routes/buyer/dashboard.routes");
+const buyerEngineRoutes = require("./routes/buyer/engines.routes");
+const buyerRulRoutes = require("./routes/buyer/rul.routes");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -26,9 +35,7 @@ app.use(cookieParser());
  *     }
  */
 app.get("/", (req, res) => {
-  res.json({
-    message: "Aviation B2B API is running",
-  });
+  res.json({ message: "Aviation B2B API is running" });
 });
 
 /**
@@ -56,32 +63,56 @@ app.get("/", (req, res) => {
 app.get("/api/db-test", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT
-        current_database() AS database,
-        current_user AS db_user,
-        COUNT(*) AS product_count
-      FROM products;
+      SELECT current_database() AS database, current_user AS db_user,
+             COUNT(*) AS product_count FROM products;
     `);
-
-    res.json({
-      success: true,
-      connection: result.rows[0],
-    });
+    res.json({ success: true, connection: result.rows[0] });
   } catch (error) {
     console.error("Database connection failed:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Database connection failed",
-    });
+    res.status(500).json({ success: false, message: "Database connection failed" });
   }
 });
 
 app.use("/api/v1/products", productV1Routes);
 app.use("/api/v1/supplier", supplierRoutes);
-
 app.use("/api/products", productRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/admin/payments", requireAdmin, adminPaymentRoutes);
+app.use("/api/v1/cart", requireBuyer, buyerCartRoutes);
+app.use("/api/v1/checkout", requireBuyer, buyerCheckoutRoutes);
+app.use("/api/v1/orders", requireBuyer, buyerOrderRoutes);
+app.use("/api/v1/dashboard", requireBuyer, buyerDashboardRoutes);
+app.use("/api/v1/engines", requireBuyer, buyerEngineRoutes);
+app.use("/api/v1/rul", requireBuyer, buyerRulRoutes);
+
+app.use((error, req, res, next) => {
+  if (!req.path.startsWith("/api/v1/rul/")) return next(error);
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({ success: false, error: {
+      code: "PAYLOAD_TOO_LARGE", message: "Request body exceeds the accepted size limit."
+    } });
+  }
+  if (error.type === "entity.parse.failed") {
+    return res.status(400).json({ success: false, error: {
+      code: "INVALID_REQUEST_BODY", message: "Unable to parse the request body."
+    } });
+  }
+  if (error.status === 415 || error.type === "charset.unsupported" ||
+      error.type === "encoding.unsupported") {
+    return res.status(415).json({ success: false, error: {
+      code: "UNSUPPORTED_MEDIA_TYPE", message: "Upload CSV as UTF-8 text/csv."
+    } });
+  }
+  if (error.status >= 400 && error.status < 500) {
+    return res.status(error.status).json({ success: false, error: {
+      code: "INVALID_REQUEST_BODY", message: "The request body is invalid."
+    } });
+  }
+  console.error("Buyer RUL request error:", error.type || error.code || "UNKNOWN");
+  return res.status(500).json({ success: false, error: {
+    code: "INTERNAL_SERVER_ERROR", message: "Unable to process RUL request."
+  } });
+});
 
 if (process.env.NODE_ENV !== "production") {
   const path = require("path");

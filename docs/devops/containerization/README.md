@@ -5,10 +5,10 @@
 The Aviation B2B E-Commerce Platform uses Docker to provide reproducible and
 isolated runtime environments for application services.
 
-Container boundaries follow the system architecture. The platform is not
-packaged into one monolithic container. The Node.js/Express backend and Python
-RUL inference service are treated as independent services because they use
-different runtimes and have different responsibilities.
+The architecture separates components with different runtimes. The current
+Node.js/Express backend calls the internal Python/FastAPI RUL service over
+HTTP. FastAPI is a private service and is not exposed to the browser or public
+API gateway.
 
 Docker Compose is planned for local integration of backend services. Production
 deployment uses the hosting architecture defined in the deployment design.
@@ -21,13 +21,15 @@ deployment uses the hosting architecture defined in the deployment design.
 |---|---|---|---|
 | Frontend | React | Local development server | Vercel |
 | Backend API | Node.js / Express | Docker container | Render |
-| RUL Service | Python / FastAPI | Docker container | Render |
+| RUL inference | Python / FastAPI | Local service bound to `127.0.0.1:8000` | Private service on internal network |
 | Database | PostgreSQL | Docker container | Managed PostgreSQL |
 
 The React frontend is not required to run inside a production container because
 Vercel builds and hosts the frontend application directly.
 
-The backend and RUL service are containerized independently.
+The backend and RUL HTTP service are started/deployed independently. Restrict
+the RUL service to private-network ingress from Express and use HTTPS for
+remote service-to-service requests.
 
 PostgreSQL is containerized only for local development. Production uses a
 managed PostgreSQL instance so database persistence is separated from
@@ -211,8 +213,9 @@ CORS_ORIGIN
 Typical RUL service configuration includes:
 
 ```text
-PORT
-MODEL_PATH
+RUL_SERVICE_TOKEN
+UVICORN_HOST
+UVICORN_PORT
 ```
 
 Local development may use a `.env` file that is excluded from Git.

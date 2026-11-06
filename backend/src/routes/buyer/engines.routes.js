@@ -1,0 +1,66 @@
+const express = require("express");
+const enginesController = require("../../controllers/buyer/engines.controller");
+
+const router = express.Router();
+
+/**
+ * @api {get} /api/v1/engines List buyer company engines
+ * @apiName GetBuyerEngines
+ * @apiGroup Buyer Engines
+ * @apiVersion 1.0.0
+ * @apiDescription Lists engines owned by the authenticated Buyer company, with previously stored successful predictions only.
+ * @apiPermission Buyer
+ * @apiQuery {String} [search] Search engine code, model, aircraft tail or serial number.
+ * @apiQuery {String="ALL","PRIORITIZE","PREPARE","MONITOR","NORMAL","NOT_ANALYZED"} [urgency=ALL] Filter stored prediction urgency.
+ * @apiQuery {Number} [page=1] Positive page number.
+ * @apiQuery {Number} [limit=10] Page size from 1 to 100.
+ * @apiSuccess {Boolean} success true
+ * @apiSuccess {Object[]} data Company-owned engines.
+ * @apiSuccess {Object} meta Counts and pagination.
+ * @apiError (400 Bad Request) INVALID_QUERY, INVALID_SEARCH, INVALID_URGENCY Invalid query values.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) BUYER_REQUIRED Session role is not BUYER.
+ * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Engine list could not be retrieved.
+ * @apiSuccessExample {json} 200 OK:
+ *     { "success": true, "data": [], "meta": { "counts": { "ALL": 0 }, "pagination": { "page": 1, "limit": 10, "total": 0, "totalPages": 1 } } }
+ */
+router.get("/", enginesController.listEngines);
+
+/**
+ * @api {get} /api/v1/engines/:engineId Get buyer engine detail
+ * @apiName GetBuyerEngineDetail
+ * @apiGroup Buyer Engines
+ * @apiVersion 1.0.0
+ * @apiDescription Returns engine and latest stored successful prediction only when the engine belongs to the authenticated Buyer company. Does not run inference.
+ * @apiPermission Buyer
+ * @apiParam {String} engineId Positive BIGINT engine ID.
+ * @apiSuccess {Boolean} success true
+ * @apiSuccess {Object} data Engine, aircraft and optional stored prediction.
+ * @apiError (404 Not Found) ENGINE_NOT_FOUND Engine not found for this company.
+ * @apiError (400 Bad Request) INVALID_ENGINE_ID Engine ID is not a positive BIGINT.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) BUYER_REQUIRED Session role is not BUYER.
+ * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Engine detail could not be retrieved.
+ */
+router.get("/:engineId", enginesController.getEngineDetail);
+
+/**
+ * @api {get} /api/v1/engines/:engineId/sensor-uploads List engine sensor uploads
+ * @apiName GetBuyerEngineSensorUploads
+ * @apiGroup Buyer Engines
+ * @apiVersion 1.0.0
+ * @apiDescription Lists sensor uploads only when the engine belongs to the authenticated Buyer company.
+ * @apiPermission Buyer
+ * @apiParam {String} engineId Positive BIGINT engine ID.
+ * @apiQuery {Number} [limit=10] Result limit from 1 to 100.
+ * @apiSuccess {Boolean} success true
+ * @apiSuccess {Object[]} data Sensor upload records.
+ * @apiError (404 Not Found) ENGINE_NOT_FOUND Engine not found for this company.
+ * @apiError (400 Bad Request) INVALID_ENGINE_ID, INVALID_QUERY Invalid engine ID or limit.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) BUYER_REQUIRED Session role is not BUYER.
+ * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Upload metadata could not be retrieved.
+ */
+router.get("/:engineId/sensor-uploads", enginesController.getSensorUploads);
+
+module.exports = router;

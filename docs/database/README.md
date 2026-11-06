@@ -125,7 +125,7 @@ seller_listings
 product_engine_compatibility
 ```
 
-Gold data can then be loaded into PostgreSQL as seed/reference data.
+Gold data can then be loaded into PostgreSQL as seed/reference data using [`database/seed/load_gold.py`](../../database/seed/load_gold.py). For the complete table-by-table column specification and foreign-key load order, see [`GOLD_SEED_MAPPING.md`](./GOLD_SEED_MAPPING.md).
 
 Unlike an analytical data warehouse, the Gold layer in this project represents
 **application-ready operational data**, not analytical data marts.
@@ -140,11 +140,14 @@ The RUL service connects aircraft condition monitoring with the marketplace.
 
 The prediction is stored in `rul_predictions`.
 
-The Recommendation Engine combines:
+The Replace & Buy recommendation MVP combines:
 
-**RUL + Engine Compatibility + Inventory + Supplier Listings**
+**Engine Model + Recorded Compatibility Evidence + Inventory + Supplier Listings**
 
-to generate records in `replacement_recommendations`.
+to generate up to five ranked records in `replacement_recommendations` for a
+successful company-owned prediction. Compatibility is an evidence-based
+eligibility gate, not a score or installation certification. Trade-in,
+buyback, and valuation remain deferred.
 
 ---
 
@@ -157,7 +160,11 @@ takes place:
 
 This creates the main end-to-end business flow of the platform:
 
-> **Engine Condition → Predictive Maintenance → Spare-Part Recommendation → B2B Procurement**
+> **Engine Condition → FD002 Demo Prediction → B2B Procurement**
+
+The demo prediction does not verify compatibility and does not create
+`replacement_recommendations`; standard marketplace procurement is a separate
+existing flow.
 
 ---
 
@@ -166,16 +173,28 @@ This creates the main end-to-end business flow of the platform:
 ```text
 database/
 ├── README.md
-├── database-schema.dbml
-└── ERD_B2B_ecommerce_Website.png
+├── schema/
+│   └── 01_schema.sql
+├── migrations/
+│   └── 04_b2b_payment_mvp.sql
+├── authentication/
+│   ├── 01_authentication_setup.sql
+│   ├── 02_authentication_validation.sql
+│   └── README.md
+├── seed/
+│   ├── 03_ml_model_version_seed.sql
+│   └── load_gold.py
+└── validation/
+    └── 03_validation.sql
 
-data/
-├── bronze/
-├── silver/
-└── gold/
+docs/database/
+├── README.md
+├── GOLD_SEED_MAPPING.md
+├── database-schema.dbml
+└── images/
 ```
 
-The `bronze`, `silver`, and `gold` directories represent the transformation
+The `bronze`, `silver`, and `gold` directories under `data/etl/` represent the transformation
 stages used before application-ready data is loaded into PostgreSQL.
 
 

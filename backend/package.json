@@ -11,7 +11,7 @@
   "apidoc": {
     "name": "AeroRUL REST API",
     "version": "1.0.0",
-    "description": "AeroRUL Public, Supplier and System APIs. Supplier endpoints are intentionally unavailable (401) before Login integration.",
+    "description": "AeroRUL Public, Authentication, Supplier, Buyer and FD002 RUL APIs. RUL prediction requires an authenticated Buyer session.",
     "url": "http://localhost:3000",
     "sampleUrl": "http://localhost:3000"
   },

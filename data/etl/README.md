@@ -358,8 +358,13 @@ data/
 database/
 ├── schema/
 │   └── 01_schema.sql
+├── migrations/
+│   └── 04_b2b_payment_mvp.sql
+├── authentication/
+│   ├── 01_authentication_setup.sql
+│   └── 02_authentication_validation.sql
 ├── seed/
-│   ├── 02_seed.sql
+│   ├── 03_ml_model_version_seed.sql
 │   └── load_gold.py
 └── validation/
     └── 03_validation.sql
