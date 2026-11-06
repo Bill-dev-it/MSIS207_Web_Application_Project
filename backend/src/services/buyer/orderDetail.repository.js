@@ -100,10 +100,20 @@ async function getOrderDetailById(orderId, companyId) {
     LIMIT 1
   `;
   const paymentRes = await pool.query(paymentQuery, [orderId]);
-  const payment = paymentRes.rows[0] || null;
+  const paymentRow = paymentRes.rows[0] || null;
+  const payment = paymentRow
+    ? {
+        ...paymentRow,
+        currency: order.currency,
+        transfer_reference: order.order_number,
+      }
+    : null;
 
   return {
     ...order,
+    payment_method: payment ? payment.payment_method : null,
+    payment_status: payment ? payment.status : null,
+    paid_at: payment ? payment.paid_at : null,
     seller_orders: sellerOrders,
     payment,
   };

@@ -45,6 +45,7 @@ async function getBuyerOrders({ companyId, status, search, page, limit }) {
   const result = await pool.query(`
     SELECT o.order_id, o.order_number, o.purchase_reference, o.created_at,
            o.grand_total, o.currency,
+           p.payment_method, p.status AS payment_status, p.paid_at,
            COALESCE(
              (SELECT CASE
                WHEN BOOL_OR(status = 'PROCESSING') THEN 'PROCESSING'
@@ -64,6 +65,7 @@ async function getBuyerOrders({ companyId, status, search, page, limit }) {
               FROM seller_orders WHERE order_id = o.order_id), ''
            ) AS suppliers_list
     FROM orders o
+    LEFT JOIN payments p ON p.order_id = o.order_id
     WHERE ${whereClause}
     ORDER BY o.created_at DESC, o.order_id DESC
     LIMIT $${nextParameter} OFFSET $${nextParameter + 1}

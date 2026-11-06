@@ -2,6 +2,40 @@ import { Link } from "react-router-dom";
 import OrderStatusBadge from "./OrderStatusBadge";
 import { formatCurrency } from "../../cart/utils/cartCalculations";
 
+function getPaymentBadge(ord) {
+  const method = ord?.payment_method;
+  const status = ord?.payment_status;
+
+  if (method === "BANK_TRANSFER" && status === "PENDING") {
+    return {
+      label: "Awaiting Payment Confirmation",
+      className: "bg-amber-50 text-amber-900 border-amber-300",
+    };
+  }
+  if (method === "SIMULATION" && status === "SUCCEEDED") {
+    return {
+      label: "Simulated Payment Successful",
+      className: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    };
+  }
+  if (method === "BANK_TRANSFER" && status === "SUCCEEDED") {
+    return {
+      label: "Payment Confirmed (Demo)",
+      className: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    };
+  }
+  if (status === "CANCELLED") {
+    return {
+      label: "Payment Cancelled",
+      className: "bg-rose-50 text-rose-800 border-rose-200",
+    };
+  }
+  return {
+    label: status ? `Payment: ${status}` : "Payment not recorded",
+    className: "bg-slate-100 text-slate-700 border-slate-200",
+  };
+}
+
 export default function OrdersTable({ orders = [] }) {
   if (orders.length === 0) {
     return (
@@ -35,7 +69,7 @@ export default function OrdersTable({ orders = [] }) {
               <th className="py-3.5 px-6">Date Placed</th>
               <th className="py-3.5 px-6">Components & Suppliers</th>
               <th className="py-3.5 px-6">Total Amount</th>
-              <th className="py-3.5 px-6">Status</th>
+              <th className="py-3.5 px-6">Order & Payment Status</th>
               <th className="py-3.5 px-6 text-right">Actions</th>
             </tr>
           </thead>
@@ -81,7 +115,20 @@ export default function OrdersTable({ orders = [] }) {
                   </td>
 
                   <td className="py-4 px-6 whitespace-nowrap">
-                    <OrderStatusBadge status={ord.primary_status} />
+                    <div className="flex flex-col items-start gap-1.5">
+                      <OrderStatusBadge status={ord.primary_status} />
+                      {(() => {
+                        const paymentBadge = getPaymentBadge(ord);
+                        if (!paymentBadge) return null;
+                        return (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${paymentBadge.className}`}
+                          >
+                            {paymentBadge.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </td>
 
                   <td className="py-4 px-6 text-right whitespace-nowrap">

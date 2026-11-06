@@ -8,12 +8,17 @@ async function getOrderConfirmation(orderId, companyId) {
       o.purchase_reference,
       o.company_name_snapshot,
       o.shipping_address_snapshot,
+      o.currency,
       o.subtotal,
       o.shipping_total,
       o.grand_total,
       o.created_at,
+      p.payment_id,
       p.payment_method,
+      p.amount AS payment_amount,
       p.status AS payment_status,
+      p.paid_at,
+      o.order_number AS transfer_reference,
       COALESCE(
         (SELECT status FROM seller_orders WHERE order_id = o.order_id LIMIT 1),
         'CONFIRMED'

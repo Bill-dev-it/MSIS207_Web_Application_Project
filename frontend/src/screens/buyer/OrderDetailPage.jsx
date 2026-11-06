@@ -14,6 +14,8 @@ export default function OrderDetailPage() {
   const sellerStatuses = order?.seller_orders?.map((sellerOrder) => sellerOrder.status) || [];
   const primaryStatus = ["PROCESSING", "CONFIRMED", "SHIPPED", "DELIVERED"]
     .find((status) => sellerStatuses.includes(status)) || "CONFIRMED";
+  const paymentMethod = order?.payment?.payment_method ?? order?.payment_method ?? null;
+  const paymentStatus = order?.payment?.status ?? order?.payment_status ?? null;
 
   return (
     <div>
@@ -62,11 +64,34 @@ export default function OrderDetailPage() {
             {/* Top Header Card */}
             <header className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-wrap items-center justify-between gap-4">
               <div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <h1 className="text-2xl font-black font-mono text-slate-900 tracking-tight">
                     {order.order_number}
                   </h1>
                   <OrderStatusBadge status={primaryStatus} />
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                      paymentStatus === "SUCCEEDED"
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                        : paymentStatus === "PENDING"
+                        ? "bg-amber-50 text-amber-900 border-amber-300"
+                        : paymentStatus === "CANCELLED"
+                        ? "bg-rose-50 text-rose-800 border-rose-200"
+                        : "bg-slate-100 text-slate-700 border-slate-200"
+                    }`}
+                  >
+                    {paymentMethod === "BANK_TRANSFER" && paymentStatus === "PENDING"
+                      ? "Awaiting Payment Confirmation"
+                      : paymentMethod === "SIMULATION" && paymentStatus === "SUCCEEDED"
+                      ? "Simulated Payment Successful"
+                      : paymentMethod === "BANK_TRANSFER" && paymentStatus === "SUCCEEDED"
+                      ? "Payment Confirmed (Demo)"
+                      : paymentStatus === "CANCELLED"
+                      ? "Payment Cancelled"
+                      : paymentStatus
+                      ? `Payment: ${paymentStatus}`
+                      : "Payment not recorded"}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Placed on{" "}
@@ -162,6 +187,11 @@ export default function OrderDetailPage() {
                 {/* Payment & Terms */}
                 <OrderPaymentInformation
                   payment={order.payment}
+                  paymentMethod={order.payment_method}
+                  paymentStatus={order.payment_status}
+                  paidAt={order.paid_at}
+                  orderNumber={order.order_number}
+                  currency={order.currency}
                   purchaseReference={order.purchase_reference}
                   grandTotal={order.grand_total}
                 />

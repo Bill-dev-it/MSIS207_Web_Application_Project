@@ -10,7 +10,7 @@ const router = express.Router();
  * @apiName GetBuyerOrders
  * @apiGroup Buyer Orders
  * @apiVersion 1.0.0
- * @apiDescription Lists orders belonging to the authenticated Buyer company.
+ * @apiDescription Lists orders belonging to the authenticated Buyer company, including primary fulfillment status and payment summary fields (payment_method, payment_status, paid_at).
  * @apiPermission Buyer
  * @apiQuery {String="ALL","CONFIRMED","PROCESSING","SHIPPED","DELIVERED"} [status=ALL] Supplier fulfillment status.
  * @apiQuery {String} [search] Order number or purchase reference, max 200 characters.
@@ -33,7 +33,7 @@ router.get("/", ordersController.getOrders);
  * @apiName GetBuyerOrderConfirmation
  * @apiGroup Buyer Orders
  * @apiVersion 1.0.0
- * @apiDescription Returns a confirmation only when the order belongs to the authenticated Buyer company.
+ * @apiDescription Returns a confirmation (including flat payment_method, payment_status, payment_amount, paid_at, and transfer_reference) only when the order belongs to the authenticated Buyer company.
  * @apiPermission Buyer
  * @apiParam {String} orderId Positive BIGINT order ID.
  * @apiSuccess {Boolean} success true
