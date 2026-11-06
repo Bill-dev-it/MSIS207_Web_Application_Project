@@ -1,3 +1,5 @@
+import apiClient from "./apiClient";
+
 /**
  * Admin and Analytics Service
  * 
@@ -9,38 +11,6 @@
  * - data/etl/gold/engine_models.csv
  * - database/schema/01_schema.sql (rul_predictions, replacement_recommendations)
  */
-
-export const ADMIN_DASHBOARD_METRICS = {
-  users: { count: 1284, change: "+42 this month" },
-  suppliers: { count: 86, pending: 5 },
-  orders: { count: 2931, change: "+8.4%" },
-  revenue: { amount: "$9.8M", change: "+11.2%" },
-  products: { count: 4120, pendingReview: 37 },
-  salesTrend: [
-    { month: "May", revenue: 4.2 },
-    { month: "Jun", revenue: 5.1 },
-    { month: "Jul", revenue: 6.3 },
-    { month: "Aug", revenue: 5.8 },
-    { month: "Sep", revenue: 7.2 },
-    { month: "Oct", revenue: 9.8 },
-  ],
-  rulStatus: {
-    serviceStatus: "Operational",
-    modelVersion: "v2.3",
-    lastPrediction: "2 min ago",
-    predictionsToday: 148,
-    averageLatency: "640 ms",
-  },
-  newSupplierRequests: [
-    { id: 1, name: "Demo Aero Supply 011", date: "Applied Oct 8", status: "PENDING" },
-    { id: 2, name: "Nordic Parts GmbH", date: "Applied Oct 7", status: "PENDING" },
-    { id: 3, name: "Pacific MRO Trading", date: "Applied Oct 5", status: "PENDING" },
-  ],
-  reportedItems: [
-    { id: 1, title: "Fuel Pump Assembly 2118-4471", reason: "Inaccurate description", type: "PRODUCT" },
-    { id: 2, title: "Review by Demo Pacific Air", reason: "Abusive language", type: "REVIEW" },
-  ],
-};
 
 export const MODERATION_QUEUE = [
   {
@@ -291,12 +261,172 @@ export const RECOMMENDATIONS_DATA = {
   ],
 };
 
-// Async service functions simulate real API calls with fallback
+// Fetch real admin dashboard data from backend API with fallback
 export async function fetchAdminDashboard() {
-  await new Promise((resolve) => setTimeout(resolve, 80));
-  return ADMIN_DASHBOARD_METRICS;
-}
+  const res = await apiClient.get("/v1/admin/dashboard");
 
+  // Backend response: { success: true, data: {...} }
+  if (res?.success === false) {
+    throw new Error("Backend could not load Admin Dashboard data.");
+  }
+
+  const raw = res?.data ?? res;
+
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error("Invalid dashboard data received from API.");
+  }
+
+  const totalRevenue = Number(raw.revenue?.total_revenue ?? 0);
+  const currentMonthRevenue = Number(
+    raw.revenue?.current_month_revenue ?? 0
+  );
+  const previousMonthRevenue = Number(
+    raw.revenue?.previous_month_revenue ?? 0
+  );
+
+  if (
+    !Number.isFinite(totalRevenue) ||
+    !Number.isFinite(currentMonthRevenue) ||
+    !Number.isFinite(previousMonthRevenue)
+  ) {
+    throw new Error("Invalid revenue values received from API.");
+  }
+
+  const formatRevenue = (amount) => {
+    if (amount >= 1_000_000) {
+      return `$${(amount / 1_000_000).toFixed(1)}M`;
+    }
+
+    if (amount >= 1_000) {
+      return `$${(amount / 1_000).toFixed(1)}K`;
+    }
+
+    return `$${amount.toFixed(2)}`;
+  };
+
+  // Do not claim +100% when the previous month had no revenue.
+  const revenueChange =
+    previousMonthRevenue > 0
+      ? (() => {
+        const difference =
+          ((currentMonthRevenue - previousMonthRevenue) /
+            previousMonthRevenue) *
+          100;
+
+        return `${difference >= 0 ? "+" : ""}${difference.toFixed(1)}%`;
+      })()
+      : "N/A";
+
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "N/A";
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) return "N/A";
+
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatTimeAgo = (dateValue) => {
+    if (!dateValue) return "Never";
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) return "N/A";
+
+    const differenceMs = Date.now() - date.getTime();
+
+    if (differenceMs < 0) return "Just now";
+
+    const minutes = Math.floor(differenceMs / 60_000);
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+
+    const hours = Math.floor(minutes / 60);
+
+    if (hours < 24) return `${hours} hours ago`;
+
+    const days = Math.floor(hours / 24);
+
+    return `${days} days ago`;
+  };
+
+  const latency = raw.rulStatus?.average_latency_ms;
+
+  return {
+    users: {
+      count: Number(raw.users?.total ?? 0),
+      change: `+${Number(raw.users?.created_this_month ?? 0)} this month`,
+    },
+
+    suppliers: {
+      count: Number(raw.suppliers?.total ?? 0),
+      pending: Number(raw.suppliers?.pending ?? 0),
+    },
+
+    orders: {
+      count: Number(raw.orders?.total ?? 0),
+      change: `${Number(raw.orders?.total ?? 0)} total`,
+    },
+
+    revenue: {
+      amount: formatRevenue(totalRevenue),
+      change: revenueChange,
+    },
+
+    products: {
+      count: Number(raw.products?.total_products ?? 0),
+      pendingReview: Number(raw.products?.draft_listings ?? 0),
+    },
+
+    // The current chart values are expressed in millions.
+    salesTrend: Array.isArray(raw.salesTrend)
+      ? raw.salesTrend.map((item) => ({
+        month: item.month,
+        revenue: Number(item.revenue ?? 0),
+      }))
+      : [],
+
+    rulStatus: {
+      // The dashboard API does not currently return service health.
+      serviceStatus: "Unknown",
+
+      modelVersion: raw.rulStatus?.model_version
+        ? `v${raw.rulStatus.model_version}`
+        : "N/A",
+
+      lastPrediction: formatTimeAgo(
+        raw.rulStatus?.last_prediction
+      ),
+
+      predictionsToday: Number(
+        raw.rulStatus?.predictions_today ?? 0
+      ),
+
+      averageLatency:
+        latency === null || latency === undefined
+          ? "N/A"
+          : `${Math.round(Number(latency))} ms`,
+    },
+
+    newSupplierRequests: Array.isArray(raw.newSupplierRequests)
+      ? raw.newSupplierRequests.map((request) => ({
+        id: request.id,
+        name: request.name,
+        date: `Applied ${formatDate(request.applied_at)}`,
+        status: request.status,
+      }))
+      : [],
+
+    reportedItems: Array.isArray(raw.reportedItems)
+      ? raw.reportedItems
+      : [],
+  };
+}
 export async function fetchModerationQueue() {
   await new Promise((resolve) => setTimeout(resolve, 80));
   return MODERATION_QUEUE;
@@ -310,4 +440,85 @@ export async function fetchRULSystemStatus() {
 export async function fetchReplacementRecommendations(engineId = "ENG-037") {
   await new Promise((resolve) => setTimeout(resolve, 80));
   return { ...RECOMMENDATIONS_DATA, engineId };
+}
+
+/**
+ * Fetch suppliers for Admin Moderation.
+ *
+ * GET /api/v1/admin/suppliers
+ *
+ * @param {Object} params
+ * @param {string} params.status - PENDING, APPROVED, SUSPENDED or ALL
+ * @param {string} params.search - Search keyword
+ * @param {number} params.page - Page number
+ * @param {number} params.limit - Items per page
+ */
+export async function fetchAdminSuppliers({
+    status = "PENDING",
+    search = "",
+    page = 1,
+    limit = 10,
+} = {}) {
+    const queryParams = new URLSearchParams();
+
+    if (status && status !== "ALL") {
+        queryParams.set("status", status);
+    }
+
+    if (search.trim()) {
+        queryParams.set("search", search.trim());
+    }
+
+    queryParams.set("page", String(page));
+    queryParams.set("limit", String(limit));
+
+    const queryString = queryParams.toString();
+
+    return apiClient.get(
+        `/v1/admin/suppliers?${queryString}`
+    );
+}
+
+/**
+ * Fetch detailed supplier information.
+ *
+ * GET /api/v1/admin/suppliers/:supplierId
+ *
+ * @param {string|number} supplierId
+ */
+export async function fetchAdminSupplierDetail(supplierId) {
+    if (!supplierId) {
+        throw new Error("Supplier ID is required.");
+    }
+
+    return apiClient.get(
+        `/v1/admin/suppliers/${encodeURIComponent(supplierId)}`
+    );
+}
+
+/**
+ * Update supplier moderation status.
+ *
+ * PATCH /api/v1/admin/suppliers/:supplierId/status
+ *
+ * Allowed transitions are enforced by the Backend.
+ *
+ * @param {string|number} supplierId
+ * @param {"APPROVED"|"SUSPENDED"} status
+ */
+export async function updateSupplierStatus(supplierId, status) {
+    if (!supplierId) {
+        throw new Error("Supplier ID is required.");
+    }
+
+    const allowedStatuses = ["APPROVED", "SUSPENDED"];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new Error(`Invalid supplier target status: ${status}`);
+    }
+
+    return apiClient.patch(
+        `/v1/admin/suppliers/${encodeURIComponent(supplierId)}/status`,
+        { status }
+    );
 }

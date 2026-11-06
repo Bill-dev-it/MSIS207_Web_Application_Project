@@ -8,7 +8,7 @@ Project documentation is organized by system area:
 - [Buyer RUL documentation](./rul/README.md) — canonical RUL documentation, public Express API, internal FastAPI service, model input contract, persistence, setup, scientific evaluation, and limitations.
 - [Database](./database/README.md) — schema and data pipeline documentation.
 - [Data](./data/README.md) — reference data architecture.
-- [UI/UX](./ui-ux/README.md) — interface and experience design.
+- [UI_UX](./ui-ux/README.md) — interface and experience design.
 - [DevOps](./devops/README.md) — project operations and delivery.
 
 ## Architecture diagram links

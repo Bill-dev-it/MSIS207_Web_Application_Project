@@ -42,7 +42,7 @@ export default function AdminHome() {
           Admin Portal & Specialized Screens
         </h1>
         <p className="mt-2 text-sm text-neutral-500">
-          Access high-fidelity UI/UX implementations built from design specifications and Gold seed data.
+          Access high-fidelity UI_UX implementations built from design specifications and Gold seed data.
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export default function AdminHome() {
 
             <div className="mt-6 flex items-center gap-2 text-xs font-bold text-primary-700">
               <span className="h-2 w-2 rounded-full bg-accent" />
-              <span>Full UI/UX reproduction</span>
+              <span>Full UI_UX reproduction</span>
             </div>
           </Link>
         ))}

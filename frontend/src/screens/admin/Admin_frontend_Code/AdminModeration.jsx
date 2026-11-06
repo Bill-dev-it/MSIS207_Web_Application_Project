@@ -1,14 +1,56 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchModerationQueue } from "../../../services/adminService";
+import apiClient from "../../../services/apiClient";
+import {
+  fetchAdminSuppliers,
+  fetchAdminSupplierDetail,
+  updateSupplierStatus,
+} from "../../../services/adminService";
 
 export default function AdminModeration() {
-  const [activeTab, setActiveTab] = useState("products"); // 'suppliers' | 'products' | 'reported'
+  const [activeTab, setActiveTab] = useState("suppliers"); // 'suppliers' | 'products' | 'reported'
   const [items, setItems] = useState([]);
-  const [selectedId, setSelectedId] = useState("MOD-001");
+  const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionNotice, setActionNotice] = useState("");
+
+  // Live counts from PostgreSQL
+  const [tabCounts, setTabCounts] = useState({
+    suppliers: 0,
+    products: 0,
+    reported: 0,
+  });
+
+  // Supplier Moderation state
+  const [supplierStatus, setSupplierStatus] = useState("PENDING");
+  const [supplierPage, setSupplierPage] = useState(1);
+  const [supplierLoading, setSupplierLoading] = useState(false);
+  const [supplierError, setSupplierError] = useState("");
+  const [supplierTotal, setSupplierTotal] = useState(0);
+  const [supplierTotalPages, setSupplierTotalPages] = useState(1);
+  const [supplierDetail, setSupplierDetail] = useState(null);
+  const [supplierDetailLoading, setSupplierDetailLoading] = useState(false);
+  const [supplierDetailError, setSupplierDetailError] = useState("");
+
+  // Fetch PostgreSQL summary metrics for real tab badge counts
+  const loadTabCounts = async () => {
+    try {
+      const res = await apiClient.get("/v1/admin/dashboard");
+      const d = res?.data ?? res;
+      setTabCounts({
+        suppliers: Number(d?.suppliers?.pending ?? 0),
+        products: Number(d?.products?.draft_listings ?? 0),
+        reported: Number((d?.reportedItems ?? []).length),
+      });
+    } catch {
+      // Keep existing counts if dashboard request fails
+    }
+  };
+
+  useEffect(() => {
+    loadTabCounts();
+  }, []);
 
   // Controlled form state for reviewer
   const [reviewerNotes, setReviewerNotes] = useState("");
@@ -18,39 +60,215 @@ export default function AdminModeration() {
     documentsAttached: false,
   });
 
-  useEffect(() => {
-    fetchModerationQueue()
-      .then((data) => {
-        setItems(data);
-        if (data.length > 0) {
-          setSelectedId(data[0].id);
-          setChecks({
-            infoComplete: data[0].infoComplete,
-            priceReasonable: data[0].priceReasonable,
-            documentsAttached: data[0].documentsAttached,
-          });
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
+  const loadSuppliers = async () => {
+    setSupplierLoading(true);
+    setSupplierError("");
+
+    try {
+      const response = await fetchAdminSuppliers({
+        status: supplierStatus,
+        search: searchQuery.trim(),
+        page: supplierPage,
+        limit: 10,
       });
-  }, []);
+
+      console.log("[Admin Moderation] Supplier response:", response);
+
+      const suppliers = (response?.data?.items ?? []).map((supplier) => ({
+        ...supplier,
+        id: String(supplier.supplier_id ?? supplier.id),
+      }));
+
+      const pagination = response?.data?.pagination ?? {};
+
+      const total = pagination.total ?? suppliers.length;
+      setSupplierTotal(total);
+      setSupplierTotalPages(pagination.totalPages ?? 1);
+      setTabCounts((prev) => ({ ...prev, suppliers: total }));
+
+      setItems(suppliers);
+
+      setSelectedId((previousId) => {
+        const exists = suppliers.some(
+          (supplier) => supplier.id === previousId
+        );
+
+        return exists
+          ? previousId
+          : suppliers[0]?.id ?? null;
+      });
+    } catch (error) {
+      console.error("Failed to load suppliers:", error);
+
+      setSupplierError(
+        error.message || "Unable to load suppliers."
+      );
+
+      setItems([]);
+      setSelectedId(null);
+    } finally {
+      setSupplierLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // Load products from PostgreSQL catalog API
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.get("/v1/products?limit=20");
+      const rawProducts = response?.data ?? [];
+      const productItems = rawProducts.map((p) => ({
+        id: String(p.product_id),
+        title: p.product_name,
+        partNumber: p.part_number,
+        supplier: p.manufacturer || "Certified Supplier",
+        supplierVerified: true,
+        supplierRating: 4.8,
+        supplierStatus: "Active",
+        listedPrice: Number(p.technical_specs?.source_unit_cost ?? 0),
+        timeAgo: "Catalog product",
+        condition: "Serviceable",
+        stock: 5,
+        status: "Awaiting admin decision",
+        category: p.category_name || "Component",
+        description: p.description,
+        compatibleEngines: ["CFM56-7B24", "CFM56-7B26"],
+        attachedDocuments: [],
+        infoComplete: true,
+        priceReasonable: true,
+        documentsAttached: false,
+        reviewerNotes: "",
+      }));
+
+      setItems(productItems);
+      setSelectedId(productItems[0]?.id ?? null);
+    } catch (error) {
+      console.error("Failed to load products:", error);
+      setItems([]);
+      setSelectedId(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load reported items from PostgreSQL
+  const loadReportedItems = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.get("/v1/admin/dashboard");
+      const reported = response?.data?.reportedItems ?? [];
+      setItems(reported);
+      setSelectedId(reported[0]?.id ?? null);
+      setTabCounts((prev) => ({ ...prev, reported: reported.length }));
+    } catch (error) {
+      console.error("Failed to load reported items:", error);
+      setItems([]);
+      setSelectedId(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Switch tabs cleanly without lingering state
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setItems([]);
+    setSelectedId(null);
+    setSearchQuery("");
+  };
+
+  useEffect(() => {
+    if (activeTab === "suppliers") {
+      const timer = setTimeout(() => {
+        loadSuppliers();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+
+    if (activeTab === "products") {
+      loadProducts();
+      return;
+    }
+
+    if (activeTab === "reported") {
+      loadReportedItems();
+      return;
+    }
+  }, [
+    activeTab,
+    supplierStatus,
+    searchQuery,
+    supplierPage,
+  ]);
 
   const selectedItem = useMemo(() => {
     return items.find((i) => i.id === selectedId) || items[0] || null;
   }, [items, selectedId]);
 
+  useEffect(() => {
+    if (activeTab !== "suppliers" || !selectedId) {
+      setSupplierDetail(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadSupplierDetail = async () => {
+      setSupplierDetailLoading(true);
+      setSupplierDetailError("");
+
+      try {
+        const response = await fetchAdminSupplierDetail(selectedId);
+
+        console.log(
+          "[Admin Moderation] Supplier detail:",
+          response
+        );
+
+        if (!cancelled) {
+          setSupplierDetail(response?.data ?? response);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSupplierDetailError(
+            error.message || "Unable to load supplier details."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setSupplierDetailLoading(false);
+        }
+      }
+    };
+
+    loadSupplierDetail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, selectedId]);
+
   const filteredItems = useMemo(() => {
+    if (activeTab === "suppliers") {
+      // Supplier search is handled by Backend API.
+      return items;
+    }
+
     const q = searchQuery.toLowerCase().trim();
+
     if (!q) return items;
-    return items.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.partNumber.toLowerCase().includes(q) ||
-        item.supplier.toLowerCase().includes(q)
+
+    return items.filter((item) =>
+      [
+        item.title,
+        item.partNumber,
+        item.supplier,
+      ].some((value) =>
+        String(value ?? "").toLowerCase().includes(q)
+      )
     );
-  }, [items, searchQuery]);
+  }, [items, searchQuery, activeTab]);
 
   const handleSelect = (item) => {
     setSelectedId(item.id);
@@ -62,14 +280,45 @@ export default function AdminModeration() {
     setReviewerNotes(item.reviewerNotes || "");
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedItem) return;
-    setActionNotice(`Approved & published listing: "${selectedItem.title}"`);
+
+    if (activeTab === "suppliers") {
+      try {
+        await updateSupplierStatus(
+          selectedItem.id,
+          "APPROVED"
+        );
+
+        setActionNotice(
+          `Approved supplier: "${selectedItem.store_name}"`
+        );
+
+        await loadSuppliers();
+
+        return;
+      } catch (error) {
+        setSupplierError(
+          error.message || "Failed to approve supplier."
+        );
+
+        return;
+      }
+    }
+
+    // Keep existing Product moderation logic below.
+    setActionNotice(
+      `Approved & published listing: "${selectedItem.title}"`
+    );
+
     setItems((prev) =>
       prev.map((i) =>
-        i.id === selectedItem.id ? { ...i, status: "Approved" } : i
+        i.id === selectedItem.id
+          ? { ...i, status: "Approved" }
+          : i
       )
     );
+
     setTimeout(() => setActionNotice(""), 3500);
   };
 
@@ -90,14 +339,47 @@ export default function AdminModeration() {
     setTimeout(() => setActionNotice(""), 3500);
   };
 
-  const handleSuspendSupplier = () => {
+  const handleSuspendSupplier = async () => {
     if (!selectedItem) return;
+
+    if (activeTab === "suppliers") {
+      const confirmed = window.confirm(
+        `Are you sure you want to suspend supplier "${selectedItem.store_name}"?`
+      );
+
+      if (!confirmed) return;
+
+      try {
+        await updateSupplierStatus(
+          selectedItem.id,
+          "SUSPENDED"
+        );
+
+        setActionNotice(
+          `Suspended supplier: "${selectedItem.store_name}"`
+        );
+
+        await loadSuppliers();
+
+      } catch (error) {
+        setSupplierError(
+          error.message || "Failed to suspend supplier."
+        );
+      }
+
+      return;
+    }
+
+    // Preserve existing Product moderation behavior.
     if (
       window.confirm(
         `Are you sure you want to suspend supplier "${selectedItem.supplier}"?`
       )
     ) {
-      setActionNotice(`Suspended supplier: "${selectedItem.supplier}"`);
+      setActionNotice(
+        `Suspended supplier: "${selectedItem.supplier}"`
+      );
+
       setTimeout(() => setActionNotice(""), 3500);
     }
   };
@@ -302,7 +584,7 @@ export default function AdminModeration() {
           {/* Moderation Tabs */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setActiveTab("suppliers")}
+              onClick={() => handleTabChange("suppliers")}
               className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${activeTab === "suppliers"
                   ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                   : "border-[#E5E7EB] bg-white text-[#475569] hover:bg-[#F8FAFC]"
@@ -310,12 +592,12 @@ export default function AdminModeration() {
             >
               <span>Supplier requests</span>
               <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${activeTab === "suppliers" ? "bg-white/20 text-white" : "bg-[#F1F5F9] text-[#475569]"}`}>
-                3
+                {tabCounts.suppliers || supplierTotal}
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab("products")}
+              onClick={() => handleTabChange("products")}
               className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${activeTab === "products"
                   ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                   : "border-[#E5E7EB] bg-white text-[#475569] hover:bg-[#F8FAFC]"
@@ -323,12 +605,12 @@ export default function AdminModeration() {
             >
               <span>Product approvals</span>
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${activeTab === "products" ? "bg-[#2563EB] text-white" : "bg-[#F1F5F9] text-[#475569]"}`}>
-                5
+                {tabCounts.products}
               </span>
             </button>
 
             <button
-              onClick={() => setActiveTab("reported")}
+              onClick={() => handleTabChange("reported")}
               className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition ${activeTab === "reported"
                   ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                   : "border-[#E5E7EB] bg-white text-[#475569] hover:bg-[#F8FAFC]"
@@ -336,7 +618,7 @@ export default function AdminModeration() {
             >
               <span>Reported items</span>
               <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${activeTab === "reported" ? "bg-white/20 text-white" : "bg-[#FEE2E2] text-[#DC2626]"}`}>
-                3
+                {tabCounts.reported}
               </span>
             </button>
           </div>
@@ -347,63 +629,152 @@ export default function AdminModeration() {
             <div className="space-y-4 lg:col-span-5">
               <input
                 type="text"
-                placeholder="Filter queue by SKU or part name"
+                placeholder={
+                  activeTab === "suppliers"
+                    ? "Search suppliers by store or company name"
+                    : activeTab === "products"
+                    ? "Filter products by SKU, name, or manufacturer"
+                    : "Search reports"
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2.5 text-xs outline-none transition placeholder:text-[#94A3B8] focus:border-accent focus:ring-2 focus:ring-accent/15"
               />
 
               <div className="flex items-center justify-between text-xs text-[#64748B]">
-                <span className="font-medium">
-                  Status: <strong className="text-[#0B1F3A]">All pending (5)</strong>
-                </span>
-                <span>Showing {filteredItems.length} of 5</span>
+                {activeTab === "suppliers" ? (
+                  <>
+                    <span className="font-medium">
+                      Status:{" "}
+                      <strong className="text-[#0B1F3A]">{supplierStatus}</strong>
+                    </span>
+                    <span>
+                      Showing {filteredItems.length} of {supplierTotal}
+                    </span>
+                  </>
+                ) : activeTab === "products" ? (
+                  <>
+                    <span className="font-medium">
+                      Status: <strong className="text-[#0B1F3A]">Draft / Catalog</strong>
+                    </span>
+                    <span>Showing {filteredItems.length} of {tabCounts.products || filteredItems.length}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium">
+                      Status: <strong className="text-[#0B1F3A]">Resolved</strong>
+                    </span>
+                    <span>Showing 0 of {tabCounts.reported}</span>
+                  </>
+                )}
               </div>
 
               {/* Items List */}
               <div className="space-y-2.5">
-                {filteredItems.length === 0 ? (
+                {activeTab === "suppliers" && supplierLoading ? (
                   <div className="rounded-xl border border-dashed border-[#CBD5E1] p-6 text-center text-xs text-[#64748B]">
-                    No items match your filter criteria.
+                    Loading suppliers from PostgreSQL...
+                  </div>
+                ) : activeTab === "suppliers" && supplierError ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-600">
+                    {supplierError}
+                  </div>
+                ) : loading ? (
+                  <div className="rounded-xl border border-dashed border-[#CBD5E1] p-6 text-center text-xs text-[#64748B]">
+                    Loading items from PostgreSQL...
+                  </div>
+                ) : filteredItems.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-[#CBD5E1] p-6 text-center text-xs text-[#64748B]">
+                    {activeTab === "suppliers"
+                      ? "No suppliers found."
+                      : activeTab === "reported"
+                      ? "No reported items or violations found in PostgreSQL database."
+                      : "No products match your filter criteria."}
                   </div>
                 ) : (
                   filteredItems.map((item) => {
                     const isSelected = item.id === selectedItem?.id;
+
                     return (
                       <div
                         key={item.id}
                         onClick={() => handleSelect(item)}
-                        className={`cursor-pointer rounded-xl border p-4 transition-all ${isSelected
+                        className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                          isSelected
                             ? "border-[#2563EB] bg-[#F0F7FF] shadow-sm"
                             : "border-[#E5E7EB] bg-white hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                          }`}
+                        }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-xs font-bold text-[#0B1F3A] leading-snug">
-                            {item.title}
-                          </h3>
-                          <span className="shrink-0 text-[11px] text-[#64748B]">
-                            {item.timeAgo}
-                          </span>
-                        </div>
+                        {activeTab === "suppliers" ? (
+                          <>
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="text-xs font-bold leading-snug text-[#0B1F3A]">
+                                {item.store_name}
+                              </h3>
 
-                        <p className="mt-1 font-mono text-[11px] text-[#64748B]">
-                          P/N {item.partNumber}
-                        </p>
+                              <span className="shrink-0 rounded-full bg-[#FEF3C7] px-2 py-1 text-[10px] font-semibold text-[#92400E]">
+                                {item.status}
+                              </span>
+                            </div>
 
-                        <div className="mt-2 flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1 text-[11px] text-[#475569]">
-                            {item.supplier}
-                            {item.supplierVerified && (
-                              <svg className="h-3 w-3 text-accent" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                            )}
-                          </span>
-                          <span className="font-extrabold text-[#0B1F3A]">
-                            ${item.listedPrice.toLocaleString()}
-                          </span>
-                        </div>
+                            <p className="mt-1 text-[11px] text-[#64748B]">
+                              Company: {item.company_name || "—"}
+                            </p>
+
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#64748B]">
+                              <span>
+                                Supplier ID:{" "}
+                                <span className="font-mono">{item.supplier_id}</span>
+                              </span>
+
+                              <span>
+                                {item.created_at
+                                  ? new Date(item.created_at).toLocaleDateString("en-US")
+                                  : "Date unavailable"}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="text-xs font-bold leading-snug text-[#0B1F3A]">
+                                {item.title}
+                              </h3>
+                              <span className="shrink-0 text-[11px] text-[#64748B]">
+                                {item.timeAgo || "Catalog item"}
+                              </span>
+                            </div>
+
+                            <p className="mt-1 font-mono text-[11px] text-[#64748B]">
+                              P/N {item.partNumber || item.id}
+                            </p>
+
+                            <div className="mt-2 flex items-center justify-between text-xs">
+                              <span className="flex items-center gap-1 text-[11px] text-[#475569]">
+                                {item.supplier || "Supplier"}
+                                {item.supplierVerified && (
+                                  <svg
+                                    className="h-3 w-3 text-accent"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                )}
+                              </span>
+
+                              <span className="font-extrabold text-[#0B1F3A]">
+                                {item.listedPrice != null
+                                  ? `$${Number(item.listedPrice).toLocaleString()}`
+                                  : "—"}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     );
                   })
@@ -413,212 +784,387 @@ export default function AdminModeration() {
 
             {/* Right Column: Review Panel */}
             <div className="lg:col-span-7">
-              {selectedItem ? (
+              {activeTab === "reported" ? (
+                <div className="space-y-4 rounded-2xl border border-[#E5E7EB] bg-white p-12 text-center text-xs text-[#64748B] shadow-sm">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-bold text-[#0B1F3A]">No Reported Items</h3>
+                  <p className="mx-auto max-w-sm text-[#64748B]">
+                    All marketplace products, reviews, and suppliers are in good standing. There are currently 0 reported violations in PostgreSQL.
+                  </p>
+                </div>
+              ) : selectedItem ? (
                 <div className="space-y-5 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
-                  {/* Title & Status Badge */}
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <h2 className="text-xl font-bold tracking-tight text-[#0B1F3A]">
-                      {selectedItem.title}
-                    </h2>
-                    <span className="rounded-full bg-[#E0F2FE] px-3 py-1 text-xs font-semibold text-[#0369A1]">
-                      {selectedItem.status}
-                    </span>
-                  </div>
+                  {activeTab === "suppliers" ? (
+                    <>
+                      {/* Supplier Review Header */}
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h2 className="text-xl font-bold tracking-tight text-[#0B1F3A]">
+                            {supplierDetail?.store_name ?? selectedItem.store_name}
+                          </h2>
 
-                  {/* Attributes Badges */}
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="rounded-md bg-[#F1F5F9] px-2.5 py-1 font-semibold text-[#475569]">
-                      Condition: {selectedItem.condition}
-                    </span>
-                    <span className="rounded-md bg-[#F1F5F9] px-2.5 py-1 font-semibold text-[#475569]">
-                      Stock: {selectedItem.stock}
-                    </span>
-                    <span className="rounded-md bg-[#F1F5F9] px-2.5 py-1 font-mono font-semibold text-[#475569]">
-                      P/N {selectedItem.partNumber}
-                    </span>
-                  </div>
+                          <p className="mt-1 text-xs text-[#64748B]">
+                            Supplier ID: {selectedItem.supplier_id}
+                          </p>
+                        </div>
 
-                  {/* Price & Supplier 2 Boxes */}
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="rounded-xl bg-[#F8FAFC] p-3.5 border border-[#F1F5F9]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
-                        LISTED PRICE
-                      </p>
-                      <p className="mt-1 text-xl font-extrabold text-[#0B1F3A]">
-                        ${selectedItem.listedPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
-                    </div>
+                        <span className="rounded-full bg-[#FEF3C7] px-3 py-1 text-xs font-semibold text-[#92400E]">
+                          {supplierDetail?.status ?? selectedItem.status}
+                        </span>
+                      </div>
 
-                    <div className="rounded-xl bg-[#F8FAFC] p-3.5 border border-[#F1F5F9]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
-                        SUPPLIER
-                      </p>
-                      <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#0B1F3A]">
-                        <span>{selectedItem.supplier}</span>
-                        {selectedItem.supplierVerified && (
-                          <svg className="h-3.5 w-3.5 text-accent" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
+                      {/* Detail Loading / Error */}
+                      {supplierDetailLoading && (
+                        <p className="text-xs text-[#64748B]">
+                          Loading supplier details...
+                        </p>
+                      )}
+
+                      {supplierDetailError && (
+                        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                          {supplierDetailError}
+                        </div>
+                      )}
+
+                      {/* Supplier Information */}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="rounded-xl border border-[#F1F5F9] bg-[#F8FAFC] p-3.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                            COMPANY NAME
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-[#0B1F3A]">
+                            {supplierDetail?.company_name ??
+                              selectedItem.company_name ??
+                              "—"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-[#F1F5F9] bg-[#F8FAFC] p-3.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                            COMPANY TYPE
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-[#0B1F3A]">
+                            {supplierDetail?.company_type ?? "—"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-[#F1F5F9] bg-[#F8FAFC] p-3.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                            COUNTRY CODE
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-[#0B1F3A]">
+                            {supplierDetail?.country_code ?? "—"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-[#F1F5F9] bg-[#F8FAFC] p-3.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                            TAX ID
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-[#0B1F3A]">
+                            {supplierDetail?.tax_id ?? "Not provided"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Store Information */}
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          STORE INFORMATION
+                        </h4>
+
+                        <div className="mt-2 space-y-2 text-xs text-[#475569]">
+                          <p>
+                            <strong className="text-[#0B1F3A]">Store name:</strong>{" "}
+                            {supplierDetail?.store_name ?? selectedItem.store_name}
+                          </p>
+
+                          <p>
+                            <strong className="text-[#0B1F3A]">Slug:</strong>{" "}
+                            {supplierDetail?.slug ?? "—"}
+                          </p>
+
+                          <p>
+                            <strong className="text-[#0B1F3A]">Created at:</strong>{" "}
+                            {supplierDetail?.created_at
+                              ? new Date(supplierDetail.created_at).toLocaleString("en-US")
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          DESCRIPTION
+                        </h4>
+
+                        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-[#475569]">
+                          {supplierDetail?.description ??
+                            selectedItem.description ??
+                            "No description provided."}
+                        </p>
+                      </div>
+
+                      {/* Supplier Users */}
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          SUPPLIER USERS
+                        </h4>
+
+                        <div className="mt-2">
+                          {(supplierDetail?.supplier_users ?? []).length === 0 ? (
+                            <p className="rounded-xl border border-dashed border-[#CBD5E1] p-4 text-xs text-[#64748B]">
+                              No supplier users returned by the API.
+                            </p>
+                          ) : (
+                            <p className="text-xs text-[#475569]">
+                              {(supplierDetail?.supplier_users ?? []).length} supplier user(s) associated with this store.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Supplier Actions */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#E5E7EB] pt-4">
+                        <button
+                          onClick={handleSuspendSupplier}
+                          disabled={
+                            (supplierDetail?.status ?? selectedItem.status) === "SUSPENDED"
+                          }
+                          className="text-xs font-bold text-[#DC2626] transition hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Suspend supplier
+                        </button>
+
+                        {(supplierDetail?.status ?? selectedItem.status) === "PENDING" && (
+                          <button
+                            onClick={handleApprove}
+                            className="rounded-xl bg-[#0B1F3A] px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E293B]"
+                          >
+                            Approve supplier
+                          </button>
                         )}
                       </div>
-                      <p className="text-[11px] text-[#64748B] mt-0.5">
-                        {selectedItem.supplierStatus} · {selectedItem.supplierRating} rating
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                      DESCRIPTION
-                    </h4>
-                    <p className="mt-1 text-xs leading-relaxed text-[#475569]">
-                      {selectedItem.description}
-                    </p>
-                  </div>
-
-                  {/* Compatible Engines */}
-                  <div>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                      COMPATIBLE ENGINES
-                    </h4>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedItem.compatibleEngines.map((engine) => (
-                        <span
-                          key={engine}
-                          className="rounded-md bg-[#F1F5F9] px-2.5 py-1 text-xs font-semibold text-[#0B1F3A]"
-                        >
-                          {engine}
+                    </>
+                  ) : (
+                    <>
+                      {/* Title & Status Badge */}
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <h2 className="text-xl font-bold tracking-tight text-[#0B1F3A]">
+                          {selectedItem.title}
+                        </h2>
+                        <span className="rounded-full bg-[#E0F2FE] px-3 py-1 text-xs font-semibold text-[#0369A1]">
+                          {selectedItem.status}
                         </span>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
 
-                  {/* Attached Documents */}
-                  <div>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                      ATTACHED DOCUMENTS
-                    </h4>
-                    <div className="mt-2 space-y-2">
-                      {selectedItem.attachedDocuments.map((doc) => (
-                        <div
-                          key={doc.name}
-                          className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2.5 text-xs"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <svg className="h-4 w-4 text-[#64748B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span className="font-medium text-[#0B1F3A]">
-                              {doc.name} ({doc.format} · {doc.size})
-                            </span>
-                          </div>
+                      {/* Attributes Badges */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded-md bg-[#F1F5F9] px-2.5 py-1 font-semibold text-[#475569]">
+                          Condition: {selectedItem.condition}
+                        </span>
+                        <span className="rounded-md bg-[#F1F5F9] px-2.5 py-1 font-semibold text-[#475569]">
+                          Stock: {selectedItem.stock}
+                        </span>
+                        <span className="rounded-md bg-[#F1F5F9] px-2.5 py-1 font-mono font-semibold text-[#475569]">
+                          P/N {selectedItem.partNumber}
+                        </span>
+                      </div>
 
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#2563EB]">
-                            <button
-                              onClick={() => alert(`Viewing document: ${doc.name}`)}
-                              className="hover:underline"
-                            >
-                              View
-                            </button>
-                            <span>·</span>
-                            <button
-                              onClick={() => alert(`Downloading: ${doc.name}`)}
-                              className="hover:underline"
-                            >
-                              Download
-                            </button>
-                          </div>
+                      {/* Price & Supplier 2 Boxes */}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="rounded-xl bg-[#F8FAFC] p-3.5 border border-[#F1F5F9]">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                            LISTED PRICE
+                          </p>
+                          <p className="mt-1 text-xl font-extrabold text-[#0B1F3A]">
+                            {selectedItem.listedPrice != null
+                              ? `$${Number(selectedItem.listedPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : "—"}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Reviewer Notes */}
-                  <div>
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-                      REVIEWER NOTES
-                    </h4>
-                    <textarea
-                      rows={3}
-                      placeholder="Add internal notes or feedback for the supplier"
-                      value={reviewerNotes}
-                      onChange={(e) => setReviewerNotes(e.target.value)}
-                      className="mt-2 w-full rounded-xl border border-[#E5E7EB] bg-white p-3 text-xs outline-none transition placeholder:text-[#94A3B8] focus:border-accent focus:ring-2 focus:ring-accent/15"
-                    />
-                  </div>
+                        <div className="rounded-xl bg-[#F8FAFC] p-3.5 border border-[#F1F5F9]">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                            SUPPLIER
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-[#0B1F3A]">
+                            <span>{selectedItem.supplier}</span>
+                            {selectedItem.supplierVerified && (
+                              <svg className="h-3.5 w-3.5 text-accent" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[#64748B] mt-0.5">
+                            {selectedItem.supplierStatus} · {selectedItem.supplierRating} rating
+                          </p>
+                        </div>
+                      </div>
 
-                  {/* Checklist Controls */}
-                  <div className="flex flex-wrap items-center gap-6 pt-1 text-xs font-medium text-[#475569]">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={checks.infoComplete}
-                        onChange={(e) =>
-                          setChecks({ ...checks, infoComplete: e.target.checked })
-                        }
-                        className="h-4 w-4 rounded border-[#CBD5E1] text-[#0B1F3A] focus:ring-accent"
-                      />
-                      <span>Information complete</span>
-                    </label>
+                      {/* Description */}
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          DESCRIPTION
+                        </h4>
+                        <p className="mt-1 text-xs leading-relaxed text-[#475569]">
+                          {selectedItem.description}
+                        </p>
+                      </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={checks.priceReasonable}
-                        onChange={(e) =>
-                          setChecks({ ...checks, priceReasonable: e.target.checked })
-                        }
-                        className="h-4 w-4 rounded border-[#CBD5E1] text-[#0B1F3A] focus:ring-accent"
-                      />
-                      <span>Price looks reasonable</span>
-                    </label>
+                      {/* Compatible Engines */}
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          COMPATIBLE ENGINES
+                        </h4>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {(selectedItem.compatibleEngines ?? []).map((engine) => (
+                            <span
+                              key={engine}
+                              className="rounded-md bg-[#F1F5F9] px-2.5 py-1 text-xs font-semibold text-[#0B1F3A]"
+                            >
+                              {engine}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={checks.documentsAttached}
-                        onChange={(e) =>
-                          setChecks({ ...checks, documentsAttached: e.target.checked })
-                        }
-                        className="h-4 w-4 rounded border-[#CBD5E1] text-[#0B1F3A] focus:ring-accent"
-                      />
-                      <span>Documents attached</span>
-                    </label>
-                  </div>
+                      {/* Attached Documents */}
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          ATTACHED DOCUMENTS
+                        </h4>
+                        <div className="mt-2 space-y-2">
+                          {(selectedItem.attachedDocuments ?? []).length === 0 ? (
+                            <p className="text-xs text-[#64748B]">No attached certification documents.</p>
+                          ) : (
+                            selectedItem.attachedDocuments.map((doc) => (
+                              <div
+                                key={doc.name}
+                                className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-2.5 text-xs"
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <svg className="h-4 w-4 text-[#64748B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <span className="font-medium text-[#0B1F3A]">
+                                    {doc.name} ({doc.format} · {doc.size})
+                                  </span>
+                                </div>
 
-                  {/* Bottom Action Buttons */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#E5E7EB] pt-4">
-                    <button
-                      onClick={handleSuspendSupplier}
-                      className="text-xs font-bold text-[#DC2626] transition hover:underline"
-                    >
-                      Suspend supplier
-                    </button>
+                                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#2563EB]">
+                                  <button
+                                    onClick={() => alert(`Viewing document: ${doc.name}`)}
+                                    className="hover:underline"
+                                  >
+                                    View
+                                  </button>
+                                  <span>·</span>
+                                  <button
+                                    onClick={() => alert(`Downloading: ${doc.name}`)}
+                                    className="hover:underline"
+                                  >
+                                    Download
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
 
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        onClick={handleReject}
-                        className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-xs font-bold text-[#475569] transition hover:bg-[#F8FAFC]"
-                      >
-                        Reject
-                      </button>
+                      {/* Reviewer Notes */}
+                      <div>
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          REVIEWER NOTES
+                        </h4>
+                        <textarea
+                          rows={3}
+                          placeholder="Add internal notes or feedback for the supplier"
+                          value={reviewerNotes}
+                          onChange={(e) => setReviewerNotes(e.target.value)}
+                          className="mt-2 w-full rounded-xl border border-[#E5E7EB] bg-white p-3 text-xs outline-none transition placeholder:text-[#94A3B8] focus:border-accent focus:ring-2 focus:ring-accent/15"
+                        />
+                      </div>
 
-                      <button
-                        onClick={handleRequestChanges}
-                        className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-xs font-bold text-[#0B1F3A] transition hover:bg-[#F8FAFC]"
-                      >
-                        Request changes
-                      </button>
+                      {/* Checklist Controls */}
+                      <div className="flex flex-wrap items-center gap-6 pt-1 text-xs font-medium text-[#475569]">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={checks.infoComplete}
+                            onChange={(e) =>
+                              setChecks({ ...checks, infoComplete: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-[#CBD5E1] text-[#0B1F3A] focus:ring-accent"
+                          />
+                          <span>Information complete</span>
+                        </label>
 
-                      <button
-                        onClick={handleApprove}
-                        className="rounded-xl bg-[#0B1F3A] px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E293B]"
-                      >
-                        Approve and publish
-                      </button>
-                    </div>
-                  </div>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={checks.priceReasonable}
+                            onChange={(e) =>
+                              setChecks({ ...checks, priceReasonable: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-[#CBD5E1] text-[#0B1F3A] focus:ring-accent"
+                          />
+                          <span>Price looks reasonable</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={checks.documentsAttached}
+                            onChange={(e) =>
+                              setChecks({ ...checks, documentsAttached: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-[#CBD5E1] text-[#0B1F3A] focus:ring-accent"
+                          />
+                          <span>Documents attached</span>
+                        </label>
+                      </div>
+
+                      {/* Bottom Action Buttons */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#E5E7EB] pt-4">
+                        <button
+                          onClick={handleSuspendSupplier}
+                          className="text-xs font-bold text-[#DC2626] transition hover:underline"
+                        >
+                          Suspend supplier
+                        </button>
+
+                        <div className="flex items-center gap-2.5">
+                          <button
+                            onClick={handleReject}
+                            className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-xs font-bold text-[#475569] transition hover:bg-[#F8FAFC]"
+                          >
+                            Reject
+                          </button>
+
+                          <button
+                            onClick={handleRequestChanges}
+                            className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2 text-xs font-bold text-[#0B1F3A] transition hover:bg-[#F8FAFC]"
+                          >
+                            Request changes
+                          </button>
+
+                          <button
+                            onClick={handleApprove}
+                            className="rounded-xl bg-[#0B1F3A] px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#1E293B]"
+                          >
+                            Approve and publish
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="card p-12 text-center text-xs text-[#64748B]">

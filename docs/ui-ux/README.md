@@ -1,4 +1,4 @@
-# UI/UX
+# UI_UX
 
 This directory is intended for user interface and experience design documentation.
 

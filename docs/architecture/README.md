@@ -202,7 +202,7 @@ Hosting and storage configurations are documented separately in
 - [Database Design](../database/README.md)
 - [Data Engineering](../data/README.md)
 - [RUL System Design](../rul/SYSTEM_DESIGN.md)
-- [UI/UX Design](../ui-ux/README.md)
+- [UI_UX Design](../ui-ux/README.md)
 - [DevOps & Deployment](../devops/README.md)
 
 ## 8. Maintaining the Architecture
