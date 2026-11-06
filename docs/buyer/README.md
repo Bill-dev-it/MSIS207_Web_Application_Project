@@ -70,9 +70,13 @@ State-changing requests include `X-AeroRUL-Request: 1`; the shared frontend tran
 
 ## Checkout and payment behavior
 
-Order placement uses one PostgreSQL transaction to validate saved addresses, recheck active offers and supplier approval, lock/check stock, create the order and seller orders, snapshot line items, decrement listing stock, create a simulated payment record, and clear the cart. A client-generated `checkout_key` is retained across retries for idempotency.
+Order placement (`POST /api/v1/checkout/orders`) uses one PostgreSQL transaction to validate saved addresses, recheck active offers and supplier approval, lock/check stock, create the order and seller orders, snapshot line items, decrement listing stock, create the order's payment record, and clear the cart. A client-generated `checkout_key` is retained across retries for idempotency.
 
-Only `SIMULATION` payment is supported. It does not collect or transfer real funds. Delivery fees are demonstration estimates, not carrier quotes or guarantees; taxes are not calculated. Inventory, supplier fulfillment, shipments and tracking are shown only when corresponding backend records exist.
+Two demonstration B2B payment methods are supported:
+- `SIMULATION` (Simulated Payment): a development-only payment method that immediately records `status = 'SUCCEEDED'` and sets `paid_at` at checkout.
+- `BANK_TRANSFER` (Bank Transfer (Demo)): a manual reconciliation demonstration that records `status = 'PENDING'` with `paid_at = NULL` at checkout and uses the unique `orders.order_number` as the transfer reference. Supplier fulfillment transitions (`CONFIRMED -> PROCESSING -> SHIPPED -> DELIVERED`) remain blocked until an authenticated `ADMIN` confirms the payment via `POST /api/v1/admin/payments/:orderId/confirm` (or cancels it via `POST /api/v1/admin/payments/:orderId/cancel`, which atomically restores reserved listing stock once).
+
+AeroRUL does **not** collect cardholder data, integrate live card acquiring or banking rails, transfer real funds, or claim PCI DSS compliance. Delivery fees are demonstration estimates, not carrier quotes or guarantees; taxes are not calculated. Inventory, supplier fulfillment, shipments and tracking are shown only when corresponding backend records exist. See [PAYMENT_MVP_CONTRACT.md](./PAYMENT_MVP_CONTRACT.md) and [PAYMENT_MVP_QA_CHECKLIST.md](./PAYMENT_MVP_QA_CHECKLIST.md) for the complete payment specification and QA checklist.
 
 ## RUL workflow and manual verification limits
 

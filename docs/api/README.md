@@ -54,7 +54,9 @@ Paths in this table are relative to `/api/v1`.
 | Checkout | POST | `/checkout/addresses` | Buyer | Save an address for the authenticated company |
 | Checkout | GET | `/checkout/delivery-methods` | Buyer | Read demonstration-only delivery estimates |
 | Checkout | GET | `/checkout/company` | Buyer | Read the authenticated Buyer company |
-| Checkout | POST | `/checkout/orders` | Buyer | Place an order from the authenticated cart |
+| Checkout | POST | `/checkout/orders` | Buyer | Place an order from the authenticated cart (`SIMULATION` or `BANK_TRANSFER`) |
+| Admin Payments | POST | `/admin/payments/:orderId/confirm` | Admin | Confirm a `PENDING` `BANK_TRANSFER` payment (`SUCCEEDED`) |
+| Admin Payments | POST | `/admin/payments/:orderId/cancel` | Admin | Cancel a `PENDING` `BANK_TRANSFER` payment (`CANCELLED`) and restore reserved stock |
 | Orders | GET | `/orders` | Buyer | Search/filter company orders |
 | Orders | GET | `/orders/:orderId` | Buyer | Read company-scoped order details |
 | Orders | GET | `/orders/:orderId/confirmation` | Buyer | Read company-scoped order confirmation |
@@ -88,12 +90,20 @@ uses BIGINT identifiers.
 
 `POST /api/v1/checkout/orders` accepts saved address IDs belonging to the
 authenticated company, a supported delivery-estimate ID, a stable
-`checkout_key`, and `payment_method: "SIMULATION"`. The server validates current
-offer status and stock, creates the order and seller orders, decrements stock,
-records a simulated payment, and clears the cart in one transaction. The
-simulation does not collect or transfer real funds. Delivery fees are
-demonstration estimates, not carrier quotes or guarantees; taxes are not
-calculated.
+`checkout_key`, and `payment_method` (`"SIMULATION"` or `"BANK_TRANSFER"`). The
+server validates current offer status and stock, creates the order and seller
+orders, decrements stock, records the explicit payment state (`SUCCEEDED` with
+`paid_at` for development-only `SIMULATION`, or `PENDING` with `paid_at = NULL`
+for the `BANK_TRANSFER` manual reconciliation demonstration), and clears the
+cart in one transaction. Authorized `ADMIN` sessions can reconcile a `PENDING`
+`BANK_TRANSFER` order via `POST /api/v1/admin/payments/:orderId/confirm` or
+cancel it (atomically restoring reserved stock once) via
+`POST /api/v1/admin/payments/:orderId/cancel`. Supplier fulfillment transitions
+(`CONFIRMED -> PROCESSING -> SHIPPED -> DELIVERED`) require the order's payment
+`status` to be `SUCCEEDED`. AeroRUL does not collect cardholder data, integrate
+live card acquiring or banking rails, transfer real funds, or claim PCI DSS
+compliance. Delivery fees are demonstration estimates, not carrier quotes or
+guarantees; taxes are not calculated.
 
 The checkout transaction creates one `orders` row and one `seller_orders` row
 per supplier represented in the cart, then writes the corresponding
