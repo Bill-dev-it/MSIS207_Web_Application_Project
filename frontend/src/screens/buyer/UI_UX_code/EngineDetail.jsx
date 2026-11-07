@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
-import { useEngineDetail } from "../../features/buyer/engines/hooks/useEngineDetail";
-import { EngineUrgencyBadge } from "../../features/buyer/engines/components/EngineUrgencyBadge";
+import { useEngineDetail } from "../../../features/buyer/engines/hooks/useEngineDetail";
+import { EngineUrgencyBadge } from "../../../features/buyer/engines/components/EngineUrgencyBadge";
 
 export default function EngineDetail() {
   const { engineId } = useParams();
@@ -67,7 +67,7 @@ export default function EngineDetail() {
               )}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Serial Number: <span className="font-mono text-slate-700">{engine.serialNumber}</span> &bull; 
+              Serial Number: <span className="font-mono text-slate-700">{engine.serialNumber}</span> &bull;
               Added: {new Date(engine.createdAt).toLocaleDateString()}
             </p>
           </div>

@@ -1,11 +1,11 @@
 import { Link, useParams } from "react-router-dom";
-import OrderStatusBadge from "../../features/buyer/orders/components/OrderStatusBadge";
-import OrderTimeline from "../../features/buyer/orders/order-detail/components/OrderTimeline";
-import SupplierShipmentCard from "../../features/buyer/orders/order-detail/components/SupplierShipmentCard";
-import OrderShippingInformation from "../../features/buyer/orders/order-detail/components/OrderShippingInformation";
-import OrderPaymentInformation from "../../features/buyer/orders/order-detail/components/OrderPaymentInformation";
-import { useOrderDetail } from "../../features/buyer/orders/order-detail/hooks/useOrderDetail";
-import { formatCurrency } from "../../features/buyer/cart/utils/cartCalculations";
+import OrderStatusBadge from "../../../features/buyer/orders/components/OrderStatusBadge";
+import OrderTimeline from "../../../features/buyer/orders/order-detail/components/OrderTimeline";
+import SupplierShipmentCard from "../../../features/buyer/orders/order-detail/components/SupplierShipmentCard";
+import OrderShippingInformation from "../../../features/buyer/orders/order-detail/components/OrderShippingInformation";
+import OrderPaymentInformation from "../../../features/buyer/orders/order-detail/components/OrderPaymentInformation";
+import { useOrderDetail } from "../../../features/buyer/orders/order-detail/hooks/useOrderDetail";
+import { formatCurrency } from "../../../features/buyer/cart/utils/cartCalculations";
 
 export default function OrderDetailPage() {
   const { orderId } = useParams();
@@ -70,27 +70,26 @@ export default function OrderDetailPage() {
                   </h1>
                   <OrderStatusBadge status={primaryStatus} />
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                      paymentStatus === "SUCCEEDED"
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${paymentStatus === "SUCCEEDED"
                         ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                         : paymentStatus === "PENDING"
-                        ? "bg-amber-50 text-amber-900 border-amber-300"
-                        : paymentStatus === "CANCELLED"
-                        ? "bg-rose-50 text-rose-800 border-rose-200"
-                        : "bg-slate-100 text-slate-700 border-slate-200"
-                    }`}
+                          ? "bg-amber-50 text-amber-900 border-amber-300"
+                          : paymentStatus === "CANCELLED"
+                            ? "bg-rose-50 text-rose-800 border-rose-200"
+                            : "bg-slate-100 text-slate-700 border-slate-200"
+                      }`}
                   >
                     {paymentMethod === "BANK_TRANSFER" && paymentStatus === "PENDING"
                       ? "Awaiting Payment Confirmation"
                       : paymentMethod === "SIMULATION" && paymentStatus === "SUCCEEDED"
-                      ? "Simulated Payment Successful"
-                      : paymentMethod === "BANK_TRANSFER" && paymentStatus === "SUCCEEDED"
-                      ? "Payment Confirmed (Demo)"
-                      : paymentStatus === "CANCELLED"
-                      ? "Payment Cancelled"
-                      : paymentStatus
-                      ? `Payment: ${paymentStatus}`
-                      : "Payment not recorded"}
+                        ? "Simulated Payment Successful"
+                        : paymentMethod === "BANK_TRANSFER" && paymentStatus === "SUCCEEDED"
+                          ? "Payment Confirmed (Demo)"
+                          : paymentStatus === "CANCELLED"
+                            ? "Payment Cancelled"
+                            : paymentStatus
+                              ? `Payment: ${paymentStatus}`
+                              : "Payment not recorded"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">

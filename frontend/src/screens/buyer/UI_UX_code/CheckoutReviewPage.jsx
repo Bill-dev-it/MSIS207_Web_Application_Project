@@ -1,11 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import CheckoutStepper from "../../features/buyer/checkout/components/CheckoutStepper";
-import CheckoutOrderSummary from "../../features/buyer/checkout/components/CheckoutOrderSummary";
-import ReviewItems from "../../features/buyer/checkout/review/components/ReviewItems";
-import ReviewShipping from "../../features/buyer/checkout/review/components/ReviewShipping";
-import ReviewPayment from "../../features/buyer/checkout/review/components/ReviewPayment";
-import PlaceOrderButton from "../../features/buyer/checkout/review/components/PlaceOrderButton";
-import { useCheckoutReview } from "../../features/buyer/checkout/review/hooks/useCheckoutReview";
+import CheckoutStepper from "../../../features/buyer/checkout/components/CheckoutStepper";
+import CheckoutOrderSummary from "../../../features/buyer/checkout/components/CheckoutOrderSummary";
+import ReviewItems from "../../../features/buyer/checkout/review/components/ReviewItems";
+import ReviewShipping from "../../../features/buyer/checkout/review/components/ReviewShipping";
+import ReviewPayment from "../../../features/buyer/checkout/review/components/ReviewPayment";
+import PlaceOrderButton from "../../../features/buyer/checkout/review/components/PlaceOrderButton";
+import { useCheckoutReview } from "../../../features/buyer/checkout/review/hooks/useCheckoutReview";
 
 export default function CheckoutReviewPage() {
   const navigate = useNavigate();

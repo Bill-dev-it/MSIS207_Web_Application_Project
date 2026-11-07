@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import CheckoutStepper from "../../features/buyer/checkout/components/CheckoutStepper";
-import CheckoutOrderSummary from "../../features/buyer/checkout/components/CheckoutOrderSummary";
-import ShippingAddressList from "../../features/buyer/checkout/shipping/components/ShippingAddressList";
-import ShippingAddressForm from "../../features/buyer/checkout/shipping/components/ShippingAddressForm";
-import DeliveryMethodSelector from "../../features/buyer/checkout/shipping/components/DeliveryMethodSelector";
-import CompanyDetailsForm from "../../features/buyer/checkout/shipping/components/CompanyDetailsForm";
-import { useCheckoutShipping } from "../../features/buyer/checkout/shipping/hooks/useCheckoutShipping";
-import { useCart } from "../../features/buyer/cart";
+import CheckoutStepper from "../../../features/buyer/checkout/components/CheckoutStepper";
+import CheckoutOrderSummary from "../../../features/buyer/checkout/components/CheckoutOrderSummary";
+import ShippingAddressList from "../../../features/buyer/checkout/shipping/components/ShippingAddressList";
+import ShippingAddressForm from "../../../features/buyer/checkout/shipping/components/ShippingAddressForm";
+import DeliveryMethodSelector from "../../../features/buyer/checkout/shipping/components/DeliveryMethodSelector";
+import CompanyDetailsForm from "../../../features/buyer/checkout/shipping/components/CompanyDetailsForm";
+import { useCheckoutShipping } from "../../../features/buyer/checkout/shipping/hooks/useCheckoutShipping";
+import { useCart } from "../../../features/buyer/cart";
 
 export default function CheckoutShippingPage() {
   const navigate = useNavigate();

@@ -1,11 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import CheckoutStepper from "../../features/buyer/checkout/components/CheckoutStepper";
-import CheckoutOrderSummary from "../../features/buyer/checkout/components/CheckoutOrderSummary";
-import PaymentMethodSelector from "../../features/buyer/checkout/payment/components/PaymentMethodSelector";
-import BillingInformation from "../../features/buyer/checkout/payment/components/BillingInformation";
-import { useCheckoutPayment } from "../../features/buyer/checkout/payment/hooks/useCheckoutPayment";
-import { isSupportedPaymentMethod } from "../../features/buyer/checkout/payment/services/paymentApi";
-import { useCart } from "../../features/buyer/cart";
+import CheckoutStepper from "../../../features/buyer/checkout/components/CheckoutStepper";
+import CheckoutOrderSummary from "../../../features/buyer/checkout/components/CheckoutOrderSummary";
+import PaymentMethodSelector from "../../../features/buyer/checkout/payment/components/PaymentMethodSelector";
+import BillingInformation from "../../../features/buyer/checkout/payment/components/BillingInformation";
+import { useCheckoutPayment } from "../../../features/buyer/checkout/payment/hooks/useCheckoutPayment";
+import { isSupportedPaymentMethod } from "../../../features/buyer/checkout/payment/services/paymentApi";
+import { useCart } from "../../../features/buyer/cart";
 
 export default function CheckoutPaymentPage() {
   const navigate = useNavigate();

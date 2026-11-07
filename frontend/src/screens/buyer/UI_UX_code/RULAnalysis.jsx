@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { addItemToCart } from "../../features/buyer/cart/services/cartApi";
-import { EngineUrgencyBadge } from "../../features/buyer/engines/components/EngineUrgencyBadge";
-import { getEngines } from "../../features/buyer/engines/services/engineApi";
+import { addItemToCart } from "../../../features/buyer/cart/services/cartApi";
+import { EngineUrgencyBadge } from "../../../features/buyer/engines/components/EngineUrgencyBadge";
+import { getEngines } from "../../../features/buyer/engines/services/engineApi";
 import {
   generateReplacementRecommendations,
   getReplacementRecommendations,
   getRulHistory,
   predictRul,
-} from "../../features/buyer/rul-analysis/services/rulApi";
+} from "../../../features/buyer/rul-analysis/services/rulApi";
 
 const STATUS_LABEL = {
   PRIORITIZE: "Prioritize maintenance planning",
@@ -243,7 +243,7 @@ export default function RULAnalysis() {
       typeof predictionRecordOrId === "object" && predictionRecordOrId !== null
         ? predictionRecordOrId
         : history.find(item => String(item.prediction_id) === String(predictionRecordOrId)) ||
-          (String(result?.prediction_id || "") === String(predictionRecordOrId) ? result : null);
+        (String(result?.prediction_id || "") === String(predictionRecordOrId) ? result : null);
     const targetPredictionId = String(
       record ? record.prediction_id : predictionRecordOrId
     );
@@ -398,7 +398,7 @@ export default function RULAnalysis() {
         <div>
           <label htmlFor="rul-file" className="mb-2 block font-semibold">3. Upload compatible sensor CSV</label>
           <input id="rul-file" className="input w-full" type="file" accept=".csv,text/csv"
-            required disabled={busy} onChange={onFileChange}/>
+            required disabled={busy} onChange={onFileChange} />
           <p className="mt-1 text-xs text-neutral-600">UTF-8 without BOM; 19 required columns, one unit, at least 30 observations, maximum 1 MiB. Use raw, unscaled values in compatible physical units; physical units are not independently verified. Do not include ground-truth RUL labels.</p>
         </div>
         <button className="btn btn-primary" type="submit" disabled={busy || !engineId || !file || !sourceClassification}>

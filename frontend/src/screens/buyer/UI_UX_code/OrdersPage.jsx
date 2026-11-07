@@ -1,7 +1,7 @@
-import OrdersFilters from "../../features/buyer/orders/components/OrdersFilters";
-import OrdersTable from "../../features/buyer/orders/components/OrdersTable";
-import OrdersPagination from "../../features/buyer/orders/components/OrdersPagination";
-import { useOrders } from "../../features/buyer/orders/hooks/useOrders";
+import OrdersFilters from "../../../features/buyer/orders/components/OrdersFilters";
+import OrdersTable from "../../../features/buyer/orders/components/OrdersTable";
+import OrdersPagination from "../../../features/buyer/orders/components/OrdersPagination";
+import { useOrders } from "../../../features/buyer/orders/hooks/useOrders";
 
 export default function OrdersPage() {
   const {

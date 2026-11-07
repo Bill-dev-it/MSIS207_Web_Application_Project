@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
-import OrderConfirmationSummary from "../../features/buyer/orders/order-confirmation/components/OrderConfirmationSummary";
-import NextStepsInformation from "../../features/buyer/orders/order-confirmation/components/NextStepsInformation";
-import { useOrderConfirmation } from "../../features/buyer/orders/order-confirmation/hooks/useOrderConfirmation";
+import OrderConfirmationSummary from "../../../features/buyer/orders/order-confirmation/components/OrderConfirmationSummary";
+import NextStepsInformation from "../../../features/buyer/orders/order-confirmation/components/NextStepsInformation";
+import { useOrderConfirmation } from "../../../features/buyer/orders/order-confirmation/hooks/useOrderConfirmation";
 
 export default function OrderConfirmationPage() {
   const { orderId } = useParams();

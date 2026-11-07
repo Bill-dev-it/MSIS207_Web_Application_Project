@@ -1,9 +1,9 @@
-import { useDashboard } from "../../features/buyer/dashboard/hooks/useDashboard";
-import { DashboardHeader } from "../../features/buyer/dashboard/components/DashboardHeader";
-import { DashboardStatCard } from "../../features/buyer/dashboard/components/DashboardStatCard";
-import { RulAlertCard } from "../../features/buyer/dashboard/components/RulAlertCard";
-import { EngineHealthOverview } from "../../features/buyer/dashboard/components/EngineHealthOverview";
-import { RecentOrders } from "../../features/buyer/dashboard/components/RecentOrders";
+import { useDashboard } from "../../../features/buyer/dashboard/hooks/useDashboard";
+import { DashboardHeader } from "../../../features/buyer/dashboard/components/DashboardHeader";
+import { DashboardStatCard } from "../../../features/buyer/dashboard/components/DashboardStatCard";
+import { RulAlertCard } from "../../../features/buyer/dashboard/components/RulAlertCard";
+import { EngineHealthOverview } from "../../../features/buyer/dashboard/components/EngineHealthOverview";
+import { RecentOrders } from "../../../features/buyer/dashboard/components/RecentOrders";
 
 export default function BuyerDashboard() {
   const { summary, engineHealth, recentOrders, loading, error, refresh } =

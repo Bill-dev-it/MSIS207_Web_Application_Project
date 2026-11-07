@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import CheckoutStepper from "../../features/buyer/checkout/components/CheckoutStepper";
-import CartItemList from "../../features/buyer/cart/components/CartItemList";
-import CartSummary from "../../features/buyer/cart/components/CartSummary";
-import { useCart } from "../../features/buyer/cart/hooks/useCart";
+import CheckoutStepper from "../../../features/buyer/checkout/components/CheckoutStepper";
+import CartItemList from "../../../features/buyer/cart/components/CartItemList";
+import CartSummary from "../../../features/buyer/cart/components/CartSummary";
+import { useCart } from "../../../features/buyer/cart/hooks/useCart";
 
 export default function CartPage() {
   const {

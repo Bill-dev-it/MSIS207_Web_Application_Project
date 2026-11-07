@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useEngines } from "../../features/buyer/engines/hooks/useEngines";
-import { EngineToolbar } from "../../features/buyer/engines/components/EngineToolbar";
-import { EngineTable } from "../../features/buyer/engines/components/EngineTable";
-import { EngineCards } from "../../features/buyer/engines/components/EngineCards";
+import { useEngines } from "../../../features/buyer/engines/hooks/useEngines";
+import { EngineToolbar } from "../../../features/buyer/engines/components/EngineToolbar";
+import { EngineTable } from "../../../features/buyer/engines/components/EngineTable";
+import { EngineCards } from "../../../features/buyer/engines/components/EngineCards";
 
 export default function MyEngines() {
   const [viewMode, setViewMode] = useState("table");
