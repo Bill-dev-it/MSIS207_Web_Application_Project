@@ -1,4 +1,4 @@
-import AdminUsersScreen from "../../../screens/admin/Admin_frontend_Code/AdminUsers";
+import AdminUsersScreen from "../../../screens/admin/UI_UX_Code/AdminUsers";
 
 export default function AdminUsers() {
   return <AdminUsersScreen />;

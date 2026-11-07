@@ -1,4 +1,4 @@
-import AdminRULStatusScreen from "../../../screens/admin/Admin_frontend_Code/AdminRULStatus";
+import AdminRULStatusScreen from "../../../screens/admin/UI_UX_Code/AdminRULStatus";
 
 export default function AdminRULStatus() {
   return <AdminRULStatusScreen />;
