@@ -78,6 +78,12 @@ export const NAVIGATION_CONFIG = {
             icon: "orders",
         },
         {
+            label: "Recommendations",
+            path: "/admin/recommendations",
+            matchPaths: ["/admin/recommendations"],
+            icon: "recommendations",
+        },
+        {
             label: "Reviews / Reports",
             path: "/admin/reports",
             matchPaths: ["/admin/reports"],
