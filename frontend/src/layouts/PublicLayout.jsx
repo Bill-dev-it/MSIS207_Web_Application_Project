@@ -2,6 +2,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import AccountActions from "../components/common/AccountActions";
+import RoleNavigation from "../components/common/RoleNavigation";
 
 export default function PublicLayout() {
   const { status, user } = useAuth();
@@ -19,35 +20,7 @@ export default function PublicLayout() {
             Aero<span className="text-accent">RUL</span>
           </NavLink>
 
-          {isAuthenticated && (
-            <nav aria-label="Public navigation" className="flex flex-wrap items-center">
-              <NavLink
-                to="/"
-                end
-                className={({ isActive }) =>
-                  `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-neutral-500 hover:text-primary-700"
-                  }`
-                }
-              >
-                Home
-              </NavLink>
-              <NavLink
-                to="/marketplace"
-                className={({ isActive }) =>
-                  `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-neutral-500 hover:text-primary-700"
-                  }`
-                }
-              >
-                Marketplace
-              </NavLink>
-            </nav>
-          )}
+          {isAuthenticated && <RoleNavigation />}
           <AccountActions />
         </div>
       </header>
