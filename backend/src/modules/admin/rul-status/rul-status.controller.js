@@ -24,3 +24,4 @@ async function getRulSystemStatus(req, res) {
 module.exports = {
     getRulSystemStatus,
 };
+

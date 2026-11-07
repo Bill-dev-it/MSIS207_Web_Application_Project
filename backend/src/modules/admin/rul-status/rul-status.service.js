@@ -225,3 +225,4 @@ async function getAdminRulSystemStatus() {
 module.exports = {
     getAdminRulSystemStatus,
 };
+

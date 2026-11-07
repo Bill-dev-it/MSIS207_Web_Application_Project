@@ -13,3 +13,4 @@ router.patch("/:id/hide", reportsController.patchHideAdminReport);
 router.patch("/:id/dismiss", reportsController.patchDismissAdminReport);
 
 module.exports = router;
+

@@ -80,3 +80,4 @@ http://localhost:3000
 
 - **Summary:** **14 PASS / 0 FAIL / 1 BLOCKED** out of 15 test cases.
 - All read-only Admin Orders endpoints (`GET /api/v1/admin/orders` and `GET /api/v1/admin/orders/:orderId`) operate accurately against real PostgreSQL data without any data mutation.
+

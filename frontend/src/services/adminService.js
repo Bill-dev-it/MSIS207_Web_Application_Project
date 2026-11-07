@@ -433,9 +433,10 @@ export async function fetchModerationQueue() {
 }
 
 export async function fetchRULSystemStatus() {
-  await new Promise((resolve) => setTimeout(resolve, 80));
-  return RUL_SYSTEM_METRICS;
+  return apiClient.get("/v1/admin/rul-status");
 }
+
+export const fetchAdminRulStatus = fetchRULSystemStatus;
 
 export async function fetchReplacementRecommendations(engineId = "ENG-037") {
   await new Promise((resolve) => setTimeout(resolve, 80));
@@ -608,4 +609,162 @@ export async function updateAdminUserStatus(userId, status) {
         `/v1/admin/users/${encodeURIComponent(userId)}/status`,
         { status }
     );
+}
+
+/**
+ * Fetch Admin Orders
+ * Observe-only: Admin can view and filter orders, but cannot modify them.
+ */
+export async function fetchAdminOrders({
+  status = "ALL",
+  search = "",
+  page = 1,
+  limit = 10,
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (status && status !== "ALL") {
+    params.set("status", status);
+  }
+
+  const normalizedSearch = String(search).trim();
+
+  if (normalizedSearch) {
+    params.set("search", normalizedSearch);
+  }
+
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+
+  const queryString = params.toString();
+
+  return apiClient.get(`/v1/admin/orders?${queryString}`);
+}
+
+/**
+ * Fetch Admin Order Detail
+ * Uses the actual order_id returned by the Admin Orders API.
+ */
+export async function fetchAdminOrderDetail(orderId) {
+  if (
+    orderId === undefined ||
+    orderId === null ||
+    String(orderId).trim() === ""
+  ) {
+    throw new Error("Order ID is required");
+  }
+
+  return apiClient.get(
+    `/v1/admin/orders/${encodeURIComponent(String(orderId).trim())}`
+  );
+}
+
+/**
+ * Fetch Admin Companies / Buyers
+ * GET /api/v1/admin/companies
+ */
+export async function fetchAdminCompanies({ search = "" } = {}) {
+  const params = new URLSearchParams();
+  const normalizedSearch = String(search || "").trim();
+
+  if (normalizedSearch) {
+    params.set("search", normalizedSearch);
+  }
+
+  const queryString = params.toString();
+  const endpoint = queryString
+    ? `/v1/admin/companies?${queryString}`
+    : "/v1/admin/companies";
+
+  return apiClient.get(endpoint);
+}
+
+/**
+ * Fetch Admin Company Detail
+ * GET /api/v1/admin/companies/:companyId
+ */
+export async function fetchAdminCompanyDetail(companyId) {
+  if (
+    companyId === undefined ||
+    companyId === null ||
+    String(companyId).trim() === ""
+  ) {
+    throw new Error("Company ID is required");
+  }
+
+  return apiClient.get(
+    `/v1/admin/companies/${encodeURIComponent(String(companyId).trim())}`
+  );
+}
+
+/**
+ * Fetch Admin Reviews / Reports
+ * GET /api/v1/admin/reports
+ */
+export async function fetchAdminReports({ status = "ALL" } = {}) {
+  const params = new URLSearchParams();
+  if (status && status !== "ALL") {
+    params.set("status", status);
+  }
+  const queryString = params.toString();
+  const endpoint = queryString
+    ? `/v1/admin/reports?${queryString}`
+    : "/v1/admin/reports";
+  return apiClient.get(endpoint);
+}
+
+/**
+ * Hide an Admin Review / Report
+ * PATCH /api/v1/admin/reports/:id/hide
+ */
+export async function hideAdminReport(reportId) {
+  if (
+    reportId === undefined ||
+    reportId === null ||
+    String(reportId).trim() === ""
+  ) {
+    throw new Error("Report ID is required");
+  }
+
+  return apiClient.patch(
+    `/v1/admin/reports/${encodeURIComponent(String(reportId).trim())}/hide`
+  );
+}
+
+/**
+ * Dismiss an Admin Review / Report
+ * PATCH /api/v1/admin/reports/:id/dismiss
+ */
+export async function dismissAdminReport(reportId) {
+  if (
+    reportId === undefined ||
+    reportId === null ||
+    String(reportId).trim() === ""
+  ) {
+    throw new Error("Report ID is required");
+  }
+
+  return apiClient.patch(
+    `/v1/admin/reports/${encodeURIComponent(String(reportId).trim())}/dismiss`
+  );
+}
+
+/**
+ * Fetch Admin System Settings
+ * GET /api/v1/admin/settings
+ */
+export async function fetchAdminSettings() {
+  return apiClient.get("/v1/admin/settings");
+}
+
+/**
+ * Update Admin System Settings
+ * PUT /api/v1/admin/settings
+ */
+export async function updateAdminSettings(payload) {
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Settings payload is required");
+  }
+
+  return apiClient.put("/v1/admin/settings", payload);
 }

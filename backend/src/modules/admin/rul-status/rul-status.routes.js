@@ -11,3 +11,4 @@ router.use(requireAdmin);
 router.get("/", rulStatusController.getRulSystemStatus);
 
 module.exports = router;
+

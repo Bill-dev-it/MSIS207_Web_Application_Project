@@ -12,3 +12,4 @@ router.get("/", settingsController.getSystemSettings);
 router.put("/", settingsController.putSystemSettings);
 
 module.exports = router;
+
