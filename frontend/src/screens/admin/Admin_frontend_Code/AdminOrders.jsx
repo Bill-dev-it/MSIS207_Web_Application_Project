@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../auth/AuthContext";
-import { fetchAdminOrders } from "../../../services/adminService";
+import {
+  fetchAdminOrderDetail,
+  fetchAdminOrders,
+} from "../../../services/adminService";
 
 const DEFAULT_PAGINATION = {
   page: 1,
@@ -47,6 +50,64 @@ function formatOrderNumber(orderNumber) {
   if (!orderNumber) return "—";
   const normalized = String(orderNumber).trim();
   return normalized.startsWith("#") ? normalized : `#${normalized}`;
+}
+
+function formatDateTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatAddressSnapshot(snapshot) {
+  if (!snapshot) return null;
+
+  let parsed = snapshot;
+  if (typeof snapshot === "string") {
+    try {
+      parsed = JSON.parse(snapshot);
+    } catch {
+      return { raw: snapshot };
+    }
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return null;
+  }
+
+  const lineParts = [
+    parsed.address_line,
+    parsed.city,
+    parsed.region,
+    parsed.postal_code,
+    parsed.country_code,
+  ].filter(Boolean);
+
+  return {
+    recipientName: parsed.recipient_name || null,
+    phone: parsed.phone || null,
+    addressLine: lineParts.length > 0 ? lineParts.join(", ") : null,
+  };
+}
+
+function InfoField({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[#64748B]">
+        {label}
+      </p>
+      <p className="break-words text-sm font-medium text-[#0B1F3A]">
+        {value !== undefined && value !== null && value !== "" ? value : "—"}
+      </p>
+    </div>
+  );
 }
 
 function OrderStatusBadge({ status }) {
@@ -101,6 +162,14 @@ export default function AdminOrdersScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  const listRequestIdRef = useRef(0);
+  const detailRequestIdRef = useRef(0);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search.trim());
@@ -110,6 +179,7 @@ export default function AdminOrdersScreen() {
   }, [search]);
 
   const loadOrders = useCallback(async () => {
+    const currentRequestId = ++listRequestIdRef.current;
     setLoading(true);
     setError("");
 
@@ -120,6 +190,10 @@ export default function AdminOrdersScreen() {
         page,
         limit: DEFAULT_PAGINATION.limit,
       });
+
+      if (currentRequestId !== listRequestIdRef.current) {
+        return;
+      }
 
       const responseData = res?.data ?? {};
 
@@ -132,18 +206,65 @@ export default function AdminOrdersScreen() {
       });
       setPagination(responseData.pagination ?? DEFAULT_PAGINATION);
     } catch (err) {
+      if (currentRequestId !== listRequestIdRef.current) {
+        return;
+      }
       setOrders([]);
       setCounts(DEFAULT_COUNTS);
       setPagination(DEFAULT_PAGINATION);
       setError(err?.message || "Unable to load orders.");
     } finally {
-      setLoading(false);
+      if (currentRequestId === listRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [status, debouncedSearch, page]);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  const openOrderDetail = async (orderId) => {
+    if (orderId === undefined || orderId === null || String(orderId).trim() === "") {
+      return;
+    }
+
+    const stringOrderId = String(orderId).trim();
+    const currentDetailReqId = ++detailRequestIdRef.current;
+
+    setSelectedOrderId(stringOrderId);
+    setSelectedOrder(null);
+    setDetailError("");
+    setDetailLoading(true);
+
+    try {
+      const res = await fetchAdminOrderDetail(stringOrderId);
+
+      if (currentDetailReqId !== detailRequestIdRef.current) {
+        return;
+      }
+
+      setSelectedOrder(res?.data ?? null);
+    } catch (err) {
+      if (currentDetailReqId !== detailRequestIdRef.current) {
+        return;
+      }
+
+      setDetailError(err?.message || "Unable to load order details.");
+    } finally {
+      if (currentDetailReqId === detailRequestIdRef.current) {
+        setDetailLoading(false);
+      }
+    }
+  };
+
+  const closeOrderDetail = () => {
+    detailRequestIdRef.current += 1;
+    setSelectedOrderId(null);
+    setSelectedOrder(null);
+    setDetailError("");
+    setDetailLoading(false);
+  };
 
   const handleStatusChange = (nextStatus) => {
     setStatus(nextStatus);
@@ -613,6 +734,7 @@ export default function AdminOrdersScreen() {
                         <td className="border-b border-[#F1F5F9] py-3.5 text-left">
                           <button
                             type="button"
+                            onClick={() => openOrderDetail(order.order_id)}
                             className="text-[13px] font-medium text-[#0284C7] hover:underline"
                           >
                             View
@@ -670,7 +792,418 @@ export default function AdminOrdersScreen() {
           </section>
         </main>
       </div>
+
+      {/* Observe-Only Order Detail Modal */}
+      {selectedOrderId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F3A]/50 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeOrderDetail();
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-detail-title"
+            className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl"
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#E5E7EB] bg-white px-6 py-4">
+              <div>
+                <h2
+                  id="order-detail-title"
+                  className="text-lg font-bold text-[#0B1F3A]"
+                >
+                  {selectedOrder?.order_number
+                    ? `Order ${formatOrderNumber(selectedOrder.order_number)}`
+                    : "Order Details"}
+                </h2>
+                <p className="mt-0.5 text-xs text-[#64748B]">
+                  Observe only · Admins do not change order status
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeOrderDetail}
+                aria-label="Close order details"
+                className="rounded-lg p-2 text-[#64748B] hover:bg-[#F1F5F9]"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6">
+              {detailError && (
+                <div
+                  role="alert"
+                  className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <span>{detailError}</span>
+                  <button
+                    type="button"
+                    onClick={() => openOrderDetail(selectedOrderId)}
+                    className="shrink-0 font-semibold underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {detailLoading ? (
+                <div className="py-12 text-center text-sm text-[#64748B]">
+                  Loading order details...
+                </div>
+              ) : selectedOrder ? (
+                <div className="space-y-6">
+                  {/* Master Order Summary */}
+                  <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] p-4">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-[#64748B]">
+                        Order Number
+                      </p>
+                      <p className="mt-0.5 text-lg font-bold text-[#0B1F3A]">
+                        {formatOrderNumber(selectedOrder.order_number)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <OrderStatusBadge
+                        status={selectedOrder.primary_status}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Buyer & Order Metadata */}
+                  <div className="grid grid-cols-1 gap-4 rounded-xl border border-[#E5E7EB] p-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <InfoField
+                      label="Order ID"
+                      value={String(selectedOrder.order_id || "—")}
+                    />
+                    <InfoField
+                      label="Purchase Reference"
+                      value={selectedOrder.purchase_reference}
+                    />
+                    <InfoField
+                      label="Placed At"
+                      value={formatDateTime(selectedOrder.created_at)}
+                    />
+                    <InfoField
+                      label="Currency"
+                      value={selectedOrder.currency}
+                    />
+                    <InfoField
+                      label="Buyer Company"
+                      value={selectedOrder.company_name_snapshot}
+                    />
+                    <InfoField
+                      label="Tax ID"
+                      value={selectedOrder.tax_id_snapshot}
+                    />
+                    <InfoField
+                      label="Placed By"
+                      value={selectedOrder.placed_by_name}
+                    />
+                    <InfoField
+                      label="Buyer Email"
+                      value={selectedOrder.placed_by_email}
+                    />
+                  </div>
+
+                  {/* Totals & Payment */}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-[#E5E7EB] p-4">
+                      <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                        Order Totals
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between text-[#475569]">
+                          <span>Subtotal</span>
+                          <span className="font-medium text-[#0B1F3A]">
+                            {formatCurrency(
+                              selectedOrder.subtotal,
+                              selectedOrder.currency
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[#475569]">
+                          <span>Shipping Total</span>
+                          <span className="font-medium text-[#0B1F3A]">
+                            {formatCurrency(
+                              selectedOrder.shipping_total,
+                              selectedOrder.currency
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-2 font-bold text-[#0B1F3A]">
+                          <span>Grand Total</span>
+                          <span>
+                            {formatCurrency(
+                              selectedOrder.grand_total,
+                              selectedOrder.currency
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#E5E7EB] p-4">
+                      <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                        Payment Information
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <InfoField
+                          label="Method"
+                          value={
+                            selectedOrder.payment?.payment_method ||
+                            selectedOrder.payment_method
+                          }
+                        />
+                        <InfoField
+                          label="Status"
+                          value={
+                            selectedOrder.payment?.status ||
+                            selectedOrder.payment_status
+                          }
+                        />
+                        <InfoField
+                          label="Paid At"
+                          value={formatDateTime(
+                            selectedOrder.payment?.paid_at ||
+                              selectedOrder.paid_at
+                          )}
+                        />
+                        <InfoField
+                          label="Reference"
+                          value={
+                            selectedOrder.payment?.transfer_reference ||
+                            selectedOrder.order_number
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shipping & Billing Addresses */}
+                  {(selectedOrder.shipping_address_snapshot ||
+                    selectedOrder.billing_address_snapshot) && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {[
+                        {
+                          title: "Shipping Address",
+                          data: formatAddressSnapshot(
+                            selectedOrder.shipping_address_snapshot
+                          ),
+                        },
+                        {
+                          title: "Billing Address",
+                          data: formatAddressSnapshot(
+                            selectedOrder.billing_address_snapshot
+                          ),
+                        },
+                      ].map(
+                        (addrSection) =>
+                          addrSection.data && (
+                            <div
+                              key={addrSection.title}
+                              className="rounded-xl border border-[#E5E7EB] p-4"
+                            >
+                              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                                {addrSection.title}
+                              </h3>
+                              {addrSection.data.raw ? (
+                                <p className="text-sm text-[#0B1F3A]">
+                                  {addrSection.data.raw}
+                                </p>
+                              ) : (
+                                <div className="space-y-1 text-sm text-[#475569]">
+                                  {addrSection.data.recipientName && (
+                                    <p className="font-semibold text-[#0B1F3A]">
+                                      {addrSection.data.recipientName}
+                                    </p>
+                                  )}
+                                  {addrSection.data.addressLine && (
+                                    <p>{addrSection.data.addressLine}</p>
+                                  )}
+                                  {addrSection.data.phone && (
+                                    <p className="text-xs text-[#64748B]">
+                                      {addrSection.data.phone}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                      )}
+                    </div>
+                  )}
+
+                  {/* Seller Orders & Items */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                      Seller Orders (
+                      {Array.isArray(selectedOrder.seller_orders)
+                        ? selectedOrder.seller_orders.length
+                        : 0}
+                      )
+                    </h3>
+
+                    {Array.isArray(selectedOrder.seller_orders) &&
+                    selectedOrder.seller_orders.length > 0 ? (
+                      selectedOrder.seller_orders.map((sellerOrder) => {
+                        const items = Array.isArray(sellerOrder.items)
+                          ? sellerOrder.items
+                          : [];
+                        const hasShipment =
+                          sellerOrder.shipment_id ||
+                          sellerOrder.carrier ||
+                          sellerOrder.tracking_number ||
+                          sellerOrder.shipped_at ||
+                          sellerOrder.delivered_at;
+
+                        return (
+                          <div
+                            key={String(sellerOrder.seller_order_id)}
+                            className="overflow-hidden rounded-xl border border-[#E5E7EB]"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3">
+                              <div>
+                                <p className="text-sm font-bold text-[#0B1F3A]">
+                                  {sellerOrder.supplier_name_snapshot || "—"}
+                                </p>
+                                <p className="text-xs text-[#64748B]">
+                                  Seller Order #
+                                  {String(sellerOrder.seller_order_id)} · Total{" "}
+                                  {formatCurrency(
+                                    sellerOrder.grand_total,
+                                    selectedOrder.currency
+                                  )}
+                                </p>
+                              </div>
+
+                              <OrderStatusBadge status={sellerOrder.status} />
+                            </div>
+
+                            {hasShipment && (
+                              <div className="grid grid-cols-1 gap-3 border-b border-[#F1F5F9] bg-white px-4 py-3 sm:grid-cols-4">
+                                <InfoField
+                                  label="Carrier"
+                                  value={sellerOrder.carrier}
+                                />
+                                <InfoField
+                                  label="Tracking Number"
+                                  value={sellerOrder.tracking_number}
+                                />
+                                <InfoField
+                                  label="Shipped At"
+                                  value={formatDateTime(sellerOrder.shipped_at)}
+                                />
+                                <InfoField
+                                  label="Delivered At"
+                                  value={formatDateTime(
+                                    sellerOrder.delivered_at
+                                  )}
+                                />
+                              </div>
+                            )}
+
+                            {items.length > 0 && (
+                              <div className="overflow-x-auto px-4 py-3">
+                                <table className="w-full min-w-[600px] text-left text-xs">
+                                  <thead>
+                                    <tr className="border-b border-[#E5E7EB] text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+                                      <th className="pb-2">Product</th>
+                                      <th className="pb-2">Part Number</th>
+                                      <th className="pb-2">Condition</th>
+                                      <th className="pb-2 text-right">Qty</th>
+                                      <th className="pb-2 text-right">
+                                        Unit Price
+                                      </th>
+                                      <th className="pb-2 text-right">
+                                        Line Total
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-[#F1F5F9]">
+                                    {items.map((item) => (
+                                      <tr
+                                        key={String(item.order_item_id)}
+                                        className="text-[#0B1F3A]"
+                                      >
+                                        <td className="py-2.5 pr-3 font-medium">
+                                          {item.product_name_snapshot || "—"}
+                                        </td>
+                                        <td className="py-2.5 pr-3 text-[#475569]">
+                                          {item.part_number_snapshot || "—"}
+                                        </td>
+                                        <td className="py-2.5 pr-3 text-[#475569]">
+                                          {item.condition_snapshot || "—"}
+                                        </td>
+                                        <td className="py-2.5 text-right">
+                                          {item.quantity ?? "—"}
+                                        </td>
+                                        <td className="py-2.5 text-right">
+                                          {formatCurrency(
+                                            item.unit_price,
+                                            selectedOrder.currency
+                                          )}
+                                        </td>
+                                        <td className="py-2.5 text-right font-semibold">
+                                          {formatCurrency(
+                                            item.line_total,
+                                            selectedOrder.currency
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-[#64748B]">
+                        No seller orders available.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end border-t border-[#E5E7EB] pt-4">
+                    <button
+                      type="button"
+                      onClick={closeOrderDetail}
+                      className="rounded-lg border border-[#E5E7EB] px-4 py-2 text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC]"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                !detailError && (
+                  <p className="py-10 text-center text-sm text-[#64748B]">
+                    Order details are unavailable.
+                  </p>
+                )
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
+
 
