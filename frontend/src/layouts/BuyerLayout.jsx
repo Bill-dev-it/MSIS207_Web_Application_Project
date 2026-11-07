@@ -1,10 +1,24 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import RoleNavigation from "../components/common/RoleNavigation";
 import AccountActions from "../components/common/AccountActions";
+import { NAVIGATION_CONFIG } from "../config/navigationConfig";
 import { useCart } from "../features/buyer/cart";
+
+function isBuyerNavActive(pathname, item) {
+  const paths = item.matchPaths || [item.path];
+  if (item.exact) {
+    return paths.includes(pathname);
+  }
+  return paths.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
 
 export default function BuyerLayout() {
   const { itemCount } = useCart();
+  const { pathname } = useLocation();
+  const buyerNavItems = NAVIGATION_CONFIG.BUYER || [];
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
@@ -16,12 +30,26 @@ export default function BuyerLayout() {
       </header>
       <nav aria-label="Buyer workspace" className="border-b border-neutral-200 bg-white">
         <div className="container-page flex flex-wrap gap-2 py-2">
-          <NavLink className={({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-primary-700 text-white" : "text-primary-700 hover:bg-primary-50"}`} to="/buyer" end>Dashboard</NavLink>
-          <NavLink className={({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-primary-700 text-white" : "text-primary-700 hover:bg-primary-50"}`} to="/buyer/engines">My Engines</NavLink>
-          <NavLink className={({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-primary-700 text-white" : "text-primary-700 hover:bg-primary-50"}`} to="/buyer/rul">RUL Analysis</NavLink>
-          <NavLink className={({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-primary-700 text-white" : "text-primary-700 hover:bg-primary-50"}`} to="/orders">Orders</NavLink>
-          <NavLink className={({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-primary-700 text-white" : "text-primary-700 hover:bg-primary-50"}`} to="/cart">Cart ({itemCount})</NavLink>
-          <NavLink className={({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? "bg-primary-700 text-white" : "text-primary-700 hover:bg-primary-50"}`} to="/marketplace">Marketplace</NavLink>
+          {buyerNavItems.map((item) => {
+            const active = isBuyerNavActive(pathname, item);
+            const label = item.showCartCount
+              ? `${item.label} (${itemCount})`
+              : item.label;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={Boolean(item.exact)}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-primary-700 text-white"
+                    : "text-primary-700 hover:bg-primary-50"
+                }`}
+              >
+                {label}
+              </NavLink>
+            );
+          })}
         </div>
       </nav>
       <main className="container-page w-full py-8">

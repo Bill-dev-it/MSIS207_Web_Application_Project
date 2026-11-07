@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { checkSupplierApproval } from "../../services/authApi";
 
+const BUYER_PORTAL_PREFIXES = [
+  "/buyer",
+  "/marketplace",
+  "/orders",
+  "/cart",
+  "/checkout",
+];
+
 export default function RoleNavigation() {
   const { status, user } = useAuth();
+  const { pathname } = useLocation();
   const [supplierAccess, setSupplierAccess] = useState({
     userId: null,
     status: "idle",
@@ -58,13 +67,20 @@ export default function RoleNavigation() {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) =>
-              `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive
+            className={({ isActive }) => {
+              const active =
+                isActive ||
+                (to === "/buyer" &&
+                  BUYER_PORTAL_PREFIXES.some(
+                    (prefix) =>
+                      pathname === prefix || pathname.startsWith(`${prefix}/`)
+                  ));
+              return `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                active
                   ? "bg-primary-700 text-white"
                   : "text-primary-700 hover:bg-primary-50"
-              }`
-            }
+              }`;
+            }}
           >
             {label}
           </NavLink>

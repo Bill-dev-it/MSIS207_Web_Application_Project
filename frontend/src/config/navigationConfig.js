@@ -6,7 +6,38 @@ export const NAVIGATION_CONFIG = {
     ],
 
     BUYER: [
-        { label: "Dashboard", path: "/buyer" },
+        {
+            label: "Marketplace",
+            path: "/marketplace",
+            matchPaths: ["/marketplace"],
+        },
+        {
+            label: "Dashboard",
+            path: "/buyer",
+            matchPaths: ["/buyer", "/buyer/dashboard"],
+            exact: true,
+        },
+        {
+            label: "My Engines",
+            path: "/buyer/engines",
+            matchPaths: ["/buyer/engines"],
+        },
+        {
+            label: "RUL Analysis",
+            path: "/buyer/rul",
+            matchPaths: ["/buyer/rul"],
+        },
+        {
+            label: "Orders",
+            path: "/orders",
+            matchPaths: ["/orders", "/buyer/orders"],
+        },
+        {
+            label: "Cart",
+            path: "/cart",
+            matchPaths: ["/cart", "/checkout"],
+            showCartCount: true,
+        },
     ],
 
     ADMIN: [
