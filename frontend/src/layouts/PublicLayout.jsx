@@ -1,8 +1,12 @@
 
 import { NavLink, Outlet } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import AccountActions from "../components/common/AccountActions";
 
 export default function PublicLayout() {
+  const { status, user } = useAuth();
+  const isAuthenticated = status === "authenticated" && Boolean(user);
+
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
@@ -29,18 +33,20 @@ export default function PublicLayout() {
             >
               Home
             </NavLink>
-            <NavLink
-              to="/marketplace"
-              className={({ isActive }) =>
-                `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary-50 text-primary-700"
-                    : "text-neutral-500 hover:text-primary-700"
-                }`
-              }
-            >
-              Marketplace
-            </NavLink>
+            {isAuthenticated && (
+              <NavLink
+                to="/marketplace"
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-primary-50 text-primary-700"
+                      : "text-neutral-500 hover:text-primary-700"
+                  }`
+                }
+              >
+                Marketplace
+              </NavLink>
+            )}
           </nav>
           <AccountActions />
         </div>
