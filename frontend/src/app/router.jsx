@@ -26,6 +26,7 @@ import AdminOrders from "../features/admin/orders/AdminOrders";
 import AdminCompanies from "../features/admin/companies/AdminCompanies";
 import AdminReports from "../features/admin/reports/AdminReports";
 import AdminSettings from "../features/admin/settings/AdminSettings";
+import BuyerHome from "../screens/buyer/BuyerHome";
 import BuyerDashboard from "../screens/buyer/BuyerDashboard";
 import MyEngines from "../screens/buyer/MyEngines";
 import EngineDetail from "../screens/buyer/EngineDetail";
@@ -55,6 +56,7 @@ export default function AppRouter() {
       <Route element={<ProtectedRoute roles={["BUYER"]} />}>
         <Route element={<BuyerLayout />}>
           <Route path="/buyer" element={<BuyerDashboard />} />
+          <Route path="/buyer/home" element={<BuyerHome />} />
           <Route path="/buyer/dashboard" element={<BuyerDashboard />} />
           <Route path="/buyer/engines" element={<MyEngines />} />
           <Route path="/buyer/engines/:engineId" element={<EngineDetail />} />
