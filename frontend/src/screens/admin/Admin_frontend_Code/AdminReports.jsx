@@ -5,7 +5,7 @@ import {
   hideAdminReport,
   dismissAdminReport,
 } from '../../../services/adminService';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '../../../auth/AuthContext';
 import './AdminStyles.css';
 
 const NAV_ITEMS = [

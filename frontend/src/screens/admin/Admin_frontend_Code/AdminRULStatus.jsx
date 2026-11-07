@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { fetchRULSystemStatus } from '../../../services/adminService';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '../../../auth/AuthContext';
 import './AdminStyles.css';
 
 const NAV_ITEMS = [

@@ -23,6 +23,9 @@ import AdminDashboard from "../screens/admin/Admin_frontend_Code/AdminDashboard"
 import AdminRULStatus from "../screens/admin/Admin_frontend_Code/AdminRULStatus";
 import AdminUsers from "../features/admin/users/AdminUsers";
 import AdminOrders from "../features/admin/orders/AdminOrders";
+import AdminCompanies from "../features/admin/companies/AdminCompanies";
+import AdminReports from "../features/admin/reports/AdminReports";
+import AdminSettings from "../features/admin/settings/AdminSettings";
 import BuyerDashboard from "../screens/buyer/BuyerDashboard";
 import MyEngines from "../screens/buyer/MyEngines";
 import EngineDetail from "../screens/buyer/EngineDetail";
@@ -98,9 +101,13 @@ export default function AppRouter() {
         </Route>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/moderation" element={<AdminModeration />} />
+        <Route path="/admin/suppliers" element={<AdminModeration />} />
+        <Route path="/admin/companies" element={<AdminCompanies />} />
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
         <Route path="/admin/rul-status" element={<AdminRULStatus />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/admin/recommendations" element={<Recommendations />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -4,7 +4,7 @@ import {
   fetchAdminSettings,
   updateAdminSettings,
 } from '../../../services/adminService';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '../../../auth/AuthContext';
 import './AdminStyles.css';
 
 const NAV_ITEMS = [

@@ -11,11 +11,13 @@ export const NAVIGATION_CONFIG = {
 
     ADMIN: [
         { label: "Dashboard", path: "/admin" },
-        { label: "Moderation", path: "/admin/moderation" },
+        { label: "Suppliers", path: "/admin/moderation" },
+        { label: "Companies / Buyers", path: "/admin/companies" },
         { label: "Users", path: "/admin/users" },
         { label: "Orders", path: "/admin/orders" },
-        { label: "RUL Monitoring", path: "/admin/rul-status" },
-        { label: "Recommendations", path: "/admin/recommendations" },
+        { label: "Reviews / Reports", path: "/admin/reports" },
+        { label: "RUL System Status", path: "/admin/rul-status" },
+        { label: "System Settings", path: "/admin/settings" },
     ],
 
     SUPPLIER: [
