@@ -74,7 +74,9 @@ async function findBuyerCompanies({ search }) {
       bc.country_code,
       bc.created_at,
       bc.engine_count,
+      bc.total_spend::numeric(18,2) AS spend,
       bc.total_spend::text AS total_spend,
+      'USD' AS currency,
       bc.total_users,
       bc.active_users,
       bc.status
@@ -98,7 +100,9 @@ async function findBuyerCompanyById(companyId) {
       bc.country_code,
       bc.created_at,
       bc.engine_count,
+      bc.total_spend::numeric(18,2) AS spend,
       bc.total_spend::text AS total_spend,
+      'USD' AS currency,
       bc.total_users,
       bc.active_users,
       bc.status
@@ -127,6 +131,7 @@ async function findBuyerCompanyById(companyId) {
           email,
           role,
           is_active,
+          CASE WHEN is_active = TRUE THEN 'ACTIVE' ELSE 'SUSPENDED' END AS status,
           created_at
         FROM public.users
         WHERE company_id = $1
@@ -142,9 +147,12 @@ async function findBuyerCompanyById(companyId) {
           e.serial_number,
           e.current_cycle::text AS current_cycle,
           a.registration_number,
+          a.registration_number AS tail_number,
           a.model AS aircraft_model,
+          a.model AS model_code,
           em.manufacturer AS engine_manufacturer,
-          em.model_name AS engine_model_name
+          em.model_name AS engine_model_name,
+          em.model_name AS position
         FROM public.engines e
         JOIN public.aircraft a
           ON a.aircraft_id = e.aircraft_id
@@ -161,9 +169,11 @@ async function findBuyerCompanyById(companyId) {
           o.order_id::text AS order_id,
           o.order_number,
           o.grand_total::text AS grand_total,
+          o.grand_total::numeric(18,2) AS total_amount,
           o.currency,
           o.created_at,
-          p.status AS payment_status
+          p.status AS payment_status,
+          COALESCE(p.status, 'CONFIRMED') AS status
         FROM public.orders o
         LEFT JOIN public.payments p
           ON p.order_id = o.order_id

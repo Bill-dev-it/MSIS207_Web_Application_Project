@@ -1,0 +1,351 @@
+{
+  "info": {
+    "_postman_id": "a7f2c910-5d84-4e3b-9b12-6c40e8d19f23",
+    "name": "AeroRUL - Admin Remaining Modules API Tests",
+    "description": "End-to-end API test suite for AeroRUL Admin Companies / Buyers, Reviews / Reports, RUL System Status, and System Settings modules against live PostgreSQL data.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Companies / Buyers",
+      "item": [
+        {
+          "name": "01 - Auth Required Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/admin/companies"
+          }
+        },
+        {
+          "name": "02 - Forbidden For Non-Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{buyerSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/companies"
+          }
+        },
+        {
+          "name": "03 - List All Buyer Companies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/companies"
+          }
+        },
+        {
+          "name": "04 - Search Companies By Name Or Tax ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/companies?search={{companySearch}}"
+          }
+        },
+        {
+          "name": "05 - Get Company Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/companies/{{companyId}}"
+          }
+        },
+        {
+          "name": "06 - Invalid Company ID Or Not Found",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/companies/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Reviews / Reports",
+      "item": [
+        {
+          "name": "07 - Auth Required Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/admin/reports"
+          }
+        },
+        {
+          "name": "08 - Forbidden For Non-Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{buyerSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/reports"
+          }
+        },
+        {
+          "name": "09 - List Open Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/reports?status=OPEN"
+          }
+        },
+        {
+          "name": "10 - List Resolved Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/reports?status=RESOLVED"
+          }
+        },
+        {
+          "name": "11 - List All Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/reports?status=ALL"
+          }
+        },
+        {
+          "name": "12 - Hide Report Action",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/reports/{{reportId}}/hide"
+          }
+        },
+        {
+          "name": "13 - Dismiss Report Action",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/reports/{{reportId}}/dismiss"
+          }
+        },
+        {
+          "name": "14 - Invalid Report ID Or Not Found",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/reports/invalid-id/hide"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. RUL System Status",
+      "item": [
+        {
+          "name": "15 - Auth Required Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/admin/rul-status"
+          }
+        },
+        {
+          "name": "16 - Forbidden For Non-Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{buyerSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/rul-status"
+          }
+        },
+        {
+          "name": "17 - Get RUL System Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/rul-status"
+          }
+        },
+        {
+          "name": "18 - Verify 14-Day Prediction Volume Structure",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/rul-status"
+          }
+        },
+        {
+          "name": "19 - Verify Urgency Distribution Structure",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/rul-status"
+          }
+        },
+        {
+          "name": "20 - Verify Recent Predictions Structure",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/rul-status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. System Settings",
+      "item": [
+        {
+          "name": "21 - Auth Required Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/admin/settings"
+          }
+        },
+        {
+          "name": "22 - Forbidden For Non-Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{buyerSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/settings"
+          }
+        },
+        {
+          "name": "23 - Get Current System Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/settings"
+          }
+        },
+        {
+          "name": "24 - Validate Invalid Settings Input",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"currency\":\"USD\",\"default_shipping_estimate\":\"3-5 business days\",\"supplier_approval_required\":true,\"product_moderation\":false,\"rul_thresholds\":{\"prioritize_at_or_below\":50,\"prepare_at_or_below\":40,\"monitor_at_or_below\":80,\"normal_above\":80},\"demo_payment_mode\":true}"
+            },
+            "url": "{{baseUrl}}/api/v1/admin/settings"
+          }
+        },
+        {
+          "name": "25 - Update And Restore System Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "aerorul_session={{adminSessionCookie}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"currency\":\"USD\",\"default_shipping_estimate\":\"3-5 business days\",\"supplier_approval_required\":true,\"product_moderation\":false,\"rul_thresholds\":{\"prioritize_at_or_below\":20,\"prepare_at_or_below\":40,\"monitor_at_or_below\":80,\"normal_above\":80},\"demo_payment_mode\":true}"
+            },
+            "url": "{{baseUrl}}/api/v1/admin/settings"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -140,7 +140,7 @@ async function findRecentPredictions(limit = 20) {
             rp.status,
             rp.predicted_rul,
             rp.urgency,
-            rp.failure_reason,
+            rp.error_message AS failure_reason,
             e.engine_id::text AS engine_id,
             e.engine_code,
             c.company_id::text AS company_id,

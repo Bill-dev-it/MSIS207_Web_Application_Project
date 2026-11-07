@@ -1,0 +1,318 @@
+{
+  "executed_at": "2026-11-07T12:46:55.961Z",
+  "environment": {
+    "baseUrl": "http://localhost:3000",
+    "database": "aerorul (PostgreSQL)",
+    "admin_user": "admin@aerorul.example",
+    "buyer_user": "john.doe@horizon-air.example"
+  },
+  "summary": {
+    "total": 25,
+    "passed": 25,
+    "failed": 0
+  },
+  "results": [
+    {
+      "id": "01",
+      "module": "Companies / Buyers",
+      "name": "01 - Auth Required Without Token",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/companies",
+      "status": 401,
+      "duration_ms": 76,
+      "passed": true,
+      "details": "HTTP 401 (AUTH_REQUIRED)"
+    },
+    {
+      "id": "02",
+      "module": "Companies / Buyers",
+      "name": "02 - Forbidden For Non-Admin",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/companies",
+      "status": 403,
+      "duration_ms": 87,
+      "passed": true,
+      "details": "HTTP 403 (FORBIDDEN)"
+    },
+    {
+      "id": "03",
+      "module": "Companies / Buyers",
+      "name": "03 - List All Buyer Companies",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/companies",
+      "status": 200,
+      "duration_ms": 44,
+      "passed": true,
+      "details": "HTTP 200, total=6, first=Demo Horizon Airlines (spend=$61039.27)"
+    },
+    {
+      "id": "04",
+      "module": "Companies / Buyers",
+      "name": "04 - Search Companies By Name Or Tax ID",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/companies?search=Horizon",
+      "status": 200,
+      "duration_ms": 34,
+      "passed": true,
+      "details": "HTTP 200, matched=1 (Demo Horizon Airlines, status=ACTIVE)"
+    },
+    {
+      "id": "05",
+      "module": "Companies / Buyers",
+      "name": "05 - Get Company Detail",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/companies/1",
+      "status": 200,
+      "duration_ms": 70,
+      "passed": true,
+      "details": "HTTP 200, company=Demo Horizon Airlines, users=2, engines=4, recent_orders=3"
+    },
+    {
+      "id": "06",
+      "module": "Companies / Buyers",
+      "name": "06 - Invalid Company ID Or Not Found",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/companies/999999",
+      "status": 404,
+      "duration_ms": 33,
+      "passed": true,
+      "details": "Not found HTTP 404 (COMPANY_NOT_FOUND); Invalid ID HTTP 400 (INVALID_COMPANY_ID)"
+    },
+    {
+      "id": "07",
+      "module": "Reviews / Reports",
+      "name": "07 - Auth Required Without Token",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/reports",
+      "status": 401,
+      "duration_ms": 4,
+      "passed": true,
+      "details": "HTTP 401 (AUTH_REQUIRED)"
+    },
+    {
+      "id": "08",
+      "module": "Reviews / Reports",
+      "name": "08 - Forbidden For Non-Admin",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/reports",
+      "status": 403,
+      "duration_ms": 25,
+      "passed": true,
+      "details": "HTTP 403 (FORBIDDEN)"
+    },
+    {
+      "id": "09",
+      "module": "Reviews / Reports",
+      "name": "09 - List Open Reports",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/reports?status=OPEN",
+      "status": 200,
+      "duration_ms": 20,
+      "passed": true,
+      "details": "HTTP 200, counts={\"OPEN\":0,\"RESOLVED\":0,\"ALL\":0}"
+    },
+    {
+      "id": "10",
+      "module": "Reviews / Reports",
+      "name": "10 - List Resolved Reports",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/reports?status=RESOLVED",
+      "status": 200,
+      "duration_ms": 33,
+      "passed": true,
+      "details": "HTTP 200, resolved_items=0"
+    },
+    {
+      "id": "11",
+      "module": "Reviews / Reports",
+      "name": "11 - List All Reports",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/reports?status=ALL",
+      "status": 200,
+      "duration_ms": 9,
+      "passed": true,
+      "details": "HTTP 200, total_items=0"
+    },
+    {
+      "id": "12",
+      "module": "Reviews / Reports",
+      "name": "12 - Hide Report Action (No review rows in DB -> 404 REPORT_NOT_FOUND)",
+      "method": "PATCH",
+      "endpoint": "/api/v1/admin/reports/999999/hide",
+      "status": 404,
+      "duration_ms": 35,
+      "passed": true,
+      "details": "HTTP 404 (REPORT_NOT_FOUND: verified on empty PostgreSQL reviews table without fabricating rows)"
+    },
+    {
+      "id": "13",
+      "module": "Reviews / Reports",
+      "name": "13 - Dismiss Report Action (No review rows in DB -> 404 REPORT_NOT_FOUND)",
+      "method": "PATCH",
+      "endpoint": "/api/v1/admin/reports/999999/dismiss",
+      "status": 404,
+      "duration_ms": 10,
+      "passed": true,
+      "details": "HTTP 404 (REPORT_NOT_FOUND: verified on empty PostgreSQL reviews table without fabricating rows)"
+    },
+    {
+      "id": "14",
+      "module": "Reviews / Reports",
+      "name": "14 - Invalid Report ID Or Status Filter",
+      "method": "PATCH",
+      "endpoint": "/api/v1/admin/reports/invalid-id/hide",
+      "status": 400,
+      "duration_ms": 6,
+      "passed": true,
+      "details": "Invalid ID HTTP 400 (INVALID_REPORT_ID); Invalid status HTTP 400 (INVALID_STATUS_FILTER)"
+    },
+    {
+      "id": "15",
+      "module": "RUL System Status",
+      "name": "15 - Auth Required Without Token",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/rul-status",
+      "status": 401,
+      "duration_ms": 3,
+      "passed": true,
+      "details": "HTTP 401 (AUTH_REQUIRED)"
+    },
+    {
+      "id": "16",
+      "module": "RUL System Status",
+      "name": "16 - Forbidden For Non-Admin",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/rul-status",
+      "status": 403,
+      "duration_ms": 23,
+      "passed": true,
+      "details": "HTTP 403 (FORBIDDEN)"
+    },
+    {
+      "id": "17",
+      "module": "RUL System Status",
+      "name": "17 - Get RUL System Status",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/rul-status",
+      "status": 200,
+      "duration_ms": 185,
+      "passed": true,
+      "details": "HTTP 200, service=Operational, model=v1.0.0 (Deployed Nov 4)"
+    },
+    {
+      "id": "18",
+      "module": "RUL System Status",
+      "name": "18 - Verify 14-Day Prediction Volume Structure",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/rul-status",
+      "status": 200,
+      "duration_ms": 185,
+      "passed": true,
+      "details": "14-day series count=14, range=2026-10-25..2026-11-07"
+    },
+    {
+      "id": "19",
+      "module": "RUL System Status",
+      "name": "19 - Verify Urgency Distribution Structure",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/rul-status",
+      "status": 200,
+      "duration_ms": 185,
+      "passed": true,
+      "details": "Urgency buckets=Normal:1, Monitor:0, Prepare:0, Prioritize:0"
+    },
+    {
+      "id": "20",
+      "module": "RUL System Status",
+      "name": "20 - Verify Recent Predictions Structure",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/rul-status",
+      "status": 200,
+      "duration_ms": 185,
+      "passed": true,
+      "details": "Recent predictions=1, latest=ENG-001 (Demo Horizon Airlines, 119 cyc, OK)"
+    },
+    {
+      "id": "21",
+      "module": "System Settings",
+      "name": "21 - Auth Required Without Token",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/settings",
+      "status": 401,
+      "duration_ms": 3,
+      "passed": true,
+      "details": "HTTP 401 (AUTH_REQUIRED)"
+    },
+    {
+      "id": "22",
+      "module": "System Settings",
+      "name": "22 - Forbidden For Non-Admin",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/settings",
+      "status": 403,
+      "duration_ms": 11,
+      "passed": true,
+      "details": "HTTP 403 (FORBIDDEN)"
+    },
+    {
+      "id": "23",
+      "module": "System Settings",
+      "name": "23 - Get Current System Settings",
+      "method": "GET",
+      "endpoint": "/api/v1/admin/settings",
+      "status": 200,
+      "duration_ms": 5,
+      "passed": true,
+      "details": "HTTP 200, currency=USD, shipping=\"3-5 business days\", thresholds={\"prioritize_at_or_below\":20,\"prepare_at_or_below\":40,\"monitor_at_or_below\":80,\"normal_above\":80}"
+    },
+    {
+      "id": "24",
+      "module": "System Settings",
+      "name": "24 - Validate Invalid Settings Input",
+      "method": "PUT",
+      "endpoint": "/api/v1/admin/settings",
+      "status": 400,
+      "duration_ms": 46,
+      "passed": true,
+      "details": "HTTP 400 (INVALID_SETTINGS_PAYLOAD: RUL thresholds must satisfy: Prioritize < Prepare < Monitor.)"
+    },
+    {
+      "id": "25",
+      "module": "System Settings",
+      "name": "25 - Update And Restore System Settings",
+      "method": "PUT",
+      "endpoint": "/api/v1/admin/settings",
+      "status": 200,
+      "duration_ms": 8,
+      "passed": true,
+      "details": "Updated shipping=\"5-7 business days\" (HTTP 200) -> verified -> restored=\"3-5 business days\" (HTTP 200)"
+    }
+  ],
+  "regression_checks": [
+    {
+      "endpoint": "GET /api/v1/admin/dashboard",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "endpoint": "GET /api/v1/admin/users",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "endpoint": "GET /api/v1/admin/suppliers",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "endpoint": "GET /api/v1/admin/orders",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "endpoint": "GET /api/v1/admin/orders/10",
+      "status": 200,
+      "passed": true
+    }
+  ]
+}
