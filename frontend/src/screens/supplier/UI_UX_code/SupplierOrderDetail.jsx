@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import PageHeader from "../../components/common/PageHeader";
-import { getSupplierOrderById } from "../../services/supplierOrderService";
-import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
-import OrderStatusButton from "../../features/supplier/orders/OrderStatusButton";
+import PageHeader from "../../../components/common/PageHeader";
+import { getSupplierOrderById } from "../../../services/supplierOrderService";
+import { SUPPLIER_DEMO_MODE } from "../../../features/supplier/api";
+import OrderStatusButton from "../../../features/supplier/orders/OrderStatusButton";
 
 function getSupplierPaymentDetail(order) {
   const method = order?.payment_method;
@@ -15,8 +15,8 @@ function getSupplierPaymentDetail(order) {
         method === "BANK_TRANSFER"
           ? "Payment Confirmed (Demo)"
           : method === "SIMULATION"
-          ? "Simulated Payment Successful"
-          : "Payment Succeeded",
+            ? "Simulated Payment Successful"
+            : "Payment Succeeded",
       badgeClass: "border border-emerald-200 bg-emerald-50 text-emerald-800",
       explanation:
         method === "BANK_TRANSFER"
@@ -153,8 +153,8 @@ export default function SupplierOrderDetail() {
                         {order.payment_method === "BANK_TRANSFER"
                           ? "Bank Transfer (Demo)"
                           : order.payment_method === "SIMULATION"
-                          ? "Simulated Payment"
-                          : order.payment_method}
+                            ? "Simulated Payment"
+                            : order.payment_method}
                       </span>
                     )}
                   </div>

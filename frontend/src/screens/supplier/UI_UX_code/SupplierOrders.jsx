@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import PageHeader from "../../components/common/PageHeader";
-import EmptyState from "../../components/common/EmptyState";
-import { getSupplierOrders } from "../../services/supplierOrderService";
-import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
+import PageHeader from "../../../components/common/PageHeader";
+import EmptyState from "../../../components/common/EmptyState";
+import { getSupplierOrders } from "../../../services/supplierOrderService";
+import { SUPPLIER_DEMO_MODE } from "../../../features/supplier/api";
 
 const statuses = [
   "ALL",
@@ -23,8 +23,8 @@ function getSupplierPaymentBadge(order) {
         method === "BANK_TRANSFER"
           ? "Payment Confirmed (Demo)"
           : method === "SIMULATION"
-          ? "Simulated Payment Successful"
-          : "Payment Succeeded",
+            ? "Simulated Payment Successful"
+            : "Payment Succeeded",
       className: "border border-emerald-200 bg-emerald-50 text-emerald-800",
     };
   }

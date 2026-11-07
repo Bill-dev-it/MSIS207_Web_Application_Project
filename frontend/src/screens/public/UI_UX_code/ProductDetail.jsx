@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import SupplierOffers from "../../components/public-marketplace/SupplierOffers";
-import { getProductById } from "../../services/productApi";
+import SupplierOffers from "../../../components/public-marketplace/SupplierOffers";
+import { getProductById } from "../../../services/productApi";
 
 export default function ProductDetail() {
   const { productId } = useParams();

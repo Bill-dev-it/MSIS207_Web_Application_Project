@@ -1,11 +1,11 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import PageHeader from "../../components/common/PageHeader";
-import EmptyState from "../../components/common/EmptyState";
-import { getSupplierListings } from "../../services/supplierService";
-import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
-import HideListingButton from "../../features/supplier/listings/HideListingButton";
+import PageHeader from "../../../components/common/PageHeader";
+import EmptyState from "../../../components/common/EmptyState";
+import { getSupplierListings } from "../../../services/supplierService";
+import { SUPPLIER_DEMO_MODE } from "../../../features/supplier/api";
+import HideListingButton from "../../../features/supplier/listings/HideListingButton";
 
 export default function SupplierListings() {
   const [listings, setListings] = useState([]);

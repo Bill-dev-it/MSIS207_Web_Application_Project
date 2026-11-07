@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import PageHeader from "../../components/common/PageHeader";
-import { getSupplierListingById, saveSupplierListing } from "../../services/supplierService";
-import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
-import { validateListing } from "../../features/supplier/listings/listingValidation";
-import ProductSelector from "../../features/supplier/listings/ProductSelector";
+import PageHeader from "../../../components/common/PageHeader";
+import { getSupplierListingById, saveSupplierListing } from "../../../services/supplierService";
+import { SUPPLIER_DEMO_MODE } from "../../../features/supplier/api";
+import { validateListing } from "../../../features/supplier/listings/listingValidation";
+import ProductSelector from "../../../features/supplier/listings/ProductSelector";
 
 const emptyForm = {
   product_id: "",

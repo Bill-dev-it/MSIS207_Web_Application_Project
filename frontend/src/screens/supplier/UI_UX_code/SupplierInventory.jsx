@@ -1,10 +1,10 @@
 
 import { useEffect, useState } from "react";
-import PageHeader from "../../components/common/PageHeader";
-import EmptyState from "../../components/common/EmptyState";
-import { getSupplierInventory } from "../../services/supplierService";
-import { SUPPLIER_DEMO_MODE } from "../../features/supplier/api";
-import StockEditor from "../../features/supplier/inventory/StockEditor";
+import PageHeader from "../../../components/common/PageHeader";
+import EmptyState from "../../../components/common/EmptyState";
+import { getSupplierInventory } from "../../../services/supplierService";
+import { SUPPLIER_DEMO_MODE } from "../../../features/supplier/api";
+import StockEditor from "../../../features/supplier/inventory/StockEditor";
 
 export default function SupplierInventory() {
   const [inventory, setInventory] = useState({

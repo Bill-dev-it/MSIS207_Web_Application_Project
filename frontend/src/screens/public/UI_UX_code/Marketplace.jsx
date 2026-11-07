@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import PageHeader from "../../components/common/PageHeader";
-import EmptyState from "../../components/common/EmptyState";
-import { getProducts, getProductFilterOptions } from "../../services/productApi";
+import PageHeader from "../../../components/common/PageHeader";
+import EmptyState from "../../../components/common/EmptyState";
+import { getProducts, getProductFilterOptions } from "../../../services/productApi";
 
 const PAGE_SIZE = 12;
 const SORT_VALUES = {
