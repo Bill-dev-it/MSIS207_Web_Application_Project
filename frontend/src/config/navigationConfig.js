@@ -10,14 +10,61 @@ export const NAVIGATION_CONFIG = {
     ],
 
     ADMIN: [
-        { label: "Dashboard", path: "/admin" },
-        { label: "Suppliers", path: "/admin/moderation" },
-        { label: "Companies / Buyers", path: "/admin/companies" },
-        { label: "Users", path: "/admin/users" },
-        { label: "Orders", path: "/admin/orders" },
-        { label: "Reviews / Reports", path: "/admin/reports" },
-        { label: "RUL System Status", path: "/admin/rul-status" },
-        { label: "System Settings", path: "/admin/settings" },
+        {
+            label: "Dashboard",
+            path: "/admin/dashboard",
+            matchPaths: ["/admin", "/admin/dashboard"],
+            icon: "dashboard",
+        },
+        {
+            label: "Users",
+            path: "/admin/users",
+            matchPaths: ["/admin/users"],
+            icon: "users",
+        },
+        {
+            label: "Companies / Buyers",
+            path: "/admin/companies",
+            matchPaths: ["/admin/companies"],
+            icon: "companies",
+        },
+        {
+            label: "Suppliers",
+            path: "/admin/suppliers",
+            matchPaths: ["/admin/suppliers"],
+            icon: "suppliers",
+        },
+        {
+            label: "Products",
+            path: "/admin/moderation",
+            matchPaths: ["/admin/moderation", "/admin/products"],
+            icon: "products",
+        },
+        {
+            label: "Orders",
+            path: "/admin/orders",
+            matchPaths: ["/admin/orders"],
+            icon: "orders",
+        },
+        {
+            label: "Reviews / Reports",
+            path: "/admin/reports",
+            matchPaths: ["/admin/reports"],
+            icon: "reports",
+        },
+        {
+            label: "RUL System Status",
+            path: "/admin/rul-status",
+            matchPaths: ["/admin/rul-status"],
+            icon: "rulStatus",
+            showStatusDot: true,
+        },
+        {
+            label: "System Settings",
+            path: "/admin/settings",
+            matchPaths: ["/admin/settings"],
+            icon: "settings",
+        },
     ],
 
     SUPPLIER: [

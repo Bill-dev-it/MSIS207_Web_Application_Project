@@ -98,16 +98,17 @@ export default function AppRouter() {
       <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminHome />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/moderation" element={<AdminModeration />} />
+          <Route path="/admin/products" element={<AdminModeration />} />
+          <Route path="/admin/suppliers" element={<AdminModeration />} />
+          <Route path="/admin/companies" element={<AdminCompanies />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/orders" element={<AdminOrders />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
+          <Route path="/admin/rul-status" element={<AdminRULStatus />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/moderation" element={<AdminModeration />} />
-        <Route path="/admin/suppliers" element={<AdminModeration />} />
-        <Route path="/admin/companies" element={<AdminCompanies />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/orders" element={<AdminOrders />} />
-        <Route path="/admin/reports" element={<AdminReports />} />
-        <Route path="/admin/rul-status" element={<AdminRULStatus />} />
-        <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/admin/recommendations" element={<Recommendations />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

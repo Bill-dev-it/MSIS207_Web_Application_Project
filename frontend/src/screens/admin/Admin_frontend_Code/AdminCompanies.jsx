@@ -7,17 +7,6 @@ import {
 import { useAuth } from '../../../auth/AuthContext';
 import './AdminStyles.css';
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/admin' },
-  { label: 'Suppliers', path: '/admin/suppliers' },
-  { label: 'Companies / Buyers', path: '/admin/companies' },
-  { label: 'Users', path: '/admin/users' },
-  { label: 'Orders', path: '/admin/orders' },
-  { label: 'Reviews / Reports', path: '/admin/reports' },
-  { label: 'RUL System Status', path: '/admin/rul-status' },
-  { label: 'System Settings', path: '/admin/settings' },
-];
-
 function formatSpend(amount, currency = 'USD') {
   const num = Number(amount);
   if (!Number.isFinite(num) || num === 0) {
@@ -186,28 +175,7 @@ const AdminCompanies = () => {
   };
 
   return (
-    <div className="admin-layout">
-      {/* Sidebar Navigation */}
-      <aside className="admin-sidebar">
-        <div className="admin-brand">AeroRUL Admin</div>
-        <nav className="admin-nav">
-          {NAV_ITEMS.map((item) => {
-            const isActive =
-              item.path === '/admin/companies' ||
-              location.pathname === item.path;
-            return (
-              <Link
-                key={item.label}
-                to={item.path}
-                className={`admin-nav-item ${isActive ? 'active' : ''}`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-
+    <div className="admin-layout" style={{ flex: 1 }}>
       {/* Main Content */}
       <main className="admin-main">
         {/* Top Header */}

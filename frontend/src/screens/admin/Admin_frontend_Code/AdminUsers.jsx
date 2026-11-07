@@ -300,19 +300,10 @@ export default function AdminUsersScreen() {
   const currentPage = Number(pagination.page) || page;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0B1F3A]">
+    <div className="min-h-screen flex-1 bg-[#F8FAFC] text-[#0B1F3A]">
       {/* Top Header */}
       <header className="sticky top-0 z-30 border-b border-[#E5E7EB] bg-white">
         <div className="flex min-h-[72px] items-center justify-between gap-4 px-5 lg:px-8">
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="text-xl font-extrabold tracking-tight text-[#0B1F3A]">
-              AeroRUL
-            </span>
-            <span className="rounded-md bg-[#E0F2FE] px-2 py-1 text-[10px] font-bold tracking-wider text-[#0369A1]">
-              ADMIN
-            </span>
-          </div>
-
           <div className="hidden max-w-md flex-1 md:block">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]">
@@ -342,56 +333,6 @@ export default function AdminUsersScreen() {
       </header>
 
       <div className="flex min-h-[calc(100vh-72px)]">
-        {/* Sidebar */}
-        <aside className="hidden w-60 shrink-0 border-r border-[#E5E7EB] bg-white p-4 lg:block">
-          <p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-[#94A3B8]">
-            Administration
-          </p>
-
-          <nav className="space-y-1">
-            <Link
-              to="/admin/dashboard"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B1F3A]"
-            >
-              <Icon name="dashboard" />
-              Dashboard
-            </Link>
-
-            <Link
-              to="/admin/moderation"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B1F3A]"
-            >
-              <Icon name="shield" />
-              Moderation
-            </Link>
-
-            <Link
-              to="/admin/users"
-              className="flex items-center gap-3 rounded-xl bg-[#0B1F3A] px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm"
-              aria-current="page"
-            >
-              <Icon name="users" />
-              Users
-            </Link>
-
-            <Link
-              to="/admin/rul-status"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B1F3A]"
-            >
-              <Icon name="activity" />
-              RUL System Status
-            </Link>
-
-            <Link
-              to="/admin/recommendations"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B1F3A]"
-            >
-              <Icon name="chart" />
-              Recommendations
-            </Link>
-          </nav>
-        </aside>
-
         {/* Main Content */}
         <main className="min-w-0 flex-1 p-5 lg:p-8">
           {/* Breadcrumb */}
