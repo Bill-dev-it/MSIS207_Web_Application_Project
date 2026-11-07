@@ -13,6 +13,7 @@ export const NAVIGATION_CONFIG = {
         { label: "Dashboard", path: "/admin" },
         { label: "Moderation", path: "/admin/moderation" },
         { label: "Users", path: "/admin/users" },
+        { label: "Orders", path: "/admin/orders" },
         { label: "RUL Monitoring", path: "/admin/rul-status" },
         { label: "Recommendations", path: "/admin/recommendations" },
     ],
