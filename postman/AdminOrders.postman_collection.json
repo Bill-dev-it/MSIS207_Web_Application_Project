@@ -1,0 +1,540 @@
+{
+  "info": {
+    "_postman_id": "c72e94a1-5b18-4d93-9c24-8a1f36e0d412",
+    "name": "AeroRUL - Admin Orders API",
+    "description": "Read-only Postman Collection for AeroRUL Admin Orders API testing (TC01 - TC15) against live Express backend and PostgreSQL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Orders List, Search, Filter & Pagination",
+      "item": [
+        {
+          "name": "TC01 - Retrieve Admin Orders List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response envelope has success=true and items/counts/pagination', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.be.an('array');",
+                  "  pm.expect(body.data.counts).to.have.all.keys('ALL', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED');",
+                  "  pm.expect(body.data.pagination).to.include.keys('page', 'limit', 'total', 'totalPages');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"]
+            }
+          }
+        },
+        {
+          "name": "TC02 - Retrieve Orders with Pagination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Pagination returns page=1 and limit=2', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items.length).to.be.at.most(2);",
+                  "  pm.expect(body.data.pagination.page).to.eql(1);",
+                  "  pm.expect(body.data.pagination.limit).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?page=1&limit=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "2" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC03 - Search Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Search returns matching order ORD-1003', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.be.an('array');",
+                  "  pm.expect(body.data.items[0].order_number).to.eql('ORD-1003');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?search={{search}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "search", "value": "{{search}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC04 - Filter Orders by CONFIRMED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('All returned orders have primary_status CONFIRMED', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  body.data.items.forEach(function (item) {",
+                  "    pm.expect(item.primary_status).to.eql('CONFIRMED');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?status=CONFIRMED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "status", "value": "CONFIRMED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC05 - Filter Orders by PROCESSING",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Filtered list for PROCESSING returns valid items array', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?status=PROCESSING",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "status", "value": "PROCESSING" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC06 - Filter Orders by SHIPPED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Filtered list for SHIPPED returns valid items array', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?status=SHIPPED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "status", "value": "SHIPPED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC07 - Filter Orders by DELIVERED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Filtered list for DELIVERED returns valid items array', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?status=DELIVERED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "status", "value": "DELIVERED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC13 - Handle Empty Search Results",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Empty search returns empty items array and total=0', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.items).to.eql([]);",
+                  "  pm.expect(body.data.pagination.total).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?search=NONEXISTENT-ORDER-99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "search", "value": "NONEXISTENT-ORDER-99999" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Order Detail",
+      "item": [
+        {
+          "name": "TC08 - Retrieve Order Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Order detail preserves BIGINT order_id as string and includes seller_orders and payment', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.order_id).to.be.a('string');",
+                  "  pm.expect(body.data.seller_orders).to.be.an('array');",
+                  "  pm.expect(body.data).to.include.keys('order_number', 'company_name_snapshot', 'grand_total', 'primary_status', 'payment');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "{{orderId}}"]
+            }
+          }
+        },
+        {
+          "name": "TC09 - Retrieve Nonexistent Order Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test('Error code is ORDER_NOT_FOUND', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.code).to.eql('ORDER_NOT_FOUND');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/999999999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "999999999999"]
+            }
+          }
+        },
+        {
+          "name": "TC10 - Validate Invalid Order ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error code is INVALID_ORDER_ID', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.code).to.eql('INVALID_ORDER_ID');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders", "abc"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Validation & Security (Auth / RBAC / Error Handling)",
+      "item": [
+        {
+          "name": "TC11 - Verify Unauthenticated Access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('Error code is AUTH_REQUIRED', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.code).to.eql('AUTH_REQUIRED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"]
+            }
+          }
+        },
+        {
+          "name": "TC12 - Verify Non-Admin Access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test('Error code is FORBIDDEN', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.code).to.eql('FORBIDDEN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"]
+            }
+          }
+        },
+        {
+          "name": "TC14 - Validate Invalid Pagination Parameters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error code is INVALID_PAGE', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.code).to.eql('INVALID_PAGE');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?page=0&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "TC15 - Validate Invalid Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Error code is INVALID_STATUS', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.code).to.eql('INVALID_STATUS');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "aerorul_session={{sessionCookie}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/orders?status=INVALID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "orders"],
+              "query": [
+                { "key": "status", "value": "INVALID" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

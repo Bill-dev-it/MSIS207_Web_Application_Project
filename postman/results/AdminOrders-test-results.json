@@ -1,0 +1,350 @@
+{
+  "collectionName": "AeroRUL - Admin Orders API",
+  "executedAt": "2026-11-07T11:51:39.058Z",
+  "environment": {
+    "baseUrl": "http://localhost:3000",
+    "database": "PostgreSQL (aerorul)",
+    "runner": "Node.js HTTP Collection Runner (Newman CLI not installed in environment)"
+  },
+  "summary": {
+    "total": 15,
+    "passed": 14,
+    "failed": 0,
+    "blocked": 1
+  },
+  "executions": [
+    {
+      "id": "TC01",
+      "name": "Retrieve Admin Orders List",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 142,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 3,
+        "counts": {
+          "ALL": 3,
+          "CONFIRMED": 3,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 3,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "id": "TC02",
+      "name": "Retrieve Orders with Pagination",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?page=1&limit=2",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 116,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 2,
+        "counts": {
+          "ALL": 3,
+          "CONFIRMED": 3,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 2,
+          "total": 3,
+          "totalPages": 2
+        }
+      }
+    },
+    {
+      "id": "TC03",
+      "name": "Search Orders",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?search=ORD-1003",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 14,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 1,
+        "counts": {
+          "ALL": 1,
+          "CONFIRMED": 1,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 1,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "id": "TC04",
+      "name": "Filter Orders by CONFIRMED",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?status=CONFIRMED",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 37,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 3,
+        "counts": {
+          "ALL": 3,
+          "CONFIRMED": 3,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 3,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "id": "TC05",
+      "name": "Filter Orders by PROCESSING",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?status=PROCESSING",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 10,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 0,
+        "counts": {
+          "ALL": 3,
+          "CONFIRMED": 3,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 0,
+          "totalPages": 0
+        }
+      }
+    },
+    {
+      "id": "TC06",
+      "name": "Filter Orders by SHIPPED",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?status=SHIPPED",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 38,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 0,
+        "counts": {
+          "ALL": 3,
+          "CONFIRMED": 3,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 0,
+          "totalPages": 0
+        }
+      }
+    },
+    {
+      "id": "TC07",
+      "name": "Filter Orders by DELIVERED",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?status=DELIVERED",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 10,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 0,
+        "counts": {
+          "ALL": 3,
+          "CONFIRMED": 3,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 0,
+          "totalPages": 0
+        }
+      }
+    },
+    {
+      "id": "TC08",
+      "name": "Retrieve Order Detail",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders/10",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 47,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "orderId": "10"
+      }
+    },
+    {
+      "id": "TC09",
+      "name": "Retrieve Nonexistent Order Detail",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders/999999999999",
+      "expectedStatus": 404,
+      "actualStatus": 404,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 34,
+      "result": "PASS",
+      "responseSummary": {
+        "success": false,
+        "errorCode": "ORDER_NOT_FOUND"
+      }
+    },
+    {
+      "id": "TC10",
+      "name": "Validate Invalid Order ID",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders/abc",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 6,
+      "result": "PASS",
+      "responseSummary": {
+        "success": false,
+        "errorCode": "INVALID_ORDER_ID"
+      }
+    },
+    {
+      "id": "TC11",
+      "name": "Verify Unauthenticated Access",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders",
+      "expectedStatus": 401,
+      "actualStatus": 401,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 2,
+      "result": "PASS",
+      "responseSummary": {
+        "success": false,
+        "errorCode": "AUTH_REQUIRED"
+      }
+    },
+    {
+      "id": "TC12",
+      "name": "Verify Non-Admin Access",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders",
+      "expectedStatus": 403,
+      "actualStatus": null,
+      "result": "BLOCKED",
+      "reason": "Plaintext password for existing BUYER account (john.doe@horizon-air.example) is not stored in repository seed files, and creating/modifying user records or faking auth tokens is prohibited by strict data policy."
+    },
+    {
+      "id": "TC13",
+      "name": "Handle Empty Search Results",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?search=NONEXISTENT-ORDER-99999",
+      "expectedStatus": 200,
+      "actualStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 13,
+      "result": "PASS",
+      "responseSummary": {
+        "success": true,
+        "errorCode": null,
+        "itemCount": 0,
+        "counts": {
+          "ALL": 0,
+          "CONFIRMED": 0,
+          "PROCESSING": 0,
+          "SHIPPED": 0,
+          "DELIVERED": 0
+        },
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 0,
+          "totalPages": 0
+        }
+      }
+    },
+    {
+      "id": "TC14",
+      "name": "Validate Invalid Pagination Parameters",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?page=0&limit=10",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 26,
+      "result": "PASS",
+      "responseSummary": {
+        "success": false,
+        "errorCode": "INVALID_PAGE"
+      }
+    },
+    {
+      "id": "TC15",
+      "name": "Validate Invalid Status",
+      "method": "GET",
+      "url": "http://localhost:3000/api/v1/admin/orders?status=INVALID",
+      "expectedStatus": 400,
+      "actualStatus": 400,
+      "contentType": "application/json; charset=utf-8",
+      "durationMs": 6,
+      "result": "PASS",
+      "responseSummary": {
+        "success": false,
+        "errorCode": "INVALID_STATUS"
+      }
+    }
+  ]
+}
