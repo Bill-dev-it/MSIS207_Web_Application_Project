@@ -21,6 +21,7 @@ import Recommendations from "../screens/admin/Admin_frontend_Code/Recommendation
 import AdminModeration from "../screens/admin/Admin_frontend_Code/AdminModeration";
 import AdminDashboard from "../screens/admin/Admin_frontend_Code/AdminDashboard";
 import AdminRULStatus from "../screens/admin/Admin_frontend_Code/AdminRULStatus";
+import AdminUsers from "../features/admin/users/AdminUsers";
 import BuyerDashboard from "../screens/buyer/BuyerDashboard";
 import MyEngines from "../screens/buyer/MyEngines";
 import EngineDetail from "../screens/buyer/EngineDetail";
@@ -96,6 +97,7 @@ export default function AppRouter() {
         </Route>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/moderation" element={<AdminModeration />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/rul-status" element={<AdminRULStatus />} />
         <Route path="/admin/recommendations" element={<Recommendations />} />
       </Route>

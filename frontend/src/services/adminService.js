@@ -522,3 +522,90 @@ export async function updateSupplierStatus(supplierId, status) {
         { status }
     );
 }
+
+/**
+ * Fetch users for Admin User Management.
+ *
+ * GET /api/v1/admin/users
+ *
+ * @param {Object} params
+ * @param {string} params.role - BUYER, SUPPLIER, ADMIN or ALL
+ * @param {string} params.status - ACTIVE, INACTIVE or ALL
+ * @param {string} params.search - Search keyword
+ * @param {number} params.page - Page number
+ * @param {number} params.limit - Items per page
+ */
+export async function fetchAdminUsers({
+    role = "ALL",
+    status = "ALL",
+    search = "",
+    page = 1,
+    limit = 10,
+} = {}) {
+    const queryParams = new URLSearchParams();
+
+    if (role && role !== "ALL") {
+        queryParams.set("role", role);
+    }
+
+    if (status && status !== "ALL") {
+        queryParams.set("status", status);
+    }
+
+    if (search.trim()) {
+        queryParams.set("search", search.trim());
+    }
+
+    queryParams.set("page", String(page));
+    queryParams.set("limit", String(limit));
+
+    const queryString = queryParams.toString();
+
+    return apiClient.get(
+        `/v1/admin/users?${queryString}`
+    );
+}
+
+/**
+ * Fetch detailed user information.
+ *
+ * GET /api/v1/admin/users/:userId
+ *
+ * @param {string|number} userId
+ */
+export async function fetchAdminUserDetail(userId) {
+    if (!userId) {
+        throw new Error("User ID is required.");
+    }
+
+    return apiClient.get(
+        `/v1/admin/users/${encodeURIComponent(userId)}`
+    );
+}
+
+/**
+ * Update user account status.
+ *
+ * PATCH /api/v1/admin/users/:userId/status
+ *
+ * Allowed transitions and self/last-admin protections are enforced by the Backend.
+ *
+ * @param {string|number} userId
+ * @param {"ACTIVE"|"INACTIVE"} status
+ */
+export async function updateAdminUserStatus(userId, status) {
+    if (!userId) {
+        throw new Error("User ID is required.");
+    }
+
+    const allowedStatuses = ["ACTIVE", "INACTIVE"];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new Error(`Invalid user target status: ${status}`);
+    }
+
+    return apiClient.patch(
+        `/v1/admin/users/${encodeURIComponent(userId)}/status`,
+        { status }
+    );
+}
