@@ -44,11 +44,13 @@ export default function AppRouter() {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route
-          path="/marketplace/products/:productId"
-          element={<ProductDetail />}
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route
+            path="/marketplace/products/:productId"
+            element={<ProductDetail />}
+          />
+        </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />

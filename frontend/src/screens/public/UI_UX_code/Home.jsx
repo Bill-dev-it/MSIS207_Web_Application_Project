@@ -72,8 +72,6 @@ const steps = [
 ];
 
 export default function Home() {
-  const navigate = useNavigate();
-
   return (
     <div className="bg-neutral-50">
       {/* Hero */}
@@ -81,7 +79,7 @@ export default function Home() {
         aria-labelledby="hero-heading"
         className="bg-primary-50"
       >
-        <div className="container-page py-20 md:py-28">
+        <div className="container-page py-12 md:py-16">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-widest text-accent-600">
               AI-Enhanced Aviation Marketplace
@@ -102,52 +100,6 @@ export default function Home() {
               suppliers, and support maintenance planning
               through RUL-based replacement recommendations.
             </p>
-
-            <form
-              role="search"
-              aria-label="Marketplace search"
-              className="mt-8 flex flex-col gap-3 sm:flex-row"
-              onSubmit={(event) => {
-                event.preventDefault();
-                const formData = new FormData(event.currentTarget);
-                const query = String(formData.get("q") ?? "").trim();
-
-                navigate(
-                  query
-                    ? `/marketplace?q=${encodeURIComponent(query)}`
-                    : "/marketplace"
-                );
-              }}
-            >
-              <label htmlFor="home-search" className="sr-only">
-                Search aviation parts
-              </label>
-
-              <input
-                id="home-search"
-                name="q"
-                type="search"
-                placeholder="Search by part number, product or engine model"
-                className="input min-w-0 flex-1"
-              />
-
-              <button type="submit" className="btn btn-primary">
-                Search Parts
-              </button>
-            </form>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/marketplace" className="btn btn-primary">
-                Explore Marketplace
-              </Link>
-
-              <a
-                href="#how-it-works"
-                className="btn btn-secondary"
-              >
-                How It Works
-              </a>
-            </div>
           </div>
         </div>
       </section>

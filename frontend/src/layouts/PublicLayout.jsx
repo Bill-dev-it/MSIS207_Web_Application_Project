@@ -19,21 +19,21 @@ export default function PublicLayout() {
             Aero<span className="text-accent">RUL</span>
           </NavLink>
 
-          <nav aria-label="Public navigation" className="flex flex-wrap items-center">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary-50 text-primary-700"
-                    : "text-neutral-500 hover:text-primary-700"
-                }`
-              }
-            >
-              Home
-            </NavLink>
-            {isAuthenticated && (
+          {isAuthenticated && (
+            <nav aria-label="Public navigation" className="flex flex-wrap items-center">
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-primary-50 text-primary-700"
+                      : "text-neutral-500 hover:text-primary-700"
+                  }`
+                }
+              >
+                Home
+              </NavLink>
               <NavLink
                 to="/marketplace"
                 className={({ isActive }) =>
@@ -46,8 +46,8 @@ export default function PublicLayout() {
               >
                 Marketplace
               </NavLink>
-            )}
-          </nav>
+            </nav>
+          )}
           <AccountActions />
         </div>
       </header>
