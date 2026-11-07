@@ -44,7 +44,7 @@ export const NAVIGATION_CONFIG = {
         {
             label: "Dashboard",
             path: "/admin/dashboard",
-            matchPaths: ["/admin", "/admin/dashboard"],
+            matchPaths: ["/admin/dashboard"],
             icon: "dashboard",
         },
         {

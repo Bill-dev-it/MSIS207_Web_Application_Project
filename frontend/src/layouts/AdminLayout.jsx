@@ -1,5 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import AccountActions from "../components/common/AccountActions";
+import RoleNavigation from "../components/common/RoleNavigation";
 import { NAVIGATION_CONFIG } from "../config/navigationConfig";
 
 function SidebarIcon({ name, active }) {
@@ -142,79 +144,101 @@ export default function AdminLayout() {
     }
   };
 
+  const isLandingPage =
+    location.pathname === "/admin" || location.pathname === "/admin/";
+
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] text-[#0B1F3A] antialiased">
-      {/* Shared Admin Sidebar Navigation (Reference Image 1) */}
-      <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col justify-between border-r border-[#E5E7EB] bg-white px-4 py-6">
-        <div className="flex flex-col gap-6">
-          {/* Logo with ADMIN badge */}
-          <div className="flex items-center gap-2 px-2">
-            <Link
-              to="/"
-              className="text-2xl font-bold tracking-tight text-[#0B1F3A]"
-            >
-              Aero<span className="text-accent">RUL</span>
-            </Link>
-            <span className="rounded-md bg-[#EDE9FE] px-2 py-0.5 text-[11px] font-bold text-[#6D28D9]">
-              ADMIN
-            </span>
-          </div>
-
-          {/* Admin Nav Items */}
-          <nav className="flex flex-col gap-1 text-[13px] font-medium text-[#475569]">
-            {adminNavItems.map((item) => {
-              const active = isNavItemActive(item);
-              return (
-                <Link
-                  key={item.label}
-                  to={item.path}
-                  aria-current={active ? "page" : undefined}
-                  className={
-                    active
-                      ? "flex items-center justify-between rounded-xl bg-[#0B1F3A] px-3.5 py-2.5 font-semibold text-white shadow-sm"
-                      : "flex items-center justify-between rounded-lg px-3 py-2 text-[#475569] hover:bg-[#F1F5F9] hover:text-[#0B1F3A]"
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <SidebarIcon name={item.icon} active={active} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.showStatusDot && (
-                    <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+    <div className="flex min-h-screen flex-col bg-[#F8FAFC] text-[#0B1F3A] antialiased">
+      {/* Global Navigation Header */}
+      <header className="border-b border-neutral-200 bg-white">
+        <div className="container-page flex flex-wrap items-center justify-between gap-4 py-4">
+          <Link to="/admin" className="text-lg font-bold text-primary-800">
+            Admin Portal
+          </Link>
+          <RoleNavigation />
+          <AccountActions />
         </div>
+      </header>
 
-        {/* Logout */}
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.8}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-            />
-          </svg>
-          <span>Logout</span>
-        </button>
-      </aside>
+      {isLandingPage ? (
+        <div className="w-full flex-1">
+          <Outlet />
+        </div>
+      ) : (
+        <div className="flex flex-1">
+          {/* Shared Admin Sidebar Navigation */}
+          <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col justify-between border-r border-[#E5E7EB] bg-white px-4 py-6">
+            <div className="flex flex-col gap-6">
+              {/* Logo with ADMIN badge */}
+              <div className="flex items-center gap-2 px-2">
+                <Link
+                  to="/admin"
+                  className="text-2xl font-bold tracking-tight text-[#0B1F3A]"
+                >
+                  Aero<span className="text-accent">RUL</span>
+                </Link>
+                <span className="rounded-md bg-[#EDE9FE] px-2 py-0.5 text-[11px] font-bold text-[#6D28D9]">
+                  ADMIN
+                </span>
+              </div>
 
-      {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Outlet />
-      </div>
+              {/* Admin Nav Items */}
+              <nav className="flex flex-col gap-1 text-[13px] font-medium text-[#475569]">
+                {adminNavItems.map((item) => {
+                  const active = isNavItemActive(item);
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.path}
+                      aria-current={active ? "page" : undefined}
+                      className={
+                        active
+                          ? "flex items-center justify-between rounded-xl bg-[#0B1F3A] px-3.5 py-2.5 font-semibold text-white shadow-sm"
+                          : "flex items-center justify-between rounded-lg px-3 py-2 text-[#475569] hover:bg-[#F1F5F9] hover:text-[#0B1F3A]"
+                      }
+                    >
+                      <div className="flex items-center gap-3">
+                        <SidebarIcon name={item.icon} active={active} />
+                        <span>{item.label}</span>
+                      </div>
+                      {item.showStatusDot && (
+                        <span className="h-2 w-2 rounded-full bg-[#10B981]" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Logout */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              <span>Logout</span>
+            </button>
+          </aside>
+
+          {/* Main Content Area */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Outlet />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

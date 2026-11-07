@@ -110,9 +110,9 @@ export default function AppRouter() {
           <Route path="/admin/orders" element={<AdminOrders />} />
           <Route path="/admin/reports" element={<AdminReports />} />
           <Route path="/admin/rul-status" element={<AdminRULStatus />} />
+          <Route path="/admin/recommendations" element={<Recommendations />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
-        <Route path="/admin/recommendations" element={<Recommendations />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
