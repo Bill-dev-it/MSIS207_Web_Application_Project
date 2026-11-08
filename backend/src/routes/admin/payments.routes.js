@@ -2,8 +2,29 @@
 
 const express = require("express");
 const paymentsController = require("../../controllers/admin/payments.controller");
+const paymentListController = require("../../controllers/admin/payment-list.controller");
 
 const router = express.Router();
+
+/**
+ * @api {get} /api/v1/admin/payments List bank transfers for Admin
+ * @apiName ListAdminBankTransfers
+ * @apiGroup Admin Payments
+ * @apiVersion 1.0.0
+ * @apiPermission Admin
+ * @apiDescription Lists BANK_TRANSFER records only, including when status=ALL.
+ * @apiQuery {String="PENDING","SUCCEEDED","CANCELLED","ALL"} [status=PENDING] Status filter.
+ * @apiQuery {Number} [page=1] Page number, 1 to 1000000.
+ * @apiQuery {Number} [limit=10] Page size, 1 to 100.
+ * @apiSuccess {Boolean} success true
+ * @apiSuccess {Object[]} data Bank-transfer payment records; BIGINT IDs and amount are strings.
+ * @apiSuccess {Object} meta Status filter and pagination details.
+ * @apiError (400 Bad Request) INVALID_QUERY, INVALID_STATUS, INVALID_PAGINATION Invalid filters.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired cookie session.
+ * @apiError (403 Forbidden) ADMIN_REQUIRED Only ADMIN can access this endpoint.
+ * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Could not load bank transfers.
+ */
+router.get("/", paymentListController.listPayments);
 
 /**
  * @api {post} /api/v1/admin/payments/:orderId/confirm Confirm pending bank transfer payment
