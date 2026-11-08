@@ -16,15 +16,18 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchAdminDashboard()
-      .then((res) => {
+    async function loadDashboard() {
+      try {
+        const res = await fetchAdminDashboard();
         setData(res);
         setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         setError(err.message || "Failed to load dashboard metrics");
         setLoading(false);
-      });
+      }
+    }
+
+    loadDashboard();
   }, []);
 
   if (loading) {

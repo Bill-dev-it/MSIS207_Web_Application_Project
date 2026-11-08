@@ -19,8 +19,9 @@ export default function AdminModeration() {
   });
 
   useEffect(() => {
-    fetchModerationQueue()
-      .then((data) => {
+    async function loadModerationQueue() {
+      try {
+        const data = await fetchModerationQueue();
         setItems(data);
         if (data.length > 0) {
           setSelectedId(data[0].id);
@@ -31,10 +32,12 @@ export default function AdminModeration() {
           });
         }
         setLoading(false);
-      })
-      .catch(() => {
+      } catch {
         setLoading(false);
-      });
+      }
+    }
+
+    loadModerationQueue();
   }, []);
 
   const selectedItem = useMemo(() => {
