@@ -303,7 +303,7 @@ async function placeOrderTransaction({
         $2,
         $3,
         $4,
-        CASE WHEN $4 = 'SUCCEEDED' THEN CURRENT_TIMESTAMP ELSE NULL END
+        CASE WHEN $4::varchar = 'SUCCEEDED' THEN CURRENT_TIMESTAMP ELSE NULL END
       )
       RETURNING payment_id, order_id, payment_method, amount, status, paid_at
     `, [order.order_id, paymentMethod, centsToMoney(grandTotalCents), paymentStatus]);
