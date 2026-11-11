@@ -8,8 +8,10 @@
 BEGIN;
 
 -- The old constraint enforces SIMULATION/SUCCEEDED only.
+-- Drop legacy or previously applied payment method/status constraint.
 ALTER TABLE public.payments
-  DROP CONSTRAINT IF EXISTS chk_payments_simulation;
+  DROP CONSTRAINT IF EXISTS chk_payments_simulation,
+  DROP CONSTRAINT IF EXISTS chk_payments_b2b_mvp_method_status;
 
 -- Require the backend to state method/status explicitly for each new payment.
 -- A pending or cancelled transfer has no payment completion timestamp.

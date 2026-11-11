@@ -20,12 +20,12 @@ function validateOrderId(orderId) {
 
 async function confirmPayment(orderId) {
   const validOrderId = validateOrderId(orderId);
-  return repository.confirmBankTransferPayment(validOrderId);
+  return await repository.confirmBankTransferPayment(validOrderId);
 }
 
 async function cancelPayment(orderId) {
   const validOrderId = validateOrderId(orderId);
-  return repository.cancelBankTransferPayment(validOrderId);
+  return await repository.cancelBankTransferPayment(validOrderId);
 }
 
 module.exports = {

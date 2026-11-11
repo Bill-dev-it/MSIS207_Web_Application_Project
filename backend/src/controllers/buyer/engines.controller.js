@@ -25,7 +25,7 @@ function fail(res, error) {
     success: false,
     error: {
       code: error.code || "INTERNAL_SERVER_ERROR",
-      message: status >= 500 ? "Unable to retrieve engine information." : error.message,
+      message: status >= 500 ? "Unable to process engine request." : error.message,
     },
   });
 }
@@ -101,4 +101,73 @@ async function getSensorUploads(req, res) {
   }
 }
 
-module.exports = { listEngines, getEngineDetail, getSensorUploads };
+async function listEngineModels(req, res) {
+  try {
+    const search = req.query.search ?? "";
+    const limit = integerQuery(req.query.limit, 20, 50);
+    const data = await service.listEngineModels({ search, limit });
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return fail(res, error);
+  }
+}
+
+async function listCompanyAircraft(req, res) {
+  try {
+    const data = await service.listCompanyAircraft({
+      companyId: req.authUser.company_id,
+    });
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return fail(res, error);
+  }
+}
+
+async function createEngine(req, res) {
+  try {
+    const body = req.body || {};
+    const engine = await service.createEngine({
+      companyId: req.authUser.company_id,
+      engineCode: body.engine_code ?? body.engineCode,
+      serialNumber: body.serial_number ?? body.serialNumber,
+      engineModelId: body.engine_model_id ?? body.engineModelId,
+      currentCycle: body.current_cycle ?? body.currentCycle,
+      aircraftId: body.aircraft_id ?? body.aircraftId,
+      newAircraft: body.new_aircraft ?? body.newAircraft,
+    });
+    return res.status(201).json({ success: true, data: engine });
+  } catch (error) {
+    return fail(res, error);
+  }
+}
+
+async function updateEngine(req, res) {
+  if (!isId(req.params.engineId)) {
+    return res.status(400).json({ success: false, error: {
+      code: "INVALID_ENGINE_ID", message: "Engine ID must be a positive BIGINT."
+    } });
+  }
+  try {
+    const body = req.body || {};
+    const engine = await service.updateEngine({
+      companyId: req.authUser.company_id,
+      engineId: req.params.engineId,
+      engineCode: body.engine_code ?? body.engineCode,
+      serialNumber: body.serial_number ?? body.serialNumber,
+      currentCycle: body.current_cycle ?? body.currentCycle,
+    });
+    return res.status(200).json({ success: true, data: engine });
+  } catch (error) {
+    return fail(res, error);
+  }
+}
+
+module.exports = {
+  listEngines,
+  getEngineDetail,
+  getSensorUploads,
+  listEngineModels,
+  listCompanyAircraft,
+  createEngine,
+  updateEngine,
+};

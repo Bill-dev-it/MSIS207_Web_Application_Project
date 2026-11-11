@@ -17,15 +17,18 @@ export default function AdminRULStatus() {
   const [triggerNotice, setTriggerNotice] = useState("");
 
   useEffect(() => {
-    fetchRULSystemStatus()
-      .then((res) => {
+    async function loadRULSystemStatus() {
+      try {
+        const res = await fetchRULSystemStatus();
         setData(res);
         setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         setError(err.message || "Failed to load RUL system status");
         setLoading(false);
-      });
+      }
+    }
+
+    loadRULSystemStatus();
   }, []);
 
   const handleRetrigger = () => {

@@ -3,9 +3,13 @@ import { useEngines } from "../../features/buyer/engines/hooks/useEngines";
 import { EngineToolbar } from "../../features/buyer/engines/components/EngineToolbar";
 import { EngineTable } from "../../features/buyer/engines/components/EngineTable";
 import { EngineCards } from "../../features/buyer/engines/components/EngineCards";
+import { RegisterEngineModal } from "../../features/buyer/engines/components/RegisterEngineModal";
 
 export default function MyEngines() {
   const [viewMode, setViewMode] = useState("table");
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [successNotification, setSuccessNotification] = useState("");
+
   const {
     engines,
     counts,
@@ -21,9 +25,42 @@ export default function MyEngines() {
     refresh,
   } = useEngines();
 
+  function handleRegisterSuccess(registeredEngine) {
+    setIsRegisterOpen(false);
+    refresh();
+    const code = registeredEngine?.engineCode || "Engine";
+    setSuccessNotification(`Engine "${code}" was registered successfully.`);
+    setTimeout(() => {
+      setSuccessNotification("");
+    }, 6000);
+  }
+
   return (
     <div>
       <div className="space-y-6">
+        {/* Success Banner */}
+        {successNotification && (
+          <div
+            role="status"
+            className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center justify-between shadow-xs transition-all animate-fade-in"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{successNotification}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSuccessNotification("")}
+              className="text-emerald-600 hover:text-emerald-900 font-bold ml-2"
+              aria-label="Dismiss notification"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         <EngineToolbar
           search={search}
           onSearchChange={setSearch}
@@ -32,6 +69,7 @@ export default function MyEngines() {
           counts={counts}
           viewMode={viewMode}
           onViewModeToggle={setViewMode}
+          onRegisterClick={() => setIsRegisterOpen(true)}
         />
 
         {loading ? (
@@ -53,10 +91,20 @@ export default function MyEngines() {
             </button>
           </div>
         ) : viewMode === "table" ? (
-          <EngineTable engines={engines} />
+          <EngineTable
+            engines={engines}
+            onRegisterClick={() => setIsRegisterOpen(true)}
+          />
         ) : (
           <EngineCards engines={engines} />
         )}
+
+        {/* Register Engine Modal */}
+        <RegisterEngineModal
+          isOpen={isRegisterOpen}
+          onClose={() => setIsRegisterOpen(false)}
+          onSuccess={handleRegisterSuccess}
+        />
 
         {/* Pagination controls */}
         {pagination.totalPages > 1 && (

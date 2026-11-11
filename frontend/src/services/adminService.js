@@ -293,21 +293,17 @@ export const RECOMMENDATIONS_DATA = {
 
 // Async service functions simulate real API calls with fallback
 export async function fetchAdminDashboard() {
-  await new Promise((resolve) => setTimeout(resolve, 80));
   return ADMIN_DASHBOARD_METRICS;
 }
 
 export async function fetchModerationQueue() {
-  await new Promise((resolve) => setTimeout(resolve, 80));
   return MODERATION_QUEUE;
 }
 
 export async function fetchRULSystemStatus() {
-  await new Promise((resolve) => setTimeout(resolve, 80));
   return RUL_SYSTEM_METRICS;
 }
 
 export async function fetchReplacementRecommendations(engineId = "ENG-037") {
-  await new Promise((resolve) => setTimeout(resolve, 80));
   return { ...RECOMMENDATIONS_DATA, engineId };
 }

@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "../auth/ProtectedRoute";
-import AdminHome from "../screens/admin/AdminHome";
 import Home from "../screens/public/Home";
 import Login from "../screens/auth/Login";
 import Register from "../screens/auth/Register";
@@ -17,10 +16,10 @@ import PublicLayout from "../layouts/PublicLayout";
 import SupplierLayout from "../layouts/SupplierLayout";
 import Marketplace from "../screens/public/Marketplace";
 import ProductDetail from "../screens/public/ProductDetail";
-import Recommendations from "../screens/admin/Admin_frontend_Code/Recommendations";
-import AdminModeration from "../screens/admin/Admin_frontend_Code/AdminModeration";
-import AdminDashboard from "../screens/admin/Admin_frontend_Code/AdminDashboard";
-import AdminRULStatus from "../screens/admin/Admin_frontend_Code/AdminRULStatus";
+import AdminDashboardLive from "../screens/admin/AdminDashboardLive";
+import AdminSuppliersLive from "../screens/admin/AdminSuppliersLive";
+import AdminPaymentsLive from "../screens/admin/AdminPaymentsLive";
+import AdminRULHealthLive from "../screens/admin/AdminRULHealthLive";
 import BuyerDashboard from "../screens/buyer/BuyerDashboard";
 import MyEngines from "../screens/buyer/MyEngines";
 import EngineDetail from "../screens/buyer/EngineDetail";
@@ -92,12 +91,15 @@ export default function AppRouter() {
       </Route>
       <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
         <Route element={<AdminLayout />}>
-          <Route path="/admin" element={<AdminHome />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardLive />} />
+          <Route path="/admin/suppliers" element={<AdminSuppliersLive />} />
+          <Route path="/admin/payments" element={<AdminPaymentsLive />} />
+          <Route path="/admin/rul-health" element={<AdminRULHealthLive />} />
+          <Route path="/admin/moderation" element={<Navigate to="/admin/suppliers" replace />} />
+          <Route path="/admin/rul-status" element={<Navigate to="/admin/rul-health" replace />} />
+          <Route path="/admin/recommendations" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/moderation" element={<AdminModeration />} />
-        <Route path="/admin/rul-status" element={<AdminRULStatus />} />
-        <Route path="/admin/recommendations" element={<Recommendations />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

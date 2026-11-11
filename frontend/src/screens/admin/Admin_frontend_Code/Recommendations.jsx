@@ -11,15 +11,18 @@ export default function Recommendations() {
   const [compareList, setCompareList] = useState(["top", "optB", "optC"]);
 
   useEffect(() => {
-    fetchReplacementRecommendations("ENG-037")
-      .then((res) => {
+    async function loadRecommendations() {
+      try {
+        const res = await fetchReplacementRecommendations("ENG-037");
         setData(res);
         setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         setError(err.message || "Failed to load recommendations");
         setLoading(false);
-      });
+      }
+    }
+
+    loadRecommendations();
   }, []);
 
   const handleAddToCart = (itemTitle, price) => {

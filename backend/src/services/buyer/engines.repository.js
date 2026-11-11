@@ -306,8 +306,235 @@ async function getEngineSensorUploads({ companyId, engineId, limit = 10 }) {
   }));
 }
 
+/**
+ * Search available engine models from the catalog
+ */
+async function searchEngineModels({ search = "", limit = 20 }) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 50);
+  const params = [];
+  let query = `
+    SELECT
+      engine_model_id,
+      manufacturer,
+      model_name,
+      engine_family,
+      engine_type
+    FROM engine_models
+  `;
+  if (search && search.trim()) {
+    params.push(`%${search.trim()}%`);
+    query += `
+      WHERE model_name ILIKE $1
+         OR manufacturer ILIKE $1
+         OR engine_family ILIKE $1
+    `;
+  }
+  params.push(safeLimit);
+  query += ` ORDER BY model_name ASC LIMIT $${params.length}`;
+
+  const res = await pool.query(query, params);
+  return res.rows.map((row) => ({
+    engineModelId: row.engine_model_id,
+    manufacturer: row.manufacturer,
+    modelName: row.model_name,
+    engineFamily: row.engine_family,
+    engineType: row.engine_type,
+  }));
+}
+
+/**
+ * List aircraft owned by the buyer company
+ */
+async function getCompanyAircraft({ companyId }) {
+  const query = `
+    SELECT
+      aircraft_id,
+      registration_number,
+      manufacturer,
+      model,
+      aircraft_type,
+      year,
+      status,
+      created_at
+    FROM aircraft
+    WHERE company_id = $1
+    ORDER BY registration_number ASC
+  `;
+  const res = await pool.query(query, [companyId]);
+  return res.rows.map((row) => ({
+    aircraftId: row.aircraft_id,
+    registrationNumber: row.registration_number,
+    manufacturer: row.manufacturer,
+    model: row.model,
+    aircraftType: row.aircraft_type,
+    year: row.year,
+    status: row.status,
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * Register a new engine, optionally creating a new aircraft for the company in a single transaction.
+ */
+async function createEngineWithAircraft({
+  companyId,
+  engineCode,
+  serialNumber,
+  currentCycle = 0,
+  engineModelId,
+  aircraftId,
+  newAircraft,
+}) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let resolvedAircraftId = aircraftId;
+
+    if (!resolvedAircraftId && newAircraft) {
+      const aircraftRes = await client.query(
+        `INSERT INTO aircraft (
+           company_id,
+           registration_number,
+           manufacturer,
+           model,
+           aircraft_type,
+           year,
+           status
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING aircraft_id`,
+        [
+          companyId,
+          newAircraft.registrationNumber,
+          newAircraft.manufacturer,
+          newAircraft.model,
+          newAircraft.aircraftType || "Commercial Fixed-Wing",
+          newAircraft.year || null,
+          newAircraft.status || "ACTIVE",
+        ]
+      );
+      resolvedAircraftId = aircraftRes.rows[0].aircraft_id;
+    } else {
+      const checkAircraft = await client.query(
+        `SELECT aircraft_id FROM aircraft WHERE aircraft_id = $1 AND company_id = $2`,
+        [resolvedAircraftId, companyId]
+      );
+      if (checkAircraft.rows.length === 0) {
+        const err = new Error("Aircraft not found for your company.");
+        err.statusCode = 404;
+        err.code = "AIRCRAFT_NOT_FOUND";
+        throw err;
+      }
+    }
+
+    const checkModel = await client.query(
+      `SELECT engine_model_id FROM engine_models WHERE engine_model_id = $1`,
+      [engineModelId]
+    );
+    if (checkModel.rows.length === 0) {
+      const err = new Error("Selected engine model does not exist.");
+      err.statusCode = 400;
+      err.code = "INVALID_ENGINE_MODEL";
+      throw err;
+    }
+
+    const engineRes = await client.query(
+      `INSERT INTO engines (
+         aircraft_id,
+         engine_model_id,
+         engine_code,
+         serial_number,
+         current_cycle
+       )
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING engine_id`,
+      [resolvedAircraftId, engineModelId, engineCode, serialNumber, currentCycle]
+    );
+
+    await client.query("COMMIT");
+    return engineRes.rows[0].engine_id;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    if (err.code === "23505") {
+      if (err.constraint === "uq_engines_aircraft_code") {
+        const e = new Error("An engine with this code is already assigned to this aircraft.");
+        e.statusCode = 409;
+        e.code = "DUPLICATE_ENGINE_CODE";
+        throw e;
+      }
+      if (err.constraint === "uq_engines_model_serial") {
+        const e = new Error("An engine with this model and serial number already exists.");
+        e.statusCode = 409;
+        e.code = "DUPLICATE_SERIAL_NUMBER";
+        throw e;
+      }
+      if (err.constraint === "aircraft_registration_number_key" || err.detail?.includes("registration_number")) {
+        const e = new Error("An aircraft with this registration number already exists.");
+        e.statusCode = 409;
+        e.code = "DUPLICATE_REGISTRATION_NUMBER";
+        throw e;
+      }
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Update editable engine details for an engine owned by the buyer's company.
+ */
+async function updateEngine({ companyId, engineId, engineCode, serialNumber, currentCycle }) {
+  const check = await pool.query(
+    `SELECT e.engine_id, e.aircraft_id, e.engine_model_id
+     FROM engines e
+     JOIN aircraft a ON e.aircraft_id = a.aircraft_id
+     WHERE e.engine_id = $1 AND a.company_id = $2`,
+    [engineId, companyId]
+  );
+  if (check.rows.length === 0) {
+    const err = new Error("Engine not found.");
+    err.statusCode = 404;
+    err.code = "ENGINE_NOT_FOUND";
+    throw err;
+  }
+
+  try {
+    await pool.query(
+      `UPDATE engines
+       SET engine_code = $1,
+           serial_number = $2,
+           current_cycle = $3
+       WHERE engine_id = $4`,
+      [engineCode, serialNumber, currentCycle, engineId]
+    );
+    return engineId;
+  } catch (err) {
+    if (err.code === "23505") {
+      if (err.constraint === "uq_engines_aircraft_code") {
+        const e = new Error("An engine with this code is already assigned to this aircraft.");
+        e.statusCode = 409;
+        e.code = "DUPLICATE_ENGINE_CODE";
+        throw e;
+      }
+      if (err.constraint === "uq_engines_model_serial") {
+        const e = new Error("An engine with this model and serial number already exists.");
+        e.statusCode = 409;
+        e.code = "DUPLICATE_SERIAL_NUMBER";
+        throw e;
+      }
+    }
+    throw err;
+  }
+}
+
 module.exports = {
   getEngines,
   getEngineById,
   getEngineSensorUploads,
+  searchEngineModels,
+  getCompanyAircraft,
+  createEngineWithAircraft,
+  updateEngine,
 };

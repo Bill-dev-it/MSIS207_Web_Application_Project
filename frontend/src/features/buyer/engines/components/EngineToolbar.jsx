@@ -6,6 +6,7 @@ export function EngineToolbar({
   counts,
   viewMode,
   onViewModeToggle,
+  onRegisterClick,
 }) {
   const filterPills = [
     { key: "ALL", label: "All Engines", count: counts.ALL },
@@ -18,7 +19,7 @@ export function EngineToolbar({
 
   return (
     <div className="space-y-4">
-      {/* Top Title & Metrics bar */}
+      {/* Top Title & Actions bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -30,8 +31,22 @@ export function EngineToolbar({
           </p>
         </div>
 
-        <div className="max-w-sm text-sm text-slate-600">
-          Only previously stored successful RUL predictions are shown. New AI inference is not available yet.
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-xs text-slate-500 max-w-xs hidden lg:block">
+            Track company aircraft engines and evaluate advisory Remaining Useful Life (RUL) health predictions.
+          </p>
+          {onRegisterClick && (
+            <button
+              type="button"
+              onClick={onRegisterClick}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0B1F3A] hover:bg-[#16335a] text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>+ Register Engine</span>
+            </button>
+          )}
         </div>
       </div>
 

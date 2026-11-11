@@ -44,4 +44,7 @@ backend/docs/apidoc/
 
 # Private Buyer sensor uploads and local RUL Python environment
 /backend/storage/rul/
-/rul-service/.venv/
+/rul-service/.venv-rul/
+
+/.postman
+/postman

@@ -49,7 +49,21 @@ Use a new, empty PostgreSQL database with the `public` schema. Run the scripts i
 
 - **Do NOT rerun** [`schema/01_schema.sql`](./schema/01_schema.sql), [`seed/load_gold.py`](./seed/load_gold.py), or [`authentication/01_authentication_setup.sql`](./authentication/01_authentication_setup.sql) against an existing local database that already has the baseline schema, Gold data, and Authentication setup applied.
 - **Applying the B2B Payment MVP Migration**:
-  - [`migrations/04_b2b_payment_mvp.sql`](./migrations/04_b2b_payment_mvp.sql) has **not** been executed automatically during code integration or static verification.
-  - Before testing the B2B Payment MVP (`SIMULATION` and `BANK_TRANSFER`) against an existing local database, apply [`migrations/04_b2b_payment_mvp.sql`](./migrations/04_b2b_payment_mvp.sql) once in a coordinated rollout with the updated Express backend. Existing historical `SIMULATION`/`SUCCEEDED` rows remain valid.
+  - [`migrations/04_b2b_payment_mvp.sql`](./migrations/04_b2b_payment_mvp.sql) is idempotent (safely drops prior legacy constraints before adding `chk_payments_b2b_mvp_method_status` and dropping `paid_at NOT NULL`).
+  - **Important Role Requirement**: Because PostgreSQL requires table ownership to execute `ALTER TABLE`, migrations must be executed by the database owner/superuser (e.g. `postgres`), not by the limited application DML user (`aviation_app`).
+  - **Command (psql)**:
+    ```bash
+    psql -h localhost -p 5432 -U postgres -d aircraft_marketplace -f database/migrations/04_b2b_payment_mvp.sql
+    ```
+  - **pgAdmin**: Open the Query Tool connected as `postgres`, open `database/migrations/04_b2b_payment_mvp.sql`, and execute (F5).
+  - Existing historical `SIMULATION`/`SUCCEEDED` rows remain completely valid.
+- **Applying the RUL Model Version Seed (Required for Buyer RUL Feature)**:
+  - [`seed/03_ml_model_version_seed.sql`](./seed/03_ml_model_version_seed.sql) registers the active FD002 Condition-Aware iTransformer model metadata in `public.ml_model_versions`.
+  - It is safe and idempotent (`ON CONFLICT (model_name, version) DO NOTHING`).
+  - If upgrading an existing local or deployment database where `public.ml_model_versions` was left empty:
+    ```bash
+    psql -h localhost -p 5432 -U postgres -d aircraft_marketplace -f database/seed/03_ml_model_version_seed.sql
+    ```
+  - **pgAdmin**: Open the Query Tool connected as `postgres`, open `database/seed/03_ml_model_version_seed.sql`, and execute (F5).
 - **Future Schema Changes**:
   - Add new incremental SQL scripts under [`migrations/`](./migrations/). Never destructively rewrite [`schema/01_schema.sql`](./schema/01_schema.sql) as a substitute for a migration.
