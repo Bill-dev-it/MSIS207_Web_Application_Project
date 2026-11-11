@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="hy-bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+    <linearGradient id="hy-rod" x1="120" y1="90" x2="165" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#CBD5E1" />
+      <stop offset="50%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+  </defs>
+
+  <rect width="200" height="200" rx="16" fill="url(#hy-bg)" />
+  <circle cx="100" cy="100" r="75" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 4" />
+
+  <!-- Hydraulic Cylinder Barrel (Main Body) -->
+  <rect x="42" y="76" width="82" height="48" rx="6" fill="#0B1F3A" stroke="#0B1F3A" stroke-width="2.5" />
+
+  <!-- Cylinder Barrel Reinforcing Bands -->
+  <line x1="68" y1="76" x2="68" y2="124" stroke="#2D9CDB" stroke-width="2" />
+  <line x1="98" y1="76" x2="98" y2="124" stroke="#2D9CDB" stroke-width="2" />
+
+  <!-- Piston Rod / Ram (Polished Chrome Extension) -->
+  <rect x="124" y="86" width="42" height="28" rx="2" fill="url(#hy-rod)" stroke="#0B1F3A" stroke-width="2" />
+
+  <!-- Piston Eye / Clevis Rod End -->
+  <circle cx="166" cy="100" r="10" fill="#EAF6FD" stroke="#0B1F3A" stroke-width="2.5" />
+  <circle cx="166" cy="100" r="4.5" fill="#0B1F3A" />
+
+  <!-- Base Clevis Mount (Rear) -->
+  <path d="M42 86 L 28 86 C 24 86, 24 114, 28 114 L 42 114 Z" fill="#EAF6FD" stroke="#0B1F3A" stroke-width="2" />
+  <circle cx="32" cy="100" r="3.5" fill="#0B1F3A" />
+
+  <!-- Hydraulic Port Fittings (Banjo Connectors on Top) -->
+  <rect x="52" y="62" width="12" height="14" rx="2" fill="#2D9CDB" stroke="#0B1F3A" stroke-width="1.5" />
+  <rect x="100" y="62" width="12" height="14" rx="2" fill="#2D9CDB" stroke="#0B1F3A" stroke-width="1.5" />
+  
+  <!-- High-Pressure Stainless Braided Line -->
+  <path d="M58 62 C 58 45, 106 45, 106 62" stroke="#2D9CDB" stroke-width="2.5" stroke-linecap="round" fill="none" stroke-dasharray="3 2" />
+
+  <!-- Analog Pressure Gauge Dial (Side Mount) -->
+  <circle cx="82" cy="140" r="14" fill="#FFFFFF" stroke="#0B1F3A" stroke-width="2" />
+  <circle cx="82" cy="140" r="1.5" fill="#0B1F3A" />
+  <line x1="82" y1="140" x2="89" y2="134" stroke="#EB5757" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="82" y1="124" x2="82" y2="126" stroke="#0B1F3A" stroke-width="2" />
+
+  <!-- Badge Accent -->
+  <rect x="70" y="162" width="60" height="18" rx="4" fill="#0B1F3A" />
+  <text x="100" y="174" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" letter-spacing="1">HYDRAULICS</text>
+</svg>
+

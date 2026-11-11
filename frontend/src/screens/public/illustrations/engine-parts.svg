@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="ep-bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+    <linearGradient id="ep-accent" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2D9CDB" />
+      <stop offset="100%" stop-color="#0B1F3A" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="200" height="200" rx="16" fill="url(#ep-bg)" />
+  <circle cx="100" cy="100" r="75" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="4 4" />
+
+  <!-- Engine Cowling Profile Outer Casing -->
+  <path d="M30 65 C 60 40, 140 40, 170 65 L 165 135 C 135 160, 65 160, 35 135 Z" fill="#FFFFFF" stroke="#0B1F3A" stroke-width="3" stroke-linejoin="round" />
+  
+  <!-- Bypass Duct / Airflow Rings -->
+  <path d="M50 75 C 75 55, 125 55, 150 75 L 146 125 C 122 145, 78 145, 54 125 Z" fill="#EAF6FD" stroke="#2D9CDB" stroke-width="2" />
+  
+  <!-- Central Hub / Spinner Cone -->
+  <path d="M100 55 L 118 108 C 118 118, 82 118, 82 108 Z" fill="#0B1F3A" />
+  <circle cx="100" cy="108" r="18" fill="#132C52" stroke="#2D9CDB" stroke-width="2.5" />
+  <circle cx="100" cy="108" r="6" fill="#2D9CDB" />
+
+  <!-- Fan Blades Array -->
+  <g stroke="#0B1F3A" stroke-width="2" stroke-linecap="round">
+    <path d="M100 90 L 100 62" />
+    <path d="M112 94 L 128 72" />
+    <path d="M118 105 L 144 95" />
+    <path d="M114 116 L 138 128" />
+    <path d="M100 126 L 100 148" />
+    <path d="M86 116 L 62 128" />
+    <path d="M82 105 L 56 95" />
+    <path d="M88 94 L 72 72" />
+  </g>
+
+  <!-- Technical Dimension / Axis Lines -->
+  <line x1="18" y1="100" x2="32" y2="100" stroke="#2D9CDB" stroke-width="2" />
+  <line x1="168" y1="100" x2="182" y2="100" stroke="#2D9CDB" stroke-width="2" />
+  <circle cx="100" cy="100" r="88" stroke="#2D9CDB" stroke-width="1.5" stroke-dasharray="2 6" />
+
+  <!-- Technical Spec Badge Accent -->
+  <rect x="74" y="162" width="52" height="18" rx="4" fill="#0B1F3A" />
+  <text x="100" y="174" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="8" font-weight="700" text-anchor="middle" letter-spacing="1">TURBOFAN</text>
+</svg>
+

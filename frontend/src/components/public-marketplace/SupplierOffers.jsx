@@ -18,28 +18,28 @@ export default function SupplierOffers({ productId }) {
   useEffect(() => {
     const controller = new AbortController();
 
-    setLoading(true);
-    setError("");
-    setOffers([]);
-    setSelectedId(null);
-
-    getProductOffers(productId, { signal: controller.signal })
-      .then((data) => {
+    async function fetchOffers() {
+      setLoading(true);
+      setError("");
+      setOffers([]);
+      setSelectedId(null);
+      try {
+        const data = await getProductOffers(productId, { signal: controller.signal });
         if (!controller.signal.aborted) {
           setOffers(data);
         }
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          setError(err.message);
+      } catch (err) {
+        if (!controller.signal.aborted && err.name !== "AbortError") {
+          setError(err.message || "Failed to load supplier offers");
         }
-      })
-      .finally(() => {
+      } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
         }
-      });
+      }
+    }
 
+    fetchOffers();
     return () => controller.abort();
   }, [productId]);
 
@@ -70,58 +70,54 @@ export default function SupplierOffers({ productId }) {
 
   return (
     <section aria-labelledby="supplier-offers-heading">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <h2
           id="supplier-offers-heading"
-          className="text-lg font-semibold text-primary-800"
+          className="text-sm font-bold uppercase tracking-wider text-slate-900"
         >
           Supplier Offers
         </h2>
 
         {!loading && !error && (
-          <span className="text-xs text-neutral-500">
-            {offers.length} offers
+          <span className="text-xs font-semibold text-slate-500">
+            {offers.length} {offers.length === 1 ? "offer" : "offers"}
           </span>
         )}
       </div>
 
       <p
         role="note"
-        className="mt-4 rounded-lg bg-accent-50 p-3 text-xs text-primary-800"
+        className="mt-3 rounded-lg bg-sky-50 border border-sky-100 p-2.5 text-[11px] text-sky-800 leading-relaxed"
       >
-        Supplier listings are loaded from the AeroRUL database.
-        Current catalog data is for educational demonstration.
-        Availability must be confirmed before checkout.
+        Verified supplier listings from the AeroRUL database. Current catalog pricing and stock are educational demonstrations.
       </p>
 
       {loading && (
-        <p role="status" className="mt-4 text-sm text-neutral-500">
+        <p role="status" className="mt-4 text-xs text-slate-500">
           Loading supplier offers...
         </p>
       )}
 
       {!loading && error && (
-        <p role="alert" className="mt-4 text-sm text-critical">
+        <p role="alert" className="mt-4 text-xs text-rose-600 font-medium">
           Unable to load supplier offers: {error}
         </p>
       )}
 
       {!loading && !error && offers.length === 0 && (
-        <div className="mt-5 rounded-lg border border-neutral-200 p-4">
-          <p className="font-medium text-primary-800">
+        <div className="mt-4 rounded-xl border border-slate-200 p-4 bg-slate-50/50 text-center">
+          <p className="font-semibold text-slate-800 text-xs">
             No supplier offers available
           </p>
-
-          <p className="mt-2 text-sm text-neutral-500">
-            There are currently no active listings from
-            approved suppliers for this product.
+          <p className="mt-1 text-[11px] text-slate-500">
+            There are currently no active listings from approved suppliers for this component.
           </p>
         </div>
       )}
 
       {!loading && !error && offers.length > 0 && (
         <>
-          <div className="mt-5 space-y-3">
+          <div className="mt-4 space-y-2.5">
             {offers.map((offer) => {
               const isSelected =
                 String(selectedId) === String(offer.listing_id);
@@ -129,12 +125,11 @@ export default function SupplierOffers({ productId }) {
               return (
                 <label
                   key={offer.listing_id}
-                  className={
-                    "block cursor-pointer rounded-xl border p-4 " +
-                    (isSelected
-                      ? "border-accent-600 bg-accent-50"
-                      : "border-neutral-200")
-                  }
+                  className={`block cursor-pointer rounded-xl border p-3.5 transition-all ${
+                    isSelected
+                      ? "border-[#0B1F3A] bg-sky-50/40 shadow-xs"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <input
@@ -143,36 +138,34 @@ export default function SupplierOffers({ productId }) {
                       value={offer.listing_id}
                       checked={isSelected}
                       onChange={() => setSelectedId(offer.listing_id)}
-                      className="mt-1"
+                      className="mt-1 text-[#0B1F3A] focus:ring-[#0B1F3A]"
                     />
 
                     <div className="min-w-0 flex-1">
-                      <p className="break-words font-semibold text-primary-800">
-                        {offer.store_name}
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="font-bold text-xs text-slate-900 truncate">
+                          {offer.store_name}
+                        </p>
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                          {offer.condition}
+                        </span>
+                      </div>
+
+                      <p className="mt-0.5 font-mono text-[11px] text-slate-400 truncate">
+                        SKU: {offer.seller_sku}
                       </p>
 
-                      <p className="mt-1 break-all font-mono text-xs text-neutral-500">
-                        {offer.seller_sku}
-                      </p>
-
-                      <p className="mt-3 text-xl font-bold text-primary-800">
+                      <p className="mt-2 text-base font-extrabold text-[#0B1F3A] font-mono">
                         {formatPrice(offer.price)}
                       </p>
 
-                      <p className="mt-2 text-sm text-neutral-500">
-                        Condition: {offer.condition}
-                      </p>
-
-                      <p className="text-sm text-neutral-500">
-                        Stock: {offer.stock_quantity} units
-                      </p>
-
-                      <p className="text-sm text-neutral-500">
-                        Lead time: {offer.lead_time_days} days
-                      </p>
+                      <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>Stock: <strong className="text-slate-800 font-mono">{offer.stock_quantity}</strong></span>
+                        <span>Lead: <strong className="text-slate-800 font-mono">{offer.lead_time_days}d</strong></span>
+                      </div>
 
                       {offer.stock_quantity === 0 && (
-                        <p className="mt-2 text-sm font-medium text-critical">
+                        <p className="mt-1.5 text-[11px] font-bold text-rose-600">
                           Out of stock
                         </p>
                       )}
@@ -186,46 +179,48 @@ export default function SupplierOffers({ productId }) {
           {selectedOffer && (
             <div
               role="status"
-              className="mt-5 rounded-lg border border-neutral-200 p-4"
+              className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3"
             >
-              <p className="text-sm font-semibold text-primary-800">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 Selected Offer
               </p>
-
-              <p className="mt-2 text-sm text-neutral-500">
-                {selectedOffer.store_name}
-              </p>
-
-              <p className="mt-1 font-semibold text-primary-800">
-                {formatPrice(selectedOffer.price)}
-              </p>
+              <div className="flex items-baseline justify-between mt-1">
+                <span className="text-xs font-semibold text-slate-800 truncate">
+                  {selectedOffer.store_name}
+                </span>
+                <span className="font-mono text-sm font-bold text-[#0B1F3A]">
+                  {formatPrice(selectedOffer.price)}
+                </span>
+              </div>
             </div>
           )}
 
           {isBuyer ? (
             <button
               type="button"
-              className="btn btn-primary mt-5 w-full"
+              className="w-full mt-4 py-2.5 px-4 rounded-xl text-xs font-bold bg-[#0B1F3A] text-white hover:bg-slate-800 disabled:opacity-40 transition-colors shadow-xs"
               onClick={handleAddToCart}
               disabled={!selectedOffer || Number(selectedOffer.stock_quantity) < 1 || adding}
             >
-              {adding ? "Adding..." : "Add selected offer to cart"}
+              {adding ? "Adding to Cart..." : "Add Selected Offer to Cart"}
             </button>
           ) : status === "anonymous" ? (
-            <p className="mt-5 text-sm text-neutral-600">
-              <Link className="font-semibold text-primary-700 underline" to="/login">
+            <p className="mt-4 text-xs text-slate-600 text-center">
+              <Link className="font-bold text-[#0B1F3A] underline" to="/login">
                 Sign in as a Buyer
               </Link>{" "}
-              to add an offer to your cart.
+              to add parts to procurement cart.
             </p>
           ) : (
-            <p className="mt-5 text-sm text-neutral-600">
-              Cart purchasing is available to signed-in Buyer accounts.
+            <p className="mt-4 text-xs text-slate-500 text-center">
+              Cart procurement is reserved for registered Buyer accounts.
             </p>
           )}
 
           {cartMessage && (
-            <p className="mt-3 text-sm text-primary-800" role="status">{cartMessage}</p>
+            <p className="mt-2 text-xs font-semibold text-emerald-700 text-center" role="status">
+              {cartMessage}
+            </p>
           )}
         </>
       )}
