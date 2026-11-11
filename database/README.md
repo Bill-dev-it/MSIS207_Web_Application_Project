@@ -57,5 +57,13 @@ Use a new, empty PostgreSQL database with the `public` schema. Run the scripts i
     ```
   - **pgAdmin**: Open the Query Tool connected as `postgres`, open `database/migrations/04_b2b_payment_mvp.sql`, and execute (F5).
   - Existing historical `SIMULATION`/`SUCCEEDED` rows remain completely valid.
+- **Applying the RUL Model Version Seed (Required for Buyer RUL Feature)**:
+  - [`seed/03_ml_model_version_seed.sql`](./seed/03_ml_model_version_seed.sql) registers the active FD002 Condition-Aware iTransformer model metadata in `public.ml_model_versions`.
+  - It is safe and idempotent (`ON CONFLICT (model_name, version) DO NOTHING`).
+  - If upgrading an existing local or deployment database where `public.ml_model_versions` was left empty:
+    ```bash
+    psql -h localhost -p 5432 -U postgres -d aircraft_marketplace -f database/seed/03_ml_model_version_seed.sql
+    ```
+  - **pgAdmin**: Open the Query Tool connected as `postgres`, open `database/seed/03_ml_model_version_seed.sql`, and execute (F5).
 - **Future Schema Changes**:
   - Add new incremental SQL scripts under [`migrations/`](./migrations/). Never destructively rewrite [`schema/01_schema.sql`](./schema/01_schema.sql) as a substitute for a migration.
