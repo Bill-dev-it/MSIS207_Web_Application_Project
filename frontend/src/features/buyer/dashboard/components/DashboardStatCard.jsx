@@ -1,47 +1,50 @@
-export function DashboardStatCard({ title, value, subtitle, icon, highlight = false, alert = false }) {
+export function DashboardStatCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  alert = false,
+}) {
   return (
     <div
-      className={`p-5 rounded-xl border transition-all ${
+      className={`h-full flex flex-col justify-between p-5 rounded-xl border transition-all ${
         alert
-          ? "bg-red-50/50 border-red-200"
-          : highlight
-          ? "bg-blue-50/40 border-blue-200"
-          : "bg-white border-slate-200 shadow-xs"
+          ? "bg-amber-50/60 border-amber-300 shadow-xs"
+          : "bg-white border-slate-200 shadow-xs hover:border-slate-300"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          {title}
-        </p>
-        <span
-          className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-            alert
-              ? "bg-red-100 text-red-600"
-              : highlight
-              ? "bg-blue-100 text-blue-600"
-              : "bg-slate-100 text-slate-600"
-          }`}
-        >
-          {icon}
-        </span>
-      </div>
+      <div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-slate-600">
+            {title}
+          </p>
+          <span
+            className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
+              alert
+                ? "bg-amber-100 text-amber-700 border border-amber-200"
+                : "bg-slate-100 text-slate-600 border border-slate-200"
+            }`}
+          >
+            {icon}
+          </span>
+        </div>
 
-      <div className="mt-3 flex items-baseline gap-2">
-        <span
-          className={`text-3xl font-black tracking-tight ${
-            alert ? "text-red-600" : "text-slate-900"
-          }`}
-        >
-          {value}
-        </span>
+        <div className="mt-3 flex items-baseline gap-2">
+          <span
+            className={`text-3xl font-bold tracking-tight ${
+              alert ? "text-amber-800" : "text-slate-900"
+            }`}
+          >
+            {value}
+          </span>
+        </div>
       </div>
 
       {subtitle && (
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 leading-relaxed">
           {subtitle}
         </p>
       )}
     </div>
   );
 }
-

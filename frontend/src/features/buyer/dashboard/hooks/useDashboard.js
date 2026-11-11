@@ -16,11 +16,9 @@ export function useDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [sumData, healthData, ordersData] = await Promise.all([
-        getDashboardSummary({ signal }),
-        getDashboardEngineHealth({ limit: 5, signal }),
-        getDashboardRecentOrders({ limit: 5, signal }),
-      ]);
+      const sumData = await getDashboardSummary({ signal });
+      const healthData = await getDashboardEngineHealth({ limit: 5, signal });
+      const ordersData = await getDashboardRecentOrders({ limit: 5, signal });
       setSummary(sumData);
       setEngineHealth(healthData);
       setRecentOrders(ordersData);
