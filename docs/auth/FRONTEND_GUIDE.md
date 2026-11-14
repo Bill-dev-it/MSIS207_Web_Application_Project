@@ -15,7 +15,7 @@ Uses the existing React 18 + React Router v6 + Vite + Tailwind stack. **No addit
 
 ## Session and API client
 
-`AuthProvider` calls `GET /api/v1/auth/me` on load. On 401 it marks the visitor signed out; 503/network errors show a retry state instead of falsely declaring a logout. The JWT remains in a server-set HttpOnly cookie, never in localStorage/sessionStorage or the JSON login body/response. Auth HTTP calls use the existing `VITE_API_BASE_URL` (default `/api`), `credentials: 'include'`, and write requests send `X-AeroRUL-Request: 1` for backend CSRF mitigation. Keep `frontend/vite.config.js` `/api` proxy and `PUBLIC_WEB_URL` aligned with the actual frontend browser origin.
+`AuthProvider` calls `GET /api/v1/auth/me` on load. On 401 it marks the visitor signed out; 503/network errors show a retry state instead of falsely declaring a logout. The JWT remains in a server-set HttpOnly cookie (which prevents frontend JavaScript from directly accessing the cookie value), never in localStorage/sessionStorage or the JSON login body/response. Auth HTTP calls use the existing `VITE_API_BASE_URL` (default `/api`), `credentials: 'include'`, and write requests send `X-AeroRUL-Request: 1` for backend CSRF mitigation. Keep `frontend/vite.config.js` `/api` proxy and `PUBLIC_WEB_URL` aligned with the actual frontend browser origin.
 
 ## Integration points (copy new files; merge modifications carefully)
 

@@ -19,7 +19,7 @@ This directory contains AeroRUL's PostgreSQL baseline schema, incremental migrat
 
 - **Executable SQL / Python Scripts** (located under `database/`):
   - [`schema/01_schema.sql`](./schema/01_schema.sql) — Baseline 26-table DDL.
-  - [`authentication/01_authentication_setup.sql`](./authentication/01_authentication_setup.sql) — Adds `users.email_verified_at`, `users.auth_version`, and the `account_tokens` table (bringing the schema to 27 tables and 215 columns).
+  - [`authentication/01_authentication_setup.sql`](./authentication/01_authentication_setup.sql) — Adds `users.email_verified_at`, `users.auth_version` (retained for schema compatibility, though the simplified session service does not require or mutate it), and the `account_tokens` table (bringing the schema to 27 tables and 215 columns).
   - [`authentication/02_authentication_validation.sql`](./authentication/02_authentication_validation.sql) — Read-only verification of Authentication schema objects.
   - [`seed/load_gold.py`](./seed/load_gold.py) — Transactional Python loader for the 10 Gold CSV files in `data/etl/gold/`.
   - [`seed/03_ml_model_version_seed.sql`](./seed/03_ml_model_version_seed.sql) — Registers the FD002 Condition-Aware iTransformer metadata in `ml_model_versions` (required when using the Buyer RUL prediction feature).

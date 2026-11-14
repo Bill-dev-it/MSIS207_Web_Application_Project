@@ -48,7 +48,7 @@ NODE_ENV=development
 
 `AUTH_JWT_SECRET` must be a securely generated value, not a hardcoded example. Keep the same secret while deployed JWT sessions should remain valid; changing it invalidates existing JWTs. `NODE_ENV=production` makes the JWT cookie `Secure` (HTTPS required). Production traffic must use HTTPS and same-site frontend/API deployment (or a deliberate updated cookie/CORS design). Local Vite `/api` proxy to `localhost:3000` keeps API calls on the frontend origin.
 
-The backend also requires `SELECT` on `users` and `suppliers`, and `UPDATE` on `users.auth_version` for logout. A DBA/user checks privileges manually in **pgAdmin**; Copilot never connects to or modifies PostgreSQL. Registration and email verification require permissions described in previous batches.
+The backend requires `SELECT` on `users` and `suppliers` to authenticate and resolve session roles. The legacy `auth_version` column remains in PostgreSQL schema for compatibility, but the simplified session service does not execute database updates during logout. A DBA/user checks privileges manually in **pgAdmin**; Copilot never connects to or modifies PostgreSQL. Registration and email verification require permissions described in previous batches.
 
 ## Authentication HTTP endpoints
 
@@ -61,7 +61,7 @@ The backend mounts `backend/src/routes/auth/index.js` under `/api/v1/auth`.
 | POST | `/api/v1/auth/resend-verification` | Request another verification email |
 | POST | `/api/v1/auth/login` | Verify email/password, set HttpOnly JWT cookie |
 | GET | `/api/v1/auth/me` | Read current user using JWT cookie |
-| POST | `/api/v1/auth/logout` | Invalidate existing JWTs, clear cookie |
+| POST | `/api/v1/auth/logout` | Clear HttpOnly session cookie |
 
 Login request body is `{ "email": "user@example.test", "password": "..." }`. The backend looks up `users.email` (schema does **not** contain `username`) and checks `password_hash` with Argon2id. Login returns limited user data **without a JWT in JSON**; the browser stores the cookie automatically. `GET /me` checks signature, expiration and current database account state. Only email-verified active users can log in. Supplier routes additionally require `role=SUPPLIER` and an `APPROVED` supplier profile connected by `company_id`. No `supplier_id` from request input is trusted.
 
@@ -75,7 +75,7 @@ fetch("/api/v1/auth/login", {
 });
 ```
 
-The custom header is not a secret or a bearer token. JWT is held in a host-only HttpOnly, SameSite=Lax cookie with a one-hour expiry. Logout increments `users.auth_version` to invalidate outstanding tokens and then clears the cookie. This intentionally invalidates sessions on other devices too; no refresh token exists in this phase. Supplier demo remains enabled by default and needs later frontend integration to use the live API.
+The custom header is not a secret or a bearer token. JWT is held in a host-only HttpOnly, SameSite=Lax cookie with a one-hour expiry. The `HttpOnly` flag prevents client-side JavaScript (`document.cookie`) from directly reading the cookie value. In this simplified JWT implementation, logout clears the cookie from the browser; any copied token expires naturally after its 1-hour lifetime. No refresh token exists in this phase. Supplier demo remains enabled by default and needs later frontend integration to use the live API.
 
 ## Source layout
 

@@ -6,7 +6,7 @@
 
 - Login identifier: `email` (the existing `users.email` is UNIQUE; no `username` column exists).
 - Password: Argon2id with `argon2.hash` / `argon2.verify`, using `async/await`. Do not store plaintext passwords or manually re-hash/compare encoded strings.
-- Session: short-lived JWT in an `HttpOnly` cookie; `SameSite=Lax`; `Secure` in HTTPS production. Initially no refresh token. JWT includes user id and `auth_version`; user status, role, and company mapping are re-checked from PostgreSQL on protected requests.
+- Session: short-lived JWT in an `HttpOnly` cookie; `SameSite=Lax`; `Secure` in HTTPS production. The `HttpOnly` flag prevents frontend JavaScript from directly reading the cookie value (it does not completely prevent other forms of XSS exploitation). Initially no refresh token. Simplified JWT payload contains only user ID (`sub`) with a 1-hour expiration; user status, role, and company mapping are re-checked from PostgreSQL on protected requests (`auth_version` column remains in the database schema for migration compatibility but is not tracked by the simplified session service; logout clears the browser cookie).
 - CSRF: validate an explicit allowed `Origin` on state-changing authenticated requests; use exact allowed development/production origins, not `*`. Reassess deployment topology/cookie attributes before going cross-site. Keep Vite `/api` proxy in development.
 - Public product endpoints stay accessible to anonymous visitors. Supplier and other private endpoints must validate identity and authorization server-side; React route guards are UX only.
 - New registration includes email verification. Password recovery uses a separate short-lived, one-time token, not the JWT. Tokens in `account_tokens` are hashes of cryptographically random secrets. Never write real tokens into logs.
@@ -36,7 +36,7 @@ These paths are **AeroRUL design decisions**, not exact lecturer URLs:
 | POST | `/api/v1/auth/resend-verification` | Resend time-limited verification message | Public, rate-limited, no account enumeration |
 | POST | `/api/v1/auth/login` | Email/password; set HttpOnly JWT cookie, return limited user | Public, rate-limited |
 | GET | `/api/v1/auth/me` | Identify current session from cookie, return limited user | Authenticated |
-| POST | `/api/v1/auth/logout` | Clear cookie; invalidate sessions per agreed auth-version policy | Authenticated + CSRF protection |
+| POST | `/api/v1/auth/logout` | Clear HttpOnly session cookie from browser | Authenticated + CSRF protection |
 | POST | `/api/v1/auth/forgot-password` | Issue recovery email without revealing whether email exists | Public, rate-limited |
 | POST | `/api/v1/auth/reset-password` | Consume recovery token; store new hash; bump auth_version | Public, token required |
 
@@ -47,7 +47,7 @@ Response envelope for newly designed APIs: `{ "success": true, "data": ... }` on
 ## 4. Supplier ownership and demo exit
 
 1. The browser sends the cookie on `/api/v1/supplier/...` requests.
-2. Express validates JWT and queries `users` by the signed user ID; requires active + email verified + correct `auth_version`.
+2. Express validates JWT and queries `users` by the signed user ID (`sub`); requires active + email verified.
 3. Role must be `SUPPLIER`; derive `company_id` from the server-fetched user record.
 4. Query `suppliers` where `suppliers.company_id = users.company_id`. Require approved Supplier for protected management operations.
 5. Set `req.supplierId` **on the server**, using the verified supplier row. Supplier service SQL already scopes by that ID.

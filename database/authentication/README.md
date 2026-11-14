@@ -9,6 +9,8 @@ Run `01_authentication_setup.sql` after creating the original database with
 `database/schema/01_schema.sql`. The setup is additive:
 
 - It adds `email_verified_at` and `auth_version` to the existing `users` table.
+  (Note: `auth_version` remains in the schema for database compatibility; the simplified
+  JWT session service manages sessions via cookie expiration without querying or bumping this column).
 - It creates `account_tokens` for one-time email-verification and
   password-reset tokens. The table stores token hashes, not the original
   secret tokens.
