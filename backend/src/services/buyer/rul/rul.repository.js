@@ -1,5 +1,5 @@
 "use strict";
-const pool = require("../../config/db");
+const pool = require("../../../config/db");
 
 const MODEL_NAME = "condition_aware_itransformer_v3";
 const MODEL_VERSION = "fd002-seed42-v3";

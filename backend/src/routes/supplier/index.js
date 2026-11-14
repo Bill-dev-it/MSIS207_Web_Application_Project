@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const requireSupplier = require("../../middleware/require-supplier");
 
-// All Supplier management endpoints stay closed until Login API integration.
+// All Supplier management endpoints require an authenticated APPROVED Supplier.
 router.use(requireSupplier);
 router.use("/listings", require("./listings.routes"));
 router.use("/inventory", require("./inventory.routes"));

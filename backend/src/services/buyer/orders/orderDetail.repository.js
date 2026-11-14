@@ -1,4 +1,4 @@
-const pool = require("../../config/db");
+const pool = require("../../../config/db");
 
 async function getOrderDetailById(orderId, companyId) {
   // 1. Fetch master order

@@ -6,12 +6,13 @@ const controller = require("../../controllers/supplier/listings.controller");
  * @apiName ListSupplierListings
  * @apiGroup Supplier Listings
  * @apiVersion 1.0.0
- * @apiDescription Lists all listings belonging to the authenticated supplier, including DRAFT and HIDDEN. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Lists all listings belonging to the authenticated supplier, including DRAFT and HIDDEN. Requires an authenticated user with SUPPLIER role and an APPROVED supplier account. Resource ownership is checked by the backend; supplier_id is never accepted from the client.
  * @apiPermission Supplier
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Number} count Number of rows.
  * @apiSuccess {Object[]} data Owned listing rows including product_name, part_number, updated_at.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED Authenticated user role is not SUPPLIER or supplier account is not APPROVED.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
  *     {
@@ -34,7 +35,7 @@ const controller = require("../../controllers/supplier/listings.controller");
  *         }
  *       ]
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }
@@ -47,13 +48,14 @@ router.get("/", controller.getAll);
  * @apiName GetSupplierListing
  * @apiGroup Supplier Listings
  * @apiVersion 1.0.0
- * @apiDescription Retrieve a listing only when it belongs to the authenticated supplier. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Retrieve a listing only when it belongs to the authenticated supplier. Requires an authenticated user with SUPPLIER role and an APPROVED supplier account. Resource ownership is checked by the backend; supplier_id is never accepted from the client.
  * @apiPermission Supplier
  * @apiParam {String} listingId Positive PostgreSQL BIGINT listing identifier.
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Owned listing with product fields.
  * @apiError (400 Bad Request) INVALID_INPUT Listing ID must be a positive BIGINT.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED Authenticated user role is not SUPPLIER or supplier account is not APPROVED.
  * @apiError (404 Not Found) LISTING_NOT_FOUND Listing missing or not owned.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
@@ -82,7 +84,7 @@ router.get("/", controller.getAll);
  *         "message": "Listing not found."
  *       }
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }
@@ -95,7 +97,7 @@ router.get("/:listingId", controller.getOne);
  * @apiName CreateSupplierListing
  * @apiGroup Supplier Listings
  * @apiVersion 1.0.0
- * @apiDescription Create a listing for an existing active product. Supplier ID comes from the authenticated session, not from request body. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Create a listing for an existing active product. Supplier ID comes from the authenticated session, not from request body. Requires an authenticated user with SUPPLIER role, an APPROVED supplier account, and X-AeroRUL-Request: 1. Resource ownership is checked by the backend.
  * @apiPermission Supplier
  * @apiSampleRequest off
  * @apiBody {String} product_id Positive BIGINT ID of an active catalog product.
@@ -108,7 +110,8 @@ router.get("/:listingId", controller.getOne);
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Newly created listing including listing_id.
  * @apiError (400 Bad Request) INVALID_INPUT Missing/invalid field or inactive product.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Supplier role, approved account, or trusted mutation header is required.
  * @apiError (409 Conflict) DUPLICATE_SKU Supplier SKU already exists.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 201 Created:
@@ -137,7 +140,7 @@ router.get("/:listingId", controller.getOne);
  *         "message": "Invalid listing input."
  *       }
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }
@@ -150,7 +153,7 @@ router.post("/", controller.create);
  * @apiName UpdateSupplierListing
  * @apiGroup Supplier Listings
  * @apiVersion 1.0.0
- * @apiDescription Update one or more allowed fields of a listing owned by the authenticated supplier. Empty body and unknown keys are rejected. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Update one or more allowed fields of a listing owned by the authenticated supplier. Empty body and unknown keys are rejected. Requires an authenticated user with SUPPLIER role, an APPROVED supplier account, and X-AeroRUL-Request: 1. Resource ownership is checked by the backend.
  * @apiPermission Supplier
  * @apiSampleRequest off
  * @apiParam {String} listingId Positive BIGINT listing identifier.
@@ -164,7 +167,8 @@ router.post("/", controller.create);
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Updated listing.
  * @apiError (400 Bad Request) INVALID_INPUT Invalid ID, invalid fields, or inactive product.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Supplier role, approved account, or trusted mutation header is required.
  * @apiError (404 Not Found) LISTING_NOT_FOUND Listing missing or not owned.
  * @apiError (409 Conflict) DUPLICATE_SKU SKU already exists.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
@@ -186,7 +190,7 @@ router.post("/", controller.create);
  *         "updated_at": "2026-10-20T09:30:00.000Z"
  *       }
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }
@@ -199,14 +203,15 @@ router.patch("/:listingId", controller.update);
  * @apiName HideSupplierListing
  * @apiGroup Supplier Listings
  * @apiVersion 1.0.0
- * @apiDescription Sets status to HIDDEN rather than deleting the row. Related order history is preserved. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Sets status to HIDDEN rather than deleting the row. Related order history is preserved. Requires an authenticated user with SUPPLIER role, an APPROVED supplier account, and X-AeroRUL-Request: 1. Resource ownership is checked by the backend.
  * @apiPermission Supplier
  * @apiSampleRequest off
  * @apiParam {String} listingId Positive BIGINT listing identifier.
  * @apiSuccess {Boolean} success true
  * @apiSuccess {String} message "Listing hidden."
  * @apiError (400 Bad Request) INVALID_INPUT Invalid ID.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Supplier role, approved account, or trusted mutation header is required.
  * @apiError (404 Not Found) LISTING_NOT_FOUND Listing missing or not owned.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
@@ -214,7 +219,7 @@ router.patch("/:listingId", controller.update);
  *       "success": true,
  *       "message": "Listing hidden."
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }

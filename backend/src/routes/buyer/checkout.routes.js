@@ -12,7 +12,7 @@ const router = express.Router();
  * @apiPermission Buyer
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object[]} data Company-owned saved addresses.
- * @apiError (401 Unauthorized) UNAUTHENTICATED A Buyer session is required.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
  * @apiError (403 Forbidden) BUYER_REQUIRED A Buyer account is required.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Address list could not be read.
  * @apiSuccessExample {json} 200 OK:
@@ -27,6 +27,7 @@ router.get("/addresses", checkoutController.getAddresses);
  * @apiVersion 1.0.0
  * @apiDescription Saves an address to the authenticated Buyer company. Requires X-AeroRUL-Request: 1.
  * @apiPermission Buyer
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiBody {String} recipient_name Recipient/contact.
  * @apiBody {String} phone Contact phone.
  * @apiBody {String} address_line Street or facility address.
@@ -86,6 +87,7 @@ router.get("/company", checkoutController.getCompany);
  * @apiVersion 1.0.0
  * @apiDescription Places an order from the authenticated user's cart in one PostgreSQL transaction. Accepts SIMULATION (immediately SUCCEEDED) or BANK_TRANSFER (initially PENDING, paid_at = NULL); no real payment is processed. Requires X-AeroRUL-Request: 1.
  * @apiPermission Buyer
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiBody {String} shipping_address_id Saved address belonging to the authenticated company.
  * @apiBody {String} [billing_address_id] Saved company address; defaults to shipping address.
  * @apiBody {String} delivery_method_id Supported delivery estimate ID.

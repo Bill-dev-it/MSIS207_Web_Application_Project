@@ -3,7 +3,7 @@ const path = require("node:path");
 const fs = require("node:fs/promises");
 const crypto = require("node:crypto");
 const repository = require("./rul.repository");
-const { predictCsv } = require("../rul-inference.service");
+const { predictCsv } = require("../../rul-inference.service");
 
 const MAX_CSV_BYTES = 1024 * 1024;
 const MAX_BIGINT = 9223372036854775807n;
@@ -148,7 +148,7 @@ async function predict({ engineId, userId, companyId, csv, filename, requestKey,
   const model = await repository.getModelVersion();
   if (!model) throw new RulError("MODEL_NOT_REGISTERED", 503,
     "The FD002 model version is not registered. Run the reviewed seed SQL during deployment.");
-  const storeRoot = path.resolve(__dirname, "../../../storage/rul");
+  const storeRoot = path.resolve(__dirname, "../../../../storage/rul");
   const safeUserId = String(userId);
   if (!validId(safeUserId)) {
     throw new RulError("AUTH_REQUIRED", 401, "A verified Buyer session is required.");

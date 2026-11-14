@@ -142,11 +142,24 @@ router.post("/login", loginLimiter, requireTrustedMutation, login);
  * @apiName CurrentUser
  * @apiGroup Authentication
  * @apiVersion 1.0.0
- * @apiDescription Reads the HttpOnly auth cookie; verifies JWT signature/expiry and rechecks user active/email-verified/auth_version in PostgreSQL. Requires the browser to include cookies. This endpoint does not change data.
+ * @apiDescription Reads the HttpOnly auth cookie; verifies JWT signature/expiry and rechecks user active and email-verified status in PostgreSQL to load current account, role and company details. Requires the browser to include cookies. This endpoint does not change data.
  * @apiSuccess (200 OK) {Boolean} success true.
  * @apiSuccess (200 OK) {Object} data.user user_id, company_id, full_name, email, role only.
  * @apiError (401 Unauthorized) AUTH_REQUIRED Invalid, missing or expired session.
  * @apiError (503 Service Unavailable) AUTH_UNAVAILABLE Authentication is not configured.
+ * @apiSuccessExample {json} 200 OK:
+ *     {
+ *       "success": true,
+ *       "data": {
+ *         "user": {
+ *           "user_id": "1",
+ *           "company_id": "48",
+ *           "full_name": "Demo Buyer",
+ *           "email": "buyer@example.test",
+ *           "role": "BUYER"
+ *         }
+ *       }
+ *     }
  */
 router.get("/me", requireAuth, me);
 
@@ -155,14 +168,21 @@ router.get("/me", requireAuth, me);
  * @apiName Logout
  * @apiGroup Authentication
  * @apiVersion 1.0.0
- * @apiDescription Requires a valid auth cookie and X-AeroRUL-Request: 1. Increments users.auth_version to revoke previously issued JWTs, then clears the cookie. Logging out on one device invalidates existing JWT sessions for that account.
+ * @apiDescription Requires a valid auth cookie and X-AeroRUL-Request: 1. Clears the HttpOnly session cookie from the browser. In this simplified JWT implementation without server-side revocation tracking, the browser session is terminated immediately; any already copied JWT token expires naturally after its 1-hour TTL.
  * @apiSampleRequest off
  * @apiHeader {String} X-AeroRUL-Request Must be 1.
  * @apiSuccess (200 OK) {Boolean} success true.
  * @apiSuccess (200 OK) {Boolean} data.logged_out true.
  * @apiError (401 Unauthorized) AUTH_REQUIRED Invalid or missing session.
  * @apiError (403 Forbidden) UNTRUSTED_REQUEST Missing header, or UNTRUSTED_ORIGIN.
- * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unable to revoke session.
+ * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unable to complete logout.
+ * @apiSuccessExample {json} 200 OK:
+ *     {
+ *       "success": true,
+ *       "data": {
+ *         "logged_out": true
+ *       }
+ *     }
  */
 router.post("/logout", requireTrustedMutation, requireAuth, logout);
 

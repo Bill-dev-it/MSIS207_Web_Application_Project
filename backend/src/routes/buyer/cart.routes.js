@@ -27,6 +27,7 @@ router.get("/", (req, res) => cartController.getCart(req, res));
  * @apiVersion 1.0.0
  * @apiDescription Adds an ACTIVE offer from an APPROVED supplier after checking stock. Requires X-AeroRUL-Request: 1.
  * @apiPermission Buyer
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiBody {String} listing_id Positive BIGINT seller listing ID.
  * @apiBody {Number} [quantity=1] Positive integer quantity.
  * @apiSuccess {Boolean} success true
@@ -50,6 +51,7 @@ router.post("/items", (req, res) => cartController.addItem(req, res));
  * @apiVersion 1.0.0
  * @apiDescription Updates an item owned by the authenticated user after checking offer availability and stock. Requires X-AeroRUL-Request: 1.
  * @apiPermission Buyer
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiParam {String} cartItemId Positive BIGINT cart item ID.
  * @apiBody {Number} quantity Positive integer quantity.
  * @apiSuccess {Boolean} success true
@@ -71,6 +73,7 @@ router.put("/items/:cartItemId", (req, res) => cartController.updateQuantity(req
  * @apiVersion 1.0.0
  * @apiDescription Removes only an item owned by the authenticated user. Requires X-AeroRUL-Request: 1.
  * @apiPermission Buyer
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiParam {String} cartItemId Positive BIGINT cart item ID.
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Updated cart.
@@ -89,6 +92,7 @@ router.delete("/items/:cartItemId", (req, res) => cartController.removeItem(req,
  * @apiVersion 1.0.0
  * @apiDescription Clears only the authenticated user's cart. Requires X-AeroRUL-Request: 1.
  * @apiPermission Buyer
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Empty cart.
  * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.

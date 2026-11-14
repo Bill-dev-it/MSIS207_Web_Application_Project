@@ -1,6 +1,6 @@
 "use strict";
 
-const { authenticate, revokeSessions, COOKIE_NAME, SESSION_MS, cookieOptions } = require("../../services/auth/session.service");
+const { authenticate, COOKIE_NAME, SESSION_MS, cookieOptions } = require("../../services/auth/session.service");
 
 function loginInput(body) {
   return !!body && typeof body === "object" && !Array.isArray(body) &&
@@ -41,23 +41,16 @@ async function login(req, res) {
   }
 }
 
-async function me(req, res) {
+function me(req, res) {
   res.set("Cache-Control", "no-store");
   return res.status(200).json({ success: true, data: { user: req.authUser } });
 }
 
-async function logout(req, res) {
-  try {
-    await revokeSessions(req.authUser.user_id);
-    res.clearCookie(COOKIE_NAME, cookieOptions());
-    res.set("Cache-Control", "no-store");
-    return res.status(200).json({ success: true, data: { logged_out: true } });
-  } catch (error) {
-    console.error("Logout failed:", error.code || "UNKNOWN");
-    return res.status(500).json({ success: false, error: {
-      code: "INTERNAL_SERVER_ERROR", message: "Logout could not be completed."
-    } });
-  }
+// 3. Logout clears the browser cookie. Existing copied JWTs expire naturally.
+function logout(req, res) {
+  res.clearCookie(COOKIE_NAME, cookieOptions());
+  res.set("Cache-Control", "no-store");
+  return res.status(200).json({ success: true, data: { logged_out: true } });
 }
 
 module.exports = { login, me, logout, loginInput };

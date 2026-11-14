@@ -6,7 +6,7 @@ const controller = require("../../controllers/supplier/inventory.controller");
  * @apiName GetSupplierInventory
  * @apiGroup Supplier Inventory
  * @apiVersion 1.0.0
- * @apiDescription Stock is stored on seller_listings, not in a separate warehouse subsystem. Includes DRAFT and HIDDEN listings. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Stock is stored on seller_listings, not in a separate warehouse subsystem. Includes DRAFT and HIDDEN listings. Requires an authenticated user with SUPPLIER role and an APPROVED supplier account. Resource ownership is checked by the backend; supplier_id is never accepted from the client.
  * @apiPermission Supplier
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Inventory information.
@@ -16,7 +16,8 @@ const controller = require("../../controllers/supplier/inventory.controller");
  * @apiSuccess {Number} data.summary.low_stock Quantity 1 through 5.
  * @apiSuccess {Number} data.summary.out_of_stock Quantity zero.
  * @apiSuccess {Object[]} data.items Listing ID, SKU, product name, quantity, status, timestamp.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED Authenticated user role is not SUPPLIER or supplier account is not APPROVED.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
  *     {
@@ -41,7 +42,7 @@ const controller = require("../../controllers/supplier/inventory.controller");
  *         ]
  *       }
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }
@@ -54,7 +55,7 @@ router.get("/", controller.getInventory);
  * @apiName UpdateSupplierStock
  * @apiGroup Supplier Inventory
  * @apiVersion 1.0.0
- * @apiDescription Update stock quantity of one owned listing. Request body must contain only stock_quantity. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Update stock quantity of one owned listing. Request body must contain only stock_quantity. Requires an authenticated user with SUPPLIER role, an APPROVED supplier account, and X-AeroRUL-Request: 1. Resource ownership is checked by the backend.
  * @apiPermission Supplier
  * @apiSampleRequest off
  * @apiParam {String} listingId Positive BIGINT listing ID.
@@ -62,7 +63,8 @@ router.get("/", controller.getInventory);
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Listing ID, quantity, status, updated_at.
  * @apiError (400 Bad Request) INVALID_INPUT Invalid ID, type, value, or extra body field.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Supplier role, approved account, or trusted mutation header is required.
  * @apiError (404 Not Found) LISTING_NOT_FOUND Listing missing or not owned.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
@@ -75,7 +77,7 @@ router.get("/", controller.getInventory);
  *         "updated_at": "2026-10-20T09:30:00.000Z"
  *       }
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }

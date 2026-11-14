@@ -93,6 +93,7 @@ router.get("/", suppliersController.listSuppliers);
  * @apiVersion 1.0.0
  * @apiPermission Admin
  * @apiDescription Approves only a PENDING supplier. Repeated requests after approval are idempotent. SUSPENDED suppliers are never silently reactivated. Requires Admin cookie and X-AeroRUL-Request: 1 with trusted origin.
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiParam {String} supplierId Positive BIGINT supplier ID.
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Supplier ID, APPROVED status, and already_approved boolean.
@@ -102,6 +103,15 @@ router.get("/", suppliersController.listSuppliers);
  * @apiError (404 Not Found) SUPPLIER_NOT_FOUND Supplier does not exist.
  * @apiError (409 Conflict) SUPPLIER_STATUS_CONFLICT Supplier is suspended or otherwise not approvable.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Supplier approval failed.
+ * @apiSuccessExample {json} 200 OK:
+ *     {
+ *       "success": true,
+ *       "data": {
+ *         "supplier_id": "42",
+ *         "status": "APPROVED",
+ *         "already_approved": false
+ *       }
+ *     }
  */
 router.post("/:supplierId/approve", suppliersController.approveSupplier);
 

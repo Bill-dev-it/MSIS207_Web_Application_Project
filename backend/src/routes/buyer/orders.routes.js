@@ -1,7 +1,7 @@
 const express = require("express");
-const ordersController = require("../../controllers/buyer/orders.controller");
-const orderDetailController = require("../../controllers/buyer/orderDetail.controller");
-const orderConfirmationController = require("../../controllers/buyer/orderConfirmation.controller");
+const ordersController = require("../../controllers/buyer/orders/orders.controller");
+const orderDetailController = require("../../controllers/buyer/orders/orderDetail.controller");
+const orderConfirmationController = require("../../controllers/buyer/orders/orderConfirmation.controller");
 
 const router = express.Router();
 
@@ -43,6 +43,35 @@ router.get("/", ordersController.getOrders);
  * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
  * @apiError (403 Forbidden) BUYER_REQUIRED Session role is not BUYER.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Confirmation could not be retrieved.
+ * @apiSuccessExample {json} 200 OK:
+ *     {
+ *       "success": true,
+ *       "data": {
+ *         "order_id": "1",
+ *         "order_number": "ORD-2026-0001",
+ *         "purchase_reference": "PO-AIR-001",
+ *         "company_name_snapshot": "Demo Horizon Airlines",
+ *         "shipping_address_snapshot": {
+ *           "recipient_name": "Aviation Logistics",
+ *           "address_line": "100 Airport Blvd",
+ *           "city": "Dallas",
+ *           "country_code": "US"
+ *         },
+ *         "currency": "USD",
+ *         "subtotal": "120000.00",
+ *         "shipping_total": "5000.00",
+ *         "grand_total": "125000.00",
+ *         "created_at": "2026-11-14T08:00:00.000Z",
+ *         "payment_id": "1",
+ *         "payment_method": "BANK_TRANSFER",
+ *         "payment_amount": "125000.00",
+ *         "payment_status": "PENDING",
+ *         "paid_at": null,
+ *         "transfer_reference": "ORD-2026-0001",
+ *         "primary_status": "CONFIRMED",
+ *         "total_items": 1
+ *       }
+ *     }
  */
 router.get("/:orderId/confirmation", orderConfirmationController.getOrderConfirmation);
 
@@ -61,6 +90,48 @@ router.get("/:orderId/confirmation", orderConfirmationController.getOrderConfirm
  * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
  * @apiError (403 Forbidden) BUYER_REQUIRED Session role is not BUYER.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Order details could not be retrieved.
+ * @apiSuccessExample {json} 200 OK:
+ *     {
+ *       "success": true,
+ *       "data": {
+ *         "order_id": "1",
+ *         "order_number": "ORD-2026-0001",
+ *         "buyer_company_id": "7",
+ *         "currency": "USD",
+ *         "purchase_reference": "PO-AIR-001",
+ *         "company_name_snapshot": "Demo Horizon Airlines",
+ *         "subtotal": "120000.00",
+ *         "shipping_total": "5000.00",
+ *         "grand_total": "125000.00",
+ *         "created_at": "2026-11-14T08:00:00.000Z",
+ *         "payment_method": "BANK_TRANSFER",
+ *         "payment_status": "PENDING",
+ *         "paid_at": null,
+ *         "seller_orders": [
+ *           {
+ *             "seller_order_id": "1",
+ *             "order_id": "1",
+ *             "supplier_id": "1",
+ *             "supplier_name_snapshot": "Approved Aero Engines",
+ *             "status": "CONFIRMED",
+ *             "subtotal": "120000.00",
+ *             "shipping_fee": "5000.00",
+ *             "grand_total": "125000.00",
+ *             "items": [
+ *               {
+ *                 "order_item_id": "1",
+ *                 "seller_order_id": "1",
+ *                 "listing_id": "10",
+ *                 "quantity": 1,
+ *                 "unit_price": "120000.00",
+ *                 "line_total": "120000.00",
+ *                 "product_name_snapshot": "Turbofan Engine Model CF34"
+ *               }
+ *             ]
+ *           }
+ *         ]
+ *       }
+ *     }
  */
 router.get("/:orderId", orderDetailController.getOrderDetail);
 

@@ -4,8 +4,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 
-const rulRepo = require("../src/services/buyer/rul.repository");
-const rulService = require("../src/services/buyer/rul.service");
+const rulRepo = require("../src/services/buyer/rul/rul.repository");
+const rulService = require("../src/services/buyer/rul/rul.service");
 const pool = require("../src/config/db");
 
 test.after(async () => {
