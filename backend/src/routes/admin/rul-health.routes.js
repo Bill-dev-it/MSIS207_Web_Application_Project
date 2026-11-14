@@ -15,6 +15,14 @@ const controller = require("../../controllers/admin/rul-health.controller");
  * @apiError (401 Unauthorized) AUTH_REQUIRED Admin session required.
  * @apiError (403 Forbidden) ADMIN_REQUIRED Admin role required.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected backend error.
+ * @apiSuccessExample {json} 200 OK:
+ *     {
+ *       "success": true,
+ *       "data": {
+ *         "status": "healthy",
+ *         "model_loaded": true
+ *       }
+ *     }
  */
 router.get("/health", controller.getHealth);
 

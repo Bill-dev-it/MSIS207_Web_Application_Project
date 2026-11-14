@@ -6,7 +6,7 @@ const controller = require("../../controllers/supplier/orders.controller");
  * @apiName ListSupplierOrders
  * @apiGroup Supplier Orders
  * @apiVersion 1.0.0
- * @apiDescription Returns seller_orders belonging to authenticated supplier. Each row includes its order_items; buyer_name comes from a stored company snapshot. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Returns seller_orders belonging to authenticated supplier. Each row includes its order_items; buyer_name comes from a stored company snapshot. Requires an authenticated user with SUPPLIER role and an APPROVED supplier account. Resource ownership is checked by the backend; supplier_id is never accepted from the client.
  * @apiPermission Supplier
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Number} count Number of supplier orders.
@@ -17,7 +17,8 @@ const controller = require("../../controllers/supplier/orders.controller");
  * @apiSuccess {String="PENDING","SUCCEEDED","CANCELLED"} [data.payment_status] Order payment status.
  * @apiSuccess {String} [data.paid_at] Payment timestamp when SUCCEEDED.
  * @apiSuccess {Object[]} data.items Purchased line item snapshots.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED Authenticated user role is not SUPPLIER or supplier account is not APPROVED.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
  *     {
@@ -57,7 +58,7 @@ const controller = require("../../controllers/supplier/orders.controller");
  *         }
  *       ]
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }
@@ -70,13 +71,14 @@ router.get("/", controller.getAll);
  * @apiName GetSupplierOrder
  * @apiGroup Supplier Orders
  * @apiVersion 1.0.0
- * @apiDescription Returns one owned supplier order with line item snapshots and monetary totals. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Returns one owned supplier order with line item snapshots and monetary totals. Requires an authenticated user with SUPPLIER role and an APPROVED supplier account. Resource ownership is checked by the backend; supplier_id is never accepted from the client.
  * @apiPermission Supplier
  * @apiParam {String} sellerOrderId Positive BIGINT seller order identifier.
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Supplier order with items.
  * @apiError (400 Bad Request) INVALID_INPUT Invalid order ID.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED Authenticated user role is not SUPPLIER or supplier account is not APPROVED.
  * @apiError (404 Not Found) ORDER_NOT_FOUND Missing or not owned.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unexpected database/server error.
  * @apiSuccessExample {json} 200 OK:
@@ -114,7 +116,7 @@ router.get("/", controller.getAll);
  *         ]
  *       }
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }
@@ -127,7 +129,7 @@ router.get("/:sellerOrderId", controller.getOne);
  * @apiName UpdateSupplierOrderStatus
  * @apiGroup Supplier Orders
  * @apiVersion 1.0.0
- * @apiDescription Only one step forward: CONFIRMED to PROCESSING, PROCESSING to SHIPPED, SHIPPED to DELIVERED. DELIVERED is terminal; transition is conditional to avoid concurrent state races. Pre-login: always returns HTTP 401 AUTH_REQUIRED. After Login integration, endpoints must check the authenticated supplier. Do not pass supplier_id from the client.
+ * @apiDescription Only one step forward: CONFIRMED to PROCESSING, PROCESSING to SHIPPED, SHIPPED to DELIVERED. DELIVERED is terminal; transition is conditional to avoid concurrent state races. Requires an authenticated user with SUPPLIER role, an APPROVED supplier account, and X-AeroRUL-Request: 1. Resource ownership is checked by the backend.
  * @apiPermission Supplier
  * @apiSampleRequest off
  * @apiParam {String} sellerOrderId Positive BIGINT seller order identifier.
@@ -135,7 +137,8 @@ router.get("/:sellerOrderId", controller.getOne);
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Updated supplier order with items.
  * @apiError (400 Bad Request) INVALID_INPUT Invalid ID/body/next status.
- * @apiError (401 Unauthorized) AUTH_REQUIRED Supplier login required; all Supplier APIs return 401 before Login integration.
+ * @apiError (401 Unauthorized) AUTH_REQUIRED Missing or expired session cookie.
+ * @apiError (403 Forbidden) FORBIDDEN, SUPPLIER_NOT_APPROVED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Supplier role, approved account, or trusted mutation header is required.
  * @apiError (404 Not Found) ORDER_NOT_FOUND Missing or not owned.
  * @apiError (409 Conflict) INVALID_TRANSITION Not the next permitted status.
  * @apiError (409 Conflict) PAYMENT_PENDING or PAYMENT_CANCELLED Order payment is not SUCCEEDED.
@@ -176,7 +179,7 @@ router.get("/:sellerOrderId", controller.getOne);
  *         ]
  *       }
  *     }
- * @apiErrorExample {json} 401 Pre-login:
+ * @apiErrorExample {json} 401 Unauthorized:
  * {
  *   "success": false,
  *   "error": { "code": "AUTH_REQUIRED", "message": "Supplier login is required." }

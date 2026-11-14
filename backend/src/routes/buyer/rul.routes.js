@@ -92,6 +92,7 @@ router.post("/engines/:engineId/predict", parseCsvBody, controller.predict);
  * @apiVersion 1.0.0
  * @apiPermission Buyer
  * @apiDescription Generates and saves up to five eligible replacement engine listings for a successfully stored prediction owned by the authenticated Buyer's company. Eligibility requires exact engine-model compatibility evidence, an active ENGINE product, ACTIVE listing, APPROVED supplier, and positive stock. Ranking is lower actual listing price, then shorter lead time, then listing ID. Generation is transactional and idempotent. Requires the existing session cookie and X-AeroRUL-Request: 1.
+ * @apiHeader {String} X-AeroRUL-Request Must be 1 on state-changing requests.
  * @apiParam {String} predictionId Positive BIGINT ID of a successful company-owned prediction.
  * @apiSuccess {Boolean} success true
  * @apiSuccess {Object} data Includes prediction_id, recommendation_status (READY or NO_MATCH), already_saved, and saved ranked recommendations.

@@ -30,6 +30,30 @@ const router = express.Router();
  * @apiError (401 Unauthorized) AUTH_REQUIRED Missing, invalid, or expired session cookie.
  * @apiError (403 Forbidden) ADMIN_REQUIRED Authenticated user role is not ADMIN.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Unable to load Admin dashboard.
+ * @apiSuccessExample {json} 200 OK:
+ *     {
+ *       "success": true,
+ *       "data": {
+ *         "buyers": 5,
+ *         "suppliers_total": 40,
+ *         "suppliers_pending": 2,
+ *         "suppliers_approved": 38,
+ *         "products_active": 45,
+ *         "listings_active": 120,
+ *         "orders_total": 15,
+ *         "payments_pending": 3,
+ *         "succeeded_payment_volume_usd": "250000.00",
+ *         "predictions_today": 4,
+ *         "last_prediction": "2026-11-14T08:30:00.000Z",
+ *         "model_version": "v3",
+ *         "sales_trend": [
+ *           {
+ *             "month": "2026-06",
+ *             "total_usd": "35000.00"
+ *           }
+ *         ]
+ *       }
+ *     }
  */
 router.get("/summary", dashboardController.getSummary);
 
