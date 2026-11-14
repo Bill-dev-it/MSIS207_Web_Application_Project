@@ -1,6 +1,6 @@
 "use strict";
 
-const service = require("../../services/buyer/orderConfirmation.service");
+const service = require("../../../services/buyer/orders/orderConfirmation.service");
 
 async function getOrderConfirmation(req, res) {
   try {

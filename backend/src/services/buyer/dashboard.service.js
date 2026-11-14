@@ -1,5 +1,5 @@
 const dashboardRepository = require("./dashboard.repository");
-const ordersRepository = require("./orders.repository");
+const ordersRepository = require("./orders/orders.repository");
 
 async function getSummary({ companyId, userId }) {
   return await dashboardRepository.getDashboardSummary({ companyId, userId });

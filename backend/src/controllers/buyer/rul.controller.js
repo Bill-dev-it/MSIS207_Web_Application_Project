@@ -1,6 +1,6 @@
 "use strict";
-const service = require("../../services/buyer/rul.service");
-const recommendationService = require("../../services/buyer/replacement-recommendations.service");
+const service = require("../../services/buyer/rul/rul.service");
+const recommendationService = require("../../services/buyer/rul/replacement-recommendations.service");
 const { RulInferenceError } = require("../../services/rul-inference.service");
 
 function errorResponse(res, error) {

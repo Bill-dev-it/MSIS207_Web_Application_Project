@@ -1,6 +1,6 @@
 "use strict";
 
-const pool = require("../../config/db");
+const pool = require("../../../config/db");
 
 async function getOwnedPrediction(client, predictionId, companyId, { lock = false } = {}) {
   const result = await client.query(`
