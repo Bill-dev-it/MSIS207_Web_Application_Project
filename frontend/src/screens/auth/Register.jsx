@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { registerAccount } from "../../services/authApi";
 import { buildRegistrationPayload } from "./registerFields";
 import AuthScreenFrame from "./AuthScreenFrame";
-import ResendVerificationForm from "./ResendVerificationForm";
 
 const DEFAULTS = {
   account_type: "BUYER", full_name: "", email: "", password: "", confirm_password: "",
@@ -38,12 +37,14 @@ export default function Register() {
 
   if (result) {
     return (
-      <AuthScreenFrame eyebrow="Registration submitted" title="Check your business email" description="Your company account has been created, but you must verify your email before logging in.">
-        <p role="status" className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm">{result.email_verification_sent
-          ? `A verification message was sent to ${result.email}. Follow its link within 24 hours.`
-          : `Your account ${result.email} was created, but the email could not be delivered. Request a new link below.`}</p>
-        {result.role === "SUPPLIER" && <p className="text-sm text-neutral-700">After email verification, your supplier company must also be approved before its workspace becomes available.</p>}
-        <ResendVerificationForm defaultEmail={result.email} />
+      <AuthScreenFrame eyebrow="Registration complete" title="Account created"
+        description="Your AeroRUL account is ready to log in.">
+        <p role="status" className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm">
+          Account {result.email} was created successfully. You can log in now.
+        </p>
+        {result.role === "SUPPLIER" && (
+          <p className="text-sm text-neutral-700">Your Supplier account must be approved by an Admin before you can use the Supplier workspace.</p>
+        )}
         <Link className="btn btn-primary" to="/login">Go to login</Link>
       </AuthScreenFrame>
     );
@@ -78,7 +79,7 @@ export default function Register() {
         <div><label className="label" htmlFor="register-confirm">Confirm password</label><input className="input" id="register-confirm" name="confirm_password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={fields.confirm_password} onChange={update} /></div>
         {error && <p className="text-sm text-red-700" role="alert">{error}</p>}
         <button className="btn btn-primary w-full" type="submit" disabled={busy}>{busy ? "Creating account…" : "Register company"}</button>
-        <p className="text-xs text-neutral-500">Suppliers are approved separately after email verification. Passwords are never stored in browser storage.</p>
+        <p className="text-xs text-neutral-500">Supplier accounts require Admin approval before entering the Supplier workspace. Email ownership is not verified in this academic MVP.</p>
       </form>
       <p className="text-sm text-neutral-700">Already registered? <Link className="font-semibold text-primary-700 underline" to="/login">Log in</Link>.</p>
     </AuthScreenFrame>

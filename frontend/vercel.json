@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://YOUR_BACKEND_RENDER_SERVICE.onrender.com/api/:path*"
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "https://YOUR_BACKEND_RENDER_SERVICE.onrender.com/docs/:path*"
+    },
+    {
+      "source": "/docs",
+      "destination": "https://YOUR_BACKEND_RENDER_SERVICE.onrender.com/docs"
+    },
+    {
+      "source": "/((?!api/|docs).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

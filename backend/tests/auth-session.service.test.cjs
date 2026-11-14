@@ -87,11 +87,18 @@ test("Login rejects unknown user and wrong password", async () => {
   assert.equal((await session.authenticate(user.email, "bad")).status, "INVALID_CREDENTIALS");
 });
 
-test("Login rejects disabled and unverified users", async () => {
+test("MVP login rejects disabled accounts and accepts active accounts without email verification", async () => {
   rows = [{ ...user, is_active: false }];
   assert.equal((await session.authenticate(user.email, "password")).status, "ACCOUNT_DISABLED");
   rows = [{ ...user, email_verified_at: null }];
-  assert.equal((await session.authenticate(user.email, "password")).status, "EMAIL_NOT_VERIFIED");
+  assert.equal((await session.authenticate(user.email, "password")).status, "OK");
+});
+
+test("MVP session resolves active user with unverified email", async () => {
+  rows = [{ ...user, email_verified_at: null }];
+  const account = await session.getAuthenticatedUser("signed-jwt");
+  assert.equal(account.user_id, "7");
+  assert.equal(account.role, "SUPPLIER");
 });
 
 test("Auth reads current role/company from PostgreSQL after verifying JWT", async () => {

@@ -1,10 +1,22 @@
 "use strict";
 
 // RUL credentials must only be read on the Express backend.
+function isAllowedPrivateOrLocalHost(hostname) {
+  if (["localhost", "127.0.0.1", "::1", "[::1]"].includes(hostname)) return true;
+  if (/^[a-z0-9][a-z0-9-]*$/i.test(hostname)) return true;
+  if (/\.(internal|local)$/i.test(hostname)) return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+  return false;
+}
+
 function serviceConfig() {
   const token = process.env.RUL_SERVICE_TOKEN || "";
   const url = new URL(process.env.RUL_SERVICE_URL || "http://127.0.0.1:8000");
-  const local = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname);
+  const local = isAllowedPrivateOrLocalHost(url.hostname);
 
   if (!/^[\x21-\x7e]{32,}$/.test(token) ||
       !["http:", "https:"].includes(url.protocol) ||

@@ -3,7 +3,6 @@ import ProtectedRoute from "../auth/ProtectedRoute";
 import Home from "../screens/public/Home";
 import Login from "../screens/auth/Login";
 import Register from "../screens/auth/Register";
-import VerifyEmail from "../screens/auth/VerifyEmail";
 import SupplierHome from "../screens/supplier/SupplierHome";
 import SupplierListings from "../screens/supplier/SupplierListings";
 import SupplierInventory from "../screens/supplier/SupplierInventory";
@@ -44,7 +43,6 @@ export default function AppRouter() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
       </Route>
       <Route element={<ProtectedRoute roles={["BUYER"]} />}>
         <Route element={<BuyerLayout />}>

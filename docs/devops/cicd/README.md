@@ -62,9 +62,10 @@ Because the platform contains three application components with different techno
 
 | Component | Technology | CI Validation |
 |---|---|---|
-| Frontend | React | Install dependencies → Lint → Test → Production build |
-| Backend | Node.js / Express | Install dependencies → Lint → Test → Application validation |
-| RUL inference service | Python / FastAPI (internal HTTP service) | Install dependencies → Code validation → Test → Service verification |
+| Repository Structure | Shell | Validate directory layout, required schema/migration files, block committed `.env` files |
+| Frontend | React / Vite | `npm ci` → Offline unit tests (`node --test tests/*.test.mjs`) → Production build (`npm run build`) |
+| Backend | Node.js / Express | `npm ci` → JavaScript syntax check (`node --check`) → Offline unit tests (`node --test tests/*.test.cjs`) → apiDoc reference build (`npm run doc`) |
+| RUL inference service | Python 3.11 | Python syntax compilation (`compileall`) → JSON metadata schema validation → Frozen model package SHA-256 checksums (`sha256sum`). *(Heavyweight TensorFlow CPU inference is executed during dedicated offline verification, not in the fast PR pipeline)* |
 
 The workflow first determines which application components are affected by the change. The relevant CI checks are then executed for those components.
 

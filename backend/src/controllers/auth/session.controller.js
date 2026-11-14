@@ -22,10 +22,9 @@ async function login(req, res) {
         code: "INVALID_CREDENTIALS", message: "Invalid email or password."
       } });
     }
-    if (result.status === "ACCOUNT_DISABLED" || result.status === "EMAIL_NOT_VERIFIED") {
+    if (result.status === "ACCOUNT_DISABLED") {
       return res.status(403).json({ success: false, error: {
-        code: result.status, message: result.status === "EMAIL_NOT_VERIFIED"
-          ? "Verify your email before logging in." : "This account is disabled."
+        code: "ACCOUNT_DISABLED", message: "This account is disabled."
       } });
     }
     res.cookie(COOKIE_NAME, result.token, { ...cookieOptions(), maxAge: SESSION_MS });

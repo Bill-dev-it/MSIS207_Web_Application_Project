@@ -11,8 +11,7 @@ Open a terminal in `backend/` and run `npm ci` on a fresh checkout. This install
 | `express` | REST API routes and middleware |
 | `pg` | PostgreSQL query pool and transactions |
 | `argon2` | Secure Argon2id password hashing during Register and verification during Login |
-| `express-rate-limit` | Limits repeated registration, email verification/resend and login attempts |
-| `nodemailer` | Sends email verification links via configured SMTP |
+| `express-rate-limit` | Limits repeated registration and login attempts |
 | `jsonwebtoken` **(Batch 4)** | Signs and verifies JWT access tokens (HS256, 1 hour) |
 | `cookie-parser` **(Batch 4)** | Reads JWT from an HttpOnly browser cookie |
 | `dotenv` | Loads locally managed backend environment settings |
@@ -36,12 +35,7 @@ DB_PASSWORD=...
 # Required for Batch 4 signing (random, secret, at least 32 bytes):
 AUTH_JWT_SECRET=...
 
-# Existing Batch 3 SMTP and web origin settings:
-SMTP_HOST=...
-SMTP_PORT=587
-SMTP_USER=...
-SMTP_PASS=...
-SMTP_FROM=...
+# Web origin and environment settings (PUBLIC_WEB_URL is mandatory for CSRF & apiDoc):
 PUBLIC_WEB_URL=http://localhost:5173
 NODE_ENV=development
 ```
@@ -56,14 +50,12 @@ The backend mounts `backend/src/routes/auth/index.js` under `/api/v1/auth`.
 
 | Method | URL | Purpose |
 | --- | --- | --- |
-| POST | `/api/v1/auth/register` | Create Buyer or Supplier, send verification link |
-| POST | `/api/v1/auth/verify-email` | Consume an email verification token |
-| POST | `/api/v1/auth/resend-verification` | Request another verification email |
+| POST | `/api/v1/auth/register` | Create Buyer or Supplier (no verification email) |
 | POST | `/api/v1/auth/login` | Verify email/password, set HttpOnly JWT cookie |
 | GET | `/api/v1/auth/me` | Read current user using JWT cookie |
 | POST | `/api/v1/auth/logout` | Clear HttpOnly session cookie |
 
-Login request body is `{ "email": "user@example.test", "password": "..." }`. The backend looks up `users.email` (schema does **not** contain `username`) and checks `password_hash` with Argon2id. Login returns limited user data **without a JWT in JSON**; the browser stores the cookie automatically. `GET /me` checks signature, expiration and current database account state. Only email-verified active users can log in. Supplier routes additionally require `role=SUPPLIER` and an `APPROVED` supplier profile connected by `company_id`. No `supplier_id` from request input is trusted.
+Login request body is `{ "email": "user@example.test", "password": "..." }`. The backend looks up `users.email` (schema does **not** contain `username`) and checks `password_hash` with Argon2id. Login returns limited user data **without a JWT in JSON**; the browser stores the cookie automatically. `GET /me` checks signature, expiration and current database account state. Active users can log in immediately; in this academic MVP, email ownership is not verified, and `email_verified_at` is not required. Supplier routes additionally require `role=SUPPLIER` and an `APPROVED` supplier profile connected by `company_id`. No `supplier_id` from request input is trusted.
 
 On login/logout and all Supplier state-changing requests, send `X-AeroRUL-Request: 1`. With an `Origin` header, it must exactly match `PUBLIC_WEB_URL`. This custom-header + origin checking is a **CSRF mitigation** for cookie-authenticated JSON APIs; do not use wildcard credentialed CORS. Example (for a later React API client):
 
@@ -83,14 +75,11 @@ The React Login, Register and Verify Email screens, session context and protecte
 
 ```text
 backend/src/
-  routes/auth/index.js                      # Register, verify, resend, login, me, logout
+  routes/auth/index.js                      # Register, login, me, logout
   controllers/auth/register.controller.js
-  controllers/auth/verify-email.controller.js
   controllers/auth/session.controller.js     # Login, /me, logout responses
   services/auth/register.service.js
   services/auth/register.validation.js
-  services/auth/verification-token.service.js
-  services/auth/verification-mail.service.js
   services/auth/session.service.js          # Argon2 verification, JWT, DB checks
   middleware/require-auth.js                # Validate cookie + JWT and load user
   middleware/require-trusted-mutation.js    # CSRF header and origin check
@@ -99,8 +88,8 @@ backend/src/
 
 ## Verification and scope boundaries
 
-Static tests do not touch PostgreSQL or send email. After installing dependencies, run `node --check`, `node --test tests/auth-*.test.cjs`, `npm run doc`, `npm audit --omit=dev`, and `git diff --check`. After Batch 4, APIDoc should contain **25 endpoints across 8 groups** (22 prior + 3). POST/PATCH/DELETE sample requests stay disabled. Existing tests from previous batches must still pass.
+Static tests do not touch PostgreSQL. After installing dependencies, run `node --check`, `node --test tests/auth-*.test.cjs`, `npm run doc`, and `git diff --check`. Sample requests for state-changing endpoints remain documented with `@apiHeader {String} X-AeroRUL-Request=1`.
 
-**Implemented:** Authentication Batch 5 added the React Login, Register and Verify Email screens, Auth Context, and role-protected routes. Its frontend unit tests passed (3/3), and the Vite production build passed.
+**Implemented:** The MVP provides React Login and Register screens, Auth Context, and role-protected routes. Registration creates an active account without an email verification step. Users log in with their email and password; suppliers remain in PENDING status until approved by an administrator.
 
-**Still pending:** Real PostgreSQL and SMTP integration testing, browser end-to-end testing, and Forgot/Reset Password. Supplier demo mode remains enabled by default. Never call a live POST endpoint or run database SQL from Copilot without explicit user approval. The SQL setup lives under `database/authentication/`; it is already applied to the user's local `aircraft_marketplace`, and must not be rerun there.
+**Still pending:** Real PostgreSQL integration testing, browser end-to-end testing, and production deployment. There is no email provider, no email verification, and no automated password reset. Supplier demo mode remains enabled by default. Never call a live POST endpoint or run database SQL from Copilot without explicit user approval. Historical verification columns in PostgreSQL are retained for schema compatibility but are not used by the MVP.

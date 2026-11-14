@@ -3,7 +3,6 @@
 const { randomUUID } = require("node:crypto");
 const argon2 = require("argon2");
 const pool = require("../../config/db");
-const { createEmailVerificationToken } = require("./verification-token.service");
 
 function makeSlug(name) {
   const prefix = name.toLowerCase()
@@ -59,23 +58,17 @@ async function registerAccount(input) {
       supplierId = supplierResult.rows[0].supplier_id;
     }
 
-    // The email token and account must commit or roll back together.
-    const verificationToken = await createEmailVerificationToken(client, user.user_id);
-
     await client.query("COMMIT");
     transactionOpen = false;
     return {
       account: {
-      user_id: user.user_id,
-      company_id: companyId,
-      supplier_id: supplierId,
-      full_name: user.full_name,
-      email: user.email,
-      role: user.role,
-      email_verification_required: true
-      },
-      // Internal only: the controller passes this to SMTP, never to the HTTP response.
-      verificationToken
+        user_id: user.user_id,
+        company_id: companyId,
+        supplier_id: supplierId,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role
+      }
     };
   } catch (error) {
     if (transactionOpen) {

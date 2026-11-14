@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const cookieParser = require("cookie-parser");
 const pool = require("./config/db");
 
@@ -64,6 +65,9 @@ app.get("/", (req, res) => {
  *     }
  */
 app.get("/api/db-test", async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Not found." } });
+  }
   try {
     const result = await pool.query(`
       SELECT current_database() AS database, current_user AS db_user,
@@ -120,14 +124,10 @@ app.use((error, req, res, next) => {
   } });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  const path = require("path");
-
-  app.use(
-    "/docs",
-    express.static(path.join(__dirname, "../docs/apidoc"))
-  );
-}
+app.use(
+  "/docs",
+  express.static(path.join(__dirname, "../docs/apidoc"))
+);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

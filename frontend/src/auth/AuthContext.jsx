@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Do not show a signed-out state until the server has revoked the session.
+    // Logout clears the browser cookie; copied JWTs are not revoked server-side before their 1-hour expiry.
     await logoutAccount();
     requestVersion.current += 1;
     setSession({ status: "anonymous", user: null, error: null });

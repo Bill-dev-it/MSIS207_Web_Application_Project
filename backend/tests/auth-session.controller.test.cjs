@@ -47,15 +47,16 @@ test("Login sets HttpOnly JWT cookie without returning JWT in JSON", async () =>
   assert.equal(JSON.stringify(res.data).includes("private-jwt"), false);
 });
 
-test("Login rejects wrong password and unverified user", async () => {
+test("Login rejects incorrect password and disabled account", async () => {
   loginResult = { status: "INVALID_CREDENTIALS" };
   const invalid = response();
   await controller.login({ body: { email: "user@example.test", password: "bad" } }, invalid);
   assert.equal(invalid.statusCode, 401);
-  loginResult = { status: "EMAIL_NOT_VERIFIED" };
-  const unverified = response();
-  await controller.login({ body: { email: "user@example.test", password: "password" } }, unverified);
-  assert.equal(unverified.statusCode, 403);
+  loginResult = { status: "ACCOUNT_DISABLED" };
+  const disabled = response();
+  await controller.login({ body: { email: "user@example.test", password: "password" } }, disabled);
+  assert.equal(disabled.statusCode, 403);
+  assert.equal(disabled.data.error.code, "ACCOUNT_DISABLED");
 });
 
 test("Me returns already authenticated user", () => {
