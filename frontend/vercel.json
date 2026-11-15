@@ -3,15 +3,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://YOUR_BACKEND_RENDER_SERVICE.onrender.com/api/:path*"
+      "destination": "https://aerorul-backend.onrender.com/api/:path*"
     },
     {
       "source": "/docs/:path*",
-      "destination": "https://YOUR_BACKEND_RENDER_SERVICE.onrender.com/docs/:path*"
+      "destination": "https://aerorul-backend.onrender.com/docs/:path*"
     },
     {
       "source": "/docs",
-      "destination": "https://YOUR_BACKEND_RENDER_SERVICE.onrender.com/docs"
+      "destination": "https://aerorul-backend.onrender.com/docs"
     },
     {
       "source": "/((?!api/|docs).*)",
