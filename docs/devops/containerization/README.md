@@ -1,294 +1,64 @@
 # Containerization Strategy
 
-## 1. Purpose
+AeroRUL applies Docker containerization selectively to isolate the **Python 3.11 / TensorFlow** RUL inference runtime on **Google Cloud Run**, while the **React SPA (Vercel)**, **Express 5 API (Render)**, and **Neon PostgreSQL** run on managed non-containerized/platform runtimes.
 
-The Aviation B2B E-Commerce Platform uses Docker to provide reproducible and
-isolated runtime environments for application services.
+## 1. Containerization Architecture Overview
 
-The architecture separates components with different runtimes. The current
-Node.js/Express backend calls the internal Python/FastAPI RUL service over
-HTTP. FastAPI is a private service and is not exposed to the browser or public
-API gateway.
+![Containerization Architecture](./Containerization_Architecture_%20AeroRUL_Cloud.png)
 
-Docker Compose is planned for local integration of backend services. Production
-deployment uses the hosting architecture defined in the deployment design.
+*Interactive cross-system diagram: [06 — Deployment & Runtime](<../../architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>).*
+
+1. **RUL Container Build & Deployment Pipeline:** Only `rul-service/` is packaged as a container: Source code (FastAPI + frozen model artifacts) $\to$ `Dockerfile` build recipe (`python:3.11-slim-bookworm`) $\to$ **Google Cloud Build** $\to$ **Artifact Registry** (versioned image) $\to$ **Google Cloud Run** (pulls image and scales on demand). *A `Dockerfile` defines an image build recipe, not a running container.*
+2. **Local Development:** Developers run React/Vite (`localhost:5173`) and Node/Express (`localhost:3000`) natively; Docker Desktop is **optional** and needed only if building/running the `rul-service` container locally (no `docker-compose.yml` exists in this repository).
+3. **Production Request Path:** Browser $\to$ **Vercel** (SPA + `/api/*` rewrite) $\to$ **Render** (Express 5 API) $\to$ **Google Cloud Run** (RUL container) & **Neon PostgreSQL** (persisted OLTP data).
+4. **Critical Design Rules:**
+   - **Only RUL is Dockerized** by repository config; Vercel and Render manage frontend/backend builds natively.
+   - **Model Bundled in Image:** `checkpoints/best_model.weights.h5` and `preprocessing/scaler_artifacts.json` are copied and verified inside the image at build time (no runtime S3/GCS download).
+   - **Controlled Inference Access:** Express calls Cloud Run over HTTPS with `X-RUL-Service-Token`; FastAPI disables Swagger/OpenAPI routes (`docs_url=None`, `redoc_url=None`, `openapi_url=None`) and validates tokens with `hmac.compare_digest`.
+   - **No DB Inside Container:** Cloud Run is stateless; relational state lives strictly in Neon PostgreSQL (managed via Express).
 
 ---
 
-## 2. Containerization Scope
+## 2. Runtime & Environment Mapping
 
-| Component | Technology | Local Development | Production |
+| Component | Technology | Local Development | Production (Verified) |
 |---|---|---|---|
-| Frontend | React | Local development server | Vercel |
-| Backend API | Node.js / Express | Docker container | Render |
-| RUL inference | Python / FastAPI | Local service bound to `127.0.0.1:8000` | Private service on internal network |
-| Database | PostgreSQL | Docker container | Managed PostgreSQL |
-
-The React frontend is not required to run inside a production container because
-Vercel builds and hosts the frontend application directly.
-
-The backend and RUL HTTP service are started/deployed independently. Restrict
-the RUL service to private-network ingress from Express and use HTTPS for
-remote service-to-service requests.
-
-PostgreSQL is containerized only for local development. Production uses a
-managed PostgreSQL instance so database persistence is separated from
-application containers.
-
----
-## Containerization Architecture
-
-The following diagram shows how the platform services are containerized for
-local development and how those logical services map to the production
-environment.
-
-![Containerization Architecture](./containerization_architecture_flow.png)
-
-
-
-## 3. Service Responsibilities
-
-### Backend Container
-
-Runtime:
-
-Node.js / Express
-
-Internal port:
-
-3000
-
-Responsibilities:
-
-- expose the REST API used by the React frontend;
-- authentication and authorization;
-- marketplace business logic;
-- product, listing, inventory and order operations;
-- aircraft and engine operations;
-- database access;
-- coordinate RUL prediction requests.
-
-The backend acts as the application gateway. The frontend does not communicate
-directly with PostgreSQL or the RUL service.
-
-### RUL Service Container
-
-Runtime:
-
-Python / FastAPI
-
-Internal port:
-
-8000
-
-Responsibilities:
-
-- expose the RUL prediction API;
-- preprocess engine sensor input;
-- load the trained prediction model;
-- perform model inference;
-- return predicted Remaining Useful Life to the backend.
-
-The RUL service is separated from the Node.js backend because the machine
-learning environment requires its own Python runtime and dependencies.
-
-### PostgreSQL Container
-
-Runtime:
-
-PostgreSQL
-
-Internal port:
-
-5432
-
-Responsibilities:
-
-- store application and marketplace data;
-- store companies, users, products and listings;
-- store aircraft and engine information;
-- store relevant RUL prediction results.
-
-The PostgreSQL container is intended for local development only.
-
-Database data is persisted using a Docker volume so that stopping or recreating
-the database container does not automatically remove development data.
+| **Frontend** | React 18 / Vite 5 | `npm run dev` (`localhost:5173`) | **Vercel** static CDN (`https://www.aerotradehub.top`) |
+| **Backend API** | Node.js / Express 5 | `npm run dev` (`localhost:3000`) | **Render Web Service** (`https://aerorul-backend.onrender.com`) |
+| **RUL Inference** | Python 3.11 / FastAPI / TF | `uvicorn api:app` (`127.0.0.1:8000`) or Docker | **Google Cloud Run** container (`rul-service/Dockerfile`) |
+| **Database** | PostgreSQL | Local PostgreSQL | **Neon** managed PostgreSQL (`PGSSLMODE=require`) |
+| **Edge / DNS** | Cloudflare / Vercel | Vite `/api` proxy | **iNET** + **Cloudflare Free (DNS Only)** + **Vercel** TLS |
 
 ---
 
-## 4. Local Development Architecture
+## 3. RUL Docker Packaging (`rul-service/Dockerfile`)
 
-The local backend environment is orchestrated using Docker Compose.
-
-```text
-Developer Browser
-       |
-       v
-React Development Server
-localhost:5173
-       |
-       | HTTP / REST
-       v
-+---------------- Docker Network ----------------+
-|                                                |
-|   Backend Container                            |
-|   Node.js / Express                            |
-|   :3000                                        |
-|       |                         |               |
-|       | SQL                     | HTTP          |
-|       v                         v               |
-|   PostgreSQL                RUL Service         |
-|   :5432                     FastAPI :8000       |
-|       |                                        |
-|       v                                        |
-|   Persistent Volume                            |
-|                                                |
-+------------------------------------------------+
-```
-
-Docker Compose provides a private network for the backend, RUL service and
-PostgreSQL database.
-
-Services communicate through Docker service names rather than localhost.
-
-Example internal endpoints:
-
-```text
-backend -> database:5432
-backend -> rul-service:8000
-```
-
-The browser accesses the backend through the host-exposed API port.
+- **Base & Env:** [`rul-service/Dockerfile`](../../../rul-service/Dockerfile) uses `python:3.11-slim-bookworm` with `PYTHONDONTWRITEBYTECODE=1`, `PYTHONUNBUFFERED=1`, and `TF_CPP_MIN_LOG_LEVEL=2`.
+- **Context Filtering:** [`rul-service/.dockerignore`](../../../rul-service/.dockerignore) excludes `.venv*`, `venv/`, `__pycache__/`, `*.pyc`, `.pytest_cache/`, `.env*`, and `.git/`.
+- **Build Verification:** Installs `requirements.txt`, copies `rul-service/`, and fails build unless both `checkpoints/best_model.weights.h5` and `preprocessing/scaler_artifacts.json` are non-empty (`test -s`).
+- **Container Entrypoint:** Exposes `8080` and runs:
+  ```sh
+  exec uvicorn api:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1
+  ```
+  Cloud Run scales instances to zero when idle and loads `RULInferenceEngine` once at container startup via FastAPI `lifespan`.
 
 ---
 
-## 5. Service Communication
-
-The normal e-commerce request flow is:
+## 4. Service Boundaries, Persistence & Configuration
 
 ```text
-React
-  -> Backend REST API
-  -> PostgreSQL
-  -> Backend
-  -> React
+Browser (https://www.aerotradehub.top)
+  └─► Vercel Same-Origin Rewrites (/api/*, /docs/*)
+        └─► Render Web Service (Express 5 Modular Monolith)
+              ├──► Neon PostgreSQL (TLS wire protocol via PGSSLMODE=require)
+              └──► Google Cloud Run Container (HTTPS + X-RUL-Service-Token)
 ```
 
-The predictive-maintenance request flow is:
-
-```text
-React
-  -> Backend REST API
-  -> RUL Service
-  -> RUL Prediction
-  -> Backend
-  -> PostgreSQL (when the result must be persisted)
-  -> React
-```
-
-The frontend never communicates directly with PostgreSQL.
-
-The frontend also does not directly invoke the RUL service. The Express backend
-remains the application API gateway between the client and internal services.
-
----
-
-## 6. Configuration and Secrets
-
-Runtime-specific configuration must not be hard-coded into application source
-code.
-
-Configuration is supplied through environment variables.
-
-Typical backend configuration includes:
-
-```text
-PORT
-DATABASE_URL
-RUL_SERVICE_URL
-JWT_SECRET
-CORS_ORIGIN
-```
-
-Typical RUL service configuration includes:
-
-```text
-RUL_SERVICE_TOKEN
-UVICORN_HOST
-UVICORN_PORT
-```
-
-Local development may use a `.env` file that is excluded from Git.
-
-Production secrets and database credentials are configured through the selected
-hosting platform rather than committed to the repository.
-
-A `.env.example` file may be committed to document required configuration
-without exposing secret values.
-
----
-
-## 7. Persistence Strategy
-
-Application containers are considered replaceable runtime units.
-
-The backend and RUL containers should not depend on persistent local filesystem
-state.
-
-For local development, PostgreSQL data is stored using a Docker volume:
-
-```text
-PostgreSQL Container
-        |
-        v
-Docker Volume
-        |
-        v
-Persistent Development Data
-```
-
-In production, database persistence is delegated to the managed PostgreSQL
-service.
-
-This separates application lifecycle from database lifecycle.
-
----
-
-## 8. Local and Production Mapping
-
-The local Docker architecture and production deployment architecture serve
-different purposes.
-
-| Logical Component | Local | Production |
-|---|---|---|
-| React Frontend | Local dev server | Vercel |
-| Express API | Docker | Render |
-| RUL Service | Docker | Render |
-| PostgreSQL | Docker + volume | Managed PostgreSQL |
-| DNS / HTTPS | localhost | Cloudflare + custom domain |
-
-Docker Compose reproduces the service relationships needed for development,
-while production uses managed hosting services.
-
-
-
----
-
-## 9. Containerization Design Summary
-
-The containerization strategy therefore establishes three local backend runtime
-units:
-
-1. Node.js/Express backend;
-2. Python/FastAPI RUL inference service;
-3. PostgreSQL database.
-
-The React frontend remains outside the local Docker environment for convenient
-frontend development.
-
-In production, React is hosted by Vercel, the application services are deployed
-through Render, and PostgreSQL is provided as a managed database.
-
-This design keeps the project simple enough for the current project scope while
-preserving clear service boundaries between the e-commerce backend, predictive
-maintenance service and persistent data layer.
+- **State & Storage Boundaries:**
+  - **Neon PostgreSQL:** Stores all relational tables (26 core + `account_tokens` compatibility table).
+  - **Immutable Container Image:** Bundles FD002 weights + scaler inside Cloud Run.
+  - **Ephemeral CSV Filesystem:** Raw uploaded CSVs write privately to `backend/storage/rul/` (`RUL_STORAGE_DIR`), which resets on Render Free restarts/redeploys (no S3/GCS bucket or Render Persistent Disk provisioned).
+- **Container/Runtime Env Names (configured privately on providers):**
+  - **Cloud Run (`rul-service`):** `RUL_SERVICE_TOKEN`, `PORT` (`8080` default).
+  - **Render (`backend`):** `NODE_ENV`, `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `PGSSLMODE`, `AUTH_JWT_SECRET`, `PUBLIC_WEB_URL`, `RUL_SERVICE_URL`, `RUL_SERVICE_TOKEN`, `RUL_STORAGE_DIR` (optional).
+- **Related Runbook:** [`docs/devops/deployment/README.md`](../deployment/README.md).

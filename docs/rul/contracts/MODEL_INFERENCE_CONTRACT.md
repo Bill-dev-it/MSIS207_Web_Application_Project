@@ -4,7 +4,7 @@ This is the internal service-to-service contract between the existing Express
 Buyer API and the Python inference service. It is not a public/browser API.
 Public Buyer REST endpoints, authentication, CSV request-source classification,
 idempotency and persistence are documented in
-[`README.md`](./README.md).
+[`README.md`](../README.md).
 
 ## Runtime and model lifecycle
 
@@ -25,10 +25,11 @@ All service endpoints require `X-RUL-Service-Token`, compared against the
 service's `RUL_SERVICE_TOKEN`. The token must contain at least 32 characters
 and must be provided to both processes through their runtime environment.
 
-Bind to localhost for local development. In a deployed environment, use a
-private service network, restrict ingress to Express, and use HTTPS for remote
-service-to-service traffic. Do not expose this service through the browser,
-public ingress, or the public Express gateway.
+Bind to localhost for local development. In production, the service is packaged
+via `rul-service/Dockerfile` and deployed to **Google Cloud Run**, where Express
+invokes it over **HTTPS** using `X-RUL-Service-Token` (interactive OpenAPI routes
+remain disabled). Do not expose this service through the browser or the public
+Express gateway.
 
 ## Endpoints
 

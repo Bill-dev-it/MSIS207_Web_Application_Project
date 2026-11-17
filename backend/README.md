@@ -2,15 +2,20 @@
 
 This directory is intended for the application's backend API and business logic.
 
-Authentication Backend Batches 2–4 are implemented: registration, email
-verification, JWT HttpOnly cookie sessions, login, logout, authentication
+Authentication MVP is implemented: registration, Argon2id password
+hashing, JWT HttpOnly cookie sessions, login, logout, authentication
 middleware, and Supplier authorization integration. Backend tests are active
-across Auth, Admin, and Buyer feature modules.
+across Auth, Admin, and Buyer feature modules. In this academic MVP,
+registration creates an active account without requiring email ownership verification.
 
 PostgreSQL database integration is implemented and active via `src/config/db.js`
-with connection pooling, migrations, and schema constraints. While local manual
-browser testing has verified primary interface workflows, automated browser
-end-to-end (E2E) testing suites and live production SMTP delivery remain pending.
+with connection pooling, migrations, and schema constraints (connecting to
+**Neon PostgreSQL** over TLS in production and local PostgreSQL in development).
+In production on **Render Web Service**, Express calls the containerized
+FastAPI RUL service on **Google Cloud Run** over HTTPS (`X-RUL-Service-Token`)
+and serves generated apiDoc at `/docs/`. Production deployment and end-to-end
+acceptance testing at `https://www.aerotradehub.top` passed owner verification on
+November 16, 2026; automated browser end-to-end (E2E) CI suites remain unconfigured.
 
 See the [Authentication setup guide](../docs/auth/README.md) for backend
 authentication packages, environment requirements, endpoints, and verification.

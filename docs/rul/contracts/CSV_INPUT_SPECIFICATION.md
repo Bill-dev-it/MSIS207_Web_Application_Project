@@ -5,7 +5,7 @@
 > required columns/physical units. This is separate from the model's FD002
 > training subset. The API requires UTF-8 `text/csv`, at most 1 MiB, one unit,
 > and at least 30 observations. The application-specific contract is authoritative:
-> [RUL runtime contract](./README.md).
+> [RUL runtime contract](../README.md).
 
 ## 1. Overview & Purpose
 This document defines the strict data contract for engine sensor time-series CSV files uploaded by Airline/MRO users to the **AeroRUL** marketplace platform. The uploaded CSV contains operational flight history and raw sensor measurements, which are processed by the **Condition-Aware iTransformer** model to estimate Remaining Useful Life (RUL) in flight cycles.

@@ -148,7 +148,9 @@ async function predict({ engineId, userId, companyId, csv, filename, requestKey,
   const model = await repository.getModelVersion();
   if (!model) throw new RulError("MODEL_NOT_REGISTERED", 503,
     "The FD002 model version is not registered. Run the reviewed seed SQL during deployment.");
-  const storeRoot = path.resolve(__dirname, "../../../../storage/rul");
+  const storeRoot = process.env.RUL_STORAGE_DIR
+    ? path.resolve(process.env.RUL_STORAGE_DIR)
+    : path.resolve(__dirname, "../../../../storage/rul");
   const safeUserId = String(userId);
   if (!validId(safeUserId)) {
     throw new RulError("AUTH_REQUIRED", 401, "A verified Buyer session is required.");

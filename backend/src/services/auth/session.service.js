@@ -41,7 +41,7 @@ function publicUser(user) {
 async function authenticate(email, password) {
   const { rows } = await pool.query(
     `SELECT user_id, company_id, full_name, email, password_hash,
-            role, is_active, email_verified_at
+            role, is_active
      FROM public.users WHERE LOWER(email) = $1 LIMIT 1`,
     [email]
   );
@@ -50,7 +50,6 @@ async function authenticate(email, password) {
     return { status: "INVALID_CREDENTIALS" };
   }
   if (!user.is_active) return { status: "ACCOUNT_DISABLED" };
-  if (!user.email_verified_at) return { status: "EMAIL_NOT_VERIFIED" };
 
   const token = jwt.sign(
     { sub: String(user.user_id) },
@@ -75,12 +74,12 @@ async function getAuthenticatedUser(token) {
 
   const { rows } = await pool.query(
     `SELECT user_id, company_id, full_name, email, role,
-            is_active, email_verified_at
+            is_active
      FROM public.users WHERE user_id = $1`,
     [payload.sub]
   );
   const user = rows[0];
-  if (!user || !user.is_active || !user.email_verified_at) return null;
+  if (!user || !user.is_active) return null;
   return publicUser(user);
 }
 

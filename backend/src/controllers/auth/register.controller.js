@@ -2,7 +2,6 @@
 
 const { validateRegister } = require("../../services/auth/register.validation");
 const { registerAccount } = require("../../services/auth/register.service");
-const { mailIsConfigured, sendVerificationEmail } = require("../../services/auth/verification-mail.service");
 
 async function register(req, res) {
   const checked = validateRegister(req.body);
@@ -13,28 +12,9 @@ async function register(req, res) {
     });
   }
 
-  // Without SMTP, do not create an account that has no way to verify email.
-  if (!mailIsConfigured()) {
-    return res.status(503).json({
-      success: false,
-      error: { code: "EMAIL_UNAVAILABLE", message: "Registration email delivery is not configured." }
-    });
-  }
-
   try {
-    const { account, verificationToken } = await registerAccount(checked.value);
-    let emailSent = false;
-    try {
-      // Only send after COMMIT. A failed email must not be reported as a failed account creation.
-      await sendVerificationEmail(account.email, verificationToken);
-      emailSent = true;
-    } catch {
-      console.error("New account created, but verification email delivery failed.");
-    }
-    return res.status(201).json({
-      success: true,
-      data: { ...account, email_verification_sent: emailSent }
-    });
+    const { account } = await registerAccount(checked.value);
+    return res.status(201).json({ success: true, data: account });
   } catch (error) {
     if (error.code === "23505") {
       return res.status(409).json({

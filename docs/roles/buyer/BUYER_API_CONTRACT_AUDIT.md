@@ -1,8 +1,11 @@
 # Buyer API Contract Audit
 
+> [!NOTE]
+> **Historical Static-Audit Snapshot:** This document preserves the pre-deployment static source audit conducted prior to adding `BANK_TRANSFER` payment reconciliation, Buyer engine creation/update routes (`/engines/models`, `/engines/aircraft`, `POST /engines`, `PUT /engines/:engineId`), and production deployment. > For the current complete endpoint list, see [`docs/api/README.md`](../../api/README.md) and [`docs/roles/buyer/README.md`](./README.md). Production end-to-end acceptance testing across Auth, RUL, Replace & Buy, Cart, Checkout, and Payment passed on **November 16, 2026** at `https://www.aerotradehub.top`.
+
 **Branch:** `week-3`  
 **Audit scope:** Current local routes, controllers, services/repositories, frontend API consumers, authentication middleware, and `database/schema/01_schema.sql`.  
-**Runtime status:** Source and static checks only. No database connection, SQL execution, or live API request was made.
+**Runtime status (at time of static audit):** Source and static checks only. No database connection, SQL execution, or live API request was made during that review.
 
 ## Findings and corrections
 

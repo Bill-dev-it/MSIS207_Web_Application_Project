@@ -1,6 +1,6 @@
 # AeroRUL — Simple B2B Payment MVP (implementation contract)
 
-Status: **Implemented in source on `week-3` (Stage 1 DB migration + Express backend, Stage 2 React UI, Stage 3 static audit); live PostgreSQL migration and runtime QA remain pending**.
+Status: **Implemented and Verified** (`04_b2b_payment_mvp.sql` applied on Neon PostgreSQL; Express backend and React UI verified in owner production end-to-end acceptance testing at `https://www.aerotradehub.top` on November 16, 2026).
 
 ## Scope
 

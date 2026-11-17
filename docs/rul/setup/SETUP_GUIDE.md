@@ -8,7 +8,7 @@
 > model and scaler once per worker. The standalone
 > `inference/predict_cli.py` is for offline use, not Express web requests. The
 > public Buyer endpoints and internal inference contract are described in
-> [`README.md`](./README.md). The Replace & Buy recommendation MVP is
+> [`README.md`](../README.md). The Replace & Buy recommendation MVP is
 > implemented by Express; trade-in and exchange-credit workflows are deferred.
 
 ---
@@ -31,14 +31,20 @@
 Project root/
 ├── rul-service/
 ├── docs/rul/                           # Canonical detailed RUL documentation
-│   ├── README.md
-│   ├── SETUP_GUIDE.md                  # This guide
-│   ├── SYSTEM_DESIGN.md
-│   ├── CSV_INPUT_SPECIFICATION.md
-│   ├── MODEL_INFERENCE_CONTRACT.md
-│   ├── MODEL_EVALUATION.md
-│   ├── INTEGRATION_GUIDE.md
-│   └── AUDIT_REPORT.md
+│   ├── README.md                       # Root overview & index
+│   ├── architecture/
+│   │   ├── SYSTEM_DESIGN.md
+│   │   └── INTEGRATION_GUIDE.md
+│   ├── contracts/
+│   │   ├── CSV_INPUT_SPECIFICATION.md
+│   │   └── MODEL_INFERENCE_CONTRACT.md
+│   ├── evaluation/
+│   │   ├── MODEL_EVALUATION.md
+│   │   └── AUDIT_REPORT.md
+│   ├── setup/
+│   │   └── SETUP_GUIDE.md              # This guide
+│   └── images/
+│       └── RUL_service_intergration.png
 └── database/seed/03_ml_model_version_seed.sql
 
 rul-service/
@@ -150,7 +156,7 @@ Expected JSON response:
 | Observed Behavior | Probable Cause | Action |
 |---|---|---|
 | `ModuleNotFoundError: No module named 'tensorflow'` | Virtual environment not active or dependencies not installed | Activate `.venv` and run `pip install -r requirements.txt` |
-| `PreprocessingValidationError: Missing required columns` | Uploaded CSV missing some of the 14 sensors or 3 settings | Check CSV against [`CSV_INPUT_SPECIFICATION.md`](./CSV_INPUT_SPECIFICATION.md) |
+| `PreprocessingValidationError: Missing required columns` | Uploaded CSV missing some of the 14 sensors or 3 settings | Check CSV against [`CSV_INPUT_SPECIFICATION.md`](../contracts/CSV_INPUT_SPECIFICATION.md) |
 | `FileNotFoundError: Checkpoint weights not found` | `checkpoints/best_model.weights.h5` was moved or deleted | Ensure directory structure is intact |
 | Exit code `1` with JSON error | Input data failed validation | Read the `error` field in JSON output for exact issue |
 
@@ -169,7 +175,7 @@ To maintain 100% numerical fidelity with published research:
 The normal web prediction path is React → Express Buyer API → internal
 FastAPI → model. FastAPI exposes authenticated `GET /health`,
 `GET /v1/model-info`, and `POST /v1/predict` routes. See
-[`INTEGRATION_GUIDE.md`](./INTEGRATION_GUIDE.md) for separate Express/FastAPI
+[`INTEGRATION_GUIDE.md`](../architecture/INTEGRATION_GUIDE.md) for separate Express/FastAPI
 startup and the request/response contract. FastAPI does not access Buyer
 authentication or PostgreSQL. The CLI remains an offline-only interface and
 is not used for web requests.

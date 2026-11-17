@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "/docs/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://aerorul-backend.onrender.com/api/:path*"
+    },
+    {
+      "source": "/docs/",
+      "destination": "https://aerorul-backend.onrender.com/docs/"
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "https://aerorul-backend.onrender.com/docs/:path*"
+    },
+    {
+      "source": "/((?!api/|docs).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -14,6 +14,18 @@ class RulInferenceError extends Error {
   }
 }
 
+function isAllowedPrivateOrLocalHost(hostname) {
+  if (["localhost", "127.0.0.1", "::1", "[::1]"].includes(hostname)) return true;
+  if (/^[a-z0-9][a-z0-9-]*$/i.test(hostname)) return true;
+  if (/\.(internal|local)$/i.test(hostname)) return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+  return false;
+}
+
 function serviceConfiguration() {
   const serviceUrl = process.env.RUL_SERVICE_URL || "http://127.0.0.1:8000";
   const token = process.env.RUL_SERVICE_TOKEN || "";
@@ -26,11 +38,11 @@ function serviceConfiguration() {
   } catch {
     throw new RulInferenceError("RUL_UNAVAILABLE", 503, "Internal RUL service address is invalid.");
   }
-  const localHost = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(base.hostname);
+  const localHost = isAllowedPrivateOrLocalHost(base.hostname);
   if (!["http:", "https:"].includes(base.protocol) ||
       (base.protocol === "http:" && !localHost) ||
       base.username || base.password || base.search || base.hash) {
-    throw new RulInferenceError("RUL_UNAVAILABLE", 503, "Internal RUL service must use localhost HTTP or HTTPS.");
+    throw new RulInferenceError("RUL_UNAVAILABLE", 503, "Internal RUL service must use localhost, private network HTTP, or HTTPS.");
   }
   return {
     endpoint: new URL("/v1/predict", base).toString(),

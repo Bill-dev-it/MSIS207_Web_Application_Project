@@ -9,7 +9,7 @@ The database supports three connected domains:
 
 ## Architecture diagram references
 
-The database design connects directly to the main architecture views:
+The database design connects directly to the synchronized architecture views below (covering the 26 baseline tables plus the 27th legacy auth table `account_tokens`, Neon TLS access, and Cloud Run boundaries):
 
 - [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — high-level data and application boundaries.
 - [04 — PostgreSQL OLTP](<../architecture/diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>) — the canonical ERD and relational structure.
@@ -20,7 +20,7 @@ For the full architecture documentation, see [docs/architecture/README.md](../ar
 
 ## 1. Database Design
 
-The system uses **PostgreSQL** as the primary operational database.
+The system uses **PostgreSQL** (**Neon** managed serverless PostgreSQL in production; local PostgreSQL in development) as the primary operational OLTP database. The baseline schema defines **26 tables** (`database/schema/01_schema.sql`), and the additive authentication setup (`database/authentication/01_authentication_setup.sql`) adds `account_tokens` (**27 tables total**, with `account_tokens` and `email_verified_at`/`auth_version` columns retained for migration compatibility and unused by active MVP runtime).
 
 The database is organized around five main domains:
 
@@ -63,7 +63,7 @@ inventory, and e-commerce transactions together.
 The project uses a lightweight **Medallion-style data pipeline** to transform
 heterogeneous source datasets into application-ready data.
 
-![Database ERD](./images/Data_pipeline.png)
+![Database ERD](./images/ETL_pipeline.png)
 
 ### Bronze Layer — Raw Data
 
@@ -160,11 +160,12 @@ takes place:
 
 This creates the main end-to-end business flow of the platform:
 
-> **Engine Condition → FD002 Demo Prediction → B2B Procurement**
+> **Engine Condition → FD002 Prediction → Replace & Buy Recommendations → B2B Procurement**
 
-The demo prediction does not verify compatibility and does not create
-`replacement_recommendations`; standard marketplace procurement is a separate
-existing flow.
+The demo prediction does not verify physical compatibility on its own, and the
+Replace & Buy workflow relies on recorded `product_engine_compatibility`
+evidence to generate `replacement_recommendations`; standard marketplace
+procurement also remains usable directly without running RUL analysis.
 
 ---
 

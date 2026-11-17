@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "doc": "apidoc -i src/ -o docs/apidoc/"
+    "build": "npm run doc",
+    "doc": "apidoc -c apidoc.config.js -i src/ -o docs/apidoc/"
   },
   "apidoc": {
     "name": "AeroRUL REST API",
@@ -26,7 +27,6 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.2",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^10.3.1",
     "pg": "^8.23.1"
   },
   "devDependencies": {

@@ -50,12 +50,6 @@ export function getCurrentUser(options) {
 export function logoutAccount(options) {
   return request("/v1/auth/logout", { method: "POST", ...options });
 }
-export function verifyEmailToken(token, options) {
-  return request("/v1/auth/verify-email", { method: "POST", body: { token }, ...options });
-}
-export function resendVerificationEmail(email, options) {
-  return request("/v1/auth/resend-verification", { method: "POST", body: { email }, ...options });
-}
 // The backend checks APPROVED supplier ownership using the verified session.
 // This is a read-only authorization probe, NOT a Supplier demo-data request.
 export function checkSupplierApproval(options) {
