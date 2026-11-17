@@ -17,7 +17,7 @@ AeroRUL combines **GitHub Actions offline quality-gate CI** on integration branc
 
 ![AeroRUL CI/CD Pipeline Architecture](./CICD_pipeline.png)
 
-The diagram summarizes the full workflow across three views (also see editable system diagram [06 — Deployment & Runtime](<../../architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>)):
+The diagram summarizes the full workflow across three views (also see system diagram [06 — Deployment & Runtime](<../../architecture/diagrams/Final system-design-06 Deployment & Runtime.drawio.png>)):
 
 1. **Panel 1 — CI Quality Gate (GitHub Actions):**
    Every `push`, `pull_request`, or `workflow_dispatch` targeting `main`, `week-3`, or `Bao_Chinh_main` triggers **4 parallel jobs** (`Repository Structure & Secrets Hygiene`, `Backend CI` on **Node.js 22**, `Frontend CI` on **Node.js 22**, and `RUL Integrity` on **Python 3.11**). All 4 must pass before integration/review (`PASS`); any failure blocks merge (`FAIL`).

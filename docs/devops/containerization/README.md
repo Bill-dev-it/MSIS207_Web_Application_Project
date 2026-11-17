@@ -6,7 +6,7 @@ AeroRUL applies Docker containerization selectively to isolate the **Python 3.11
 
 ![Containerization Architecture](./Containerization_Architecture_%20AeroRUL_Cloud.png)
 
-*Interactive cross-system diagram: [06 — Deployment & Runtime](<../../architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>).*
+*Interactive cross-system diagram: [06 — Deployment & Runtime](<../../architecture/diagrams/Final system-design-06 Deployment & Runtime.drawio.png>).*
 
 1. **RUL Container Build & Deployment Pipeline:** Only `rul-service/` is packaged as a container: Source code (FastAPI + frozen model artifacts) $\to$ `Dockerfile` build recipe (`python:3.11-slim-bookworm`) $\to$ **Google Cloud Build** $\to$ **Artifact Registry** (versioned image) $\to$ **Google Cloud Run** (pulls image and scales on demand). *A `Dockerfile` defines an image build recipe, not a running container.*
 2. **Local Development:** Developers run React/Vite (`localhost:5173`) and Node/Express (`localhost:3000`) natively; Docker Desktop is **optional** and needed only if building/running the `rul-service` container locally (no `docker-compose.yml` exists in this repository).

@@ -27,7 +27,7 @@ Production deployment and end-to-end acceptance testing—covering Authenticatio
 ## Repository Modules & Documentation
 
 - [**System Documentation Hub**](./docs/README.md) — Central documentation index
-- [**Architecture Overview**](./docs/architecture/README.md) — Service boundaries, flows, and synchronized draw.io / SVG system diagrams
+- [**Architecture Overview**](./docs/architecture/README.md) — Service boundaries, flows, and synchronized draw.io / PNG system diagrams
 - [**Cloud Deployment Runbook**](./docs/devops/deployment/README.md) — Vercel, Render, Neon, Google Cloud Run, Cloudflare/iNET configuration, and recovery steps
 - [**REST API Design**](./docs/api/README.md) — Complete Express `/api/v1` contract and security conventions
 - [**Frontend (`frontend/`)**](./frontend/README.md) — React 18 SPA and Vercel proxy rules
