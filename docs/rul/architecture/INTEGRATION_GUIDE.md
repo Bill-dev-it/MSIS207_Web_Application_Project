@@ -22,10 +22,10 @@ use only. It is not part of Express's normal prediction path.
 ## Internal HTTP API
 
 All routes require `X-RUL-Service-Token`, matching `RUL_SERVICE_TOKEN` in both
-processes. Use a private random value of at least 32 characters. Keep this
-service internal: localhost binding for local development, and private network
-access plus HTTPS for deployment. Do not expose it through the browser or the
-public API gateway.
+processes. Use a private random value of at least 32 characters. Locally, FastAPI
+binds to `127.0.0.1:8000`; in production, it is packaged via `rul-service/Dockerfile`
+and hosted on **Google Cloud Run**, called exclusively by the Render Express backend
+over **HTTPS**. Do not expose this service through the browser or the public API gateway.
 
 ### `GET /health`
 
@@ -114,4 +114,4 @@ verify data origin, physical equivalence or prediction accuracy.
 The internal FastAPI contract is separate from the public Buyer API contract.
 The public paths, cookie authentication, CSRF header, response envelope and
 database persistence remain owned by Express; see
-[`./README.md`](./README.md).
+[`docs/rul/README.md`](../README.md).

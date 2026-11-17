@@ -8,8 +8,8 @@
 > scaler once at startup. The standalone Python CLI remains for offline use
 > only. The Replace & Buy engine-listing recommendation MVP is implemented;
 > trade-in and exchange-credit workflows are not. See the current
-> [Buyer RUL runtime contract](./README.md) and
-> [REST API documentation](../api/README.md) for authoritative behavior.
+> [Buyer RUL runtime contract](../README.md) and
+> [REST API documentation](../../api/README.md) for authoritative behavior.
 
 ## 1. Overview
 
@@ -27,14 +27,13 @@ Node.js / Express backend through a REST API.
 
 ## Architecture diagram references
 
-The system diagrams preserve the broader architecture and workflow, including
-future recommendation concepts:
+The system diagrams below are synchronized with the implemented RUL inference and Replace & Buy recommendation architecture:
 
-- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall system boundary for the RUL workflow.
-- [05 — AI/RUL & Recommendation](<../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — inference pipeline, model input/output, and recommendation process.
-- [07 — End-to-End Integration](<../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — end-to-end request flow from UI through business logic to RUL and cart checkout.
+- [00 — Master System Architecture](<../../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall system boundary for the RUL workflow.
+- [05 — AI/RUL & Recommendation](<../../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — inference pipeline, model input/output, and recommendation process.
+- [07 — End-to-End Integration](<../../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — end-to-end request flow from UI through business logic to RUL and cart checkout.
 
-See also: [Architecture overview](../architecture/README.md).
+See also: [Architecture overview](../../architecture/README.md).
 
 ## Original System Design and Responsibilities
 
@@ -47,7 +46,7 @@ workflows remain deferred.
 
 ## 2. Integration Flow
 
-![RUL integration flow](./images/RUL_integration.jpg)
+![RUL integration flow](../images/RUL_service_intergration.png)
 ## 3. Responsibilities
 
 ### Node.js / Express Backend
@@ -84,8 +83,8 @@ or e-commerce business logic.
 ## 4. Internal FastAPI REST API
 
 The public React client calls only the authenticated Express Buyer endpoints.
-Express sends the raw CSV to FastAPI on the private service network using the
-shared `X-RUL-Service-Token`.
+Express sends the raw CSV to the FastAPI container on **Google Cloud Run** over
+**HTTPS** (or `127.0.0.1:8000` locally) using the shared `X-RUL-Service-Token`.
 
 | Method | Internal path | Contract |
 |---|---|---|
@@ -114,7 +113,7 @@ by the frozen preprocessor. It returns the existing inference result as JSON:
 
 Failures use `{ "success": false, "error": { "code": "...", "message": "..." } }`.
 The internal FastAPI contract and local service startup are documented in
-[`./README.md`](./README.md). It is separate from the public Express
+[`docs/rul/README.md`](../README.md). It is separate from the public Express
 Buyer API and does not receive Buyer identity or connect to PostgreSQL.
 
 The existing FastAPI service reuses the actual inference runner and loads the
@@ -298,4 +297,4 @@ This document records the broader system design and current service boundary.
 The frozen model, preprocessing, FastAPI inference service, Express
 integration, PostgreSQL prediction persistence, and Replace & Buy engine
 recommendation MVP are implemented. Trade-in and exchange-credit workflows
-remain deferred; see the [current RUL runtime contract](./README.md).
+remain deferred; see the [current RUL runtime contract](../README.md).
