@@ -1,95 +1,103 @@
-# AeroRUL Authentication — setup and dependencies
+# AeroRUL Authentication
 
-This folder documents the Authentication implementation. **Lecturer context:** register, one-way password hashing, email verification, POST login with credentials in the request body, client public/protected pages, and server-side validation. Exact API paths, JWT settings, CSRF headers and cookie choice below are **AeroRUL design decisions**, not statements from the lecturer.
+Cookie-based JWT authentication, Argon2id password security, CSRF protection, and Express RBAC across **Vercel (SPA)** $\to$ **Render (Express 5)** $\to$ **Neon (PostgreSQL)**.
 
-## Package installation (backend only)
+![AeroRUL Authentication Architecture](./authentication_architecture_flow.png)
 
-Open a terminal in `backend/` and run `npm ci` on a fresh checkout. This installs dependency versions locked by `backend/package-lock.json`. No separate frontend Authentication npm package is required for this batch.
+## 1. Architecture Flow Breakdown
 
-| npm package | Why AeroRUL uses it |
-| --- | --- |
-| `express` | REST API routes and middleware |
-| `pg` | PostgreSQL query pool and transactions |
-| `argon2` | Secure Argon2id password hashing during Register and verification during Login |
-| `express-rate-limit` | Limits repeated registration and login attempts |
-| `jsonwebtoken` **(Batch 4)** | Signs and verifies JWT access tokens (HS256, 1 hour) |
-| `cookie-parser` **(Batch 4)** | Reads JWT from an HttpOnly browser cookie |
-| `dotenv` | Loads locally managed backend environment settings |
-| `apidoc` (devDependency) | Generates API reference pages with `npm run doc` |
-| `nodemon` (devDependency) | Restart backend when source changes during local development |
+| Stage | Component & Transport | Implemented Behavior |
+|---|---|---|
+| **1. Client & Entry Point** | Users (`Buyer`, `Supplier`, `Admin`) $\to$ **React SPA (Vercel)** $\to$ **Express API (Render)** | Browser calls same-origin `/api/*` (`credentials: "include"`). Vercel rewrites `/api/*` to Render so cookies stay same-origin against `PUBLIC_WEB_URL` (`https://www.aerotradehub.top`). |
+| **2. Authentication Flow** | `POST /api/v1/auth/register` · `POST /api/v1/auth/login` · `POST /api/v1/auth/logout` | **5-step Express pipeline:** (1) validate input, (2) lookup/create `users` + `companies` (+ `PENDING` `suppliers`), (3) hash/verify `password_hash` with **Argon2id**, (4) sign 1h HS256 JWT (`{ sub }`), (5) set/clear `HttpOnly` cookie `aerorul_session` synced with Neon (`users`, `companies`, `suppliers`, `role`, `is_active`). |
+| **3. Session Protection & RBAC** | `requireTrustedMutation` $\to$ `requireAuth` $\to$ `requireBuyer` / `requireSupplier` / `requireAdmin` | Validates `aerorul_session` via `AUTH_JWT_SECRET`, reloads current `users.is_active` & `role` from Neon, checks role/approval (`APPROVED` supplier via `company_id`), and enforces CSRF header + `Origin` on writes. |
+| **4. Authorized Access** | Protected Express Modules $\to$ JSON Response | Authorized requests reach Buyer, Supplier, Admin, Cart/Checkout, and RUL/Recommendation routes; Express returns JSON while `aerorul_session` remains browser-managed (`HttpOnly`, never in `localStorage`). |
 
-For an existing Batch 3 working tree, install only the two Batch 4 packages with `npm install jsonwebtoken cookie-parser` **inside `backend/`**. Do not edit `package-lock.json` by hand or use `npm audit fix --force`.
+> [!NOTE]
+> **No-Email Academic MVP:** Registration activates users immediately without email delivery or `email_verified_at` checks; Suppliers remain `PENDING` until an `ADMIN` approves them. Historical verification schema artifacts (`account_tokens`, `users.email_verified_at`, `users.auth_version`) remain unused at runtime.
 
-## Required environment variable *names* (values remain private)
+---
 
-Only the user edits `backend/.env`. **Never commit credentials, tokens or `.env` files.**
+## 2. Authentication Endpoints (`/api/v1/auth`)
 
-```dotenv
-# Existing PostgreSQL settings (values already configured locally):
-DB_HOST=...
-DB_PORT=...
-DB_NAME=...
-DB_USER=...
-DB_PASSWORD=...
+| Method | Endpoint | Middleware & Rate Limit | Request / Notes | Success & Key Errors |
+|---|---|---|---|---|
+| `POST` | `/api/v1/auth/register` | `rateLimit` (5 req / 15 min) | `account_type` (`BUYER`\|`SUPPLIER`), `full_name`, `email`, `password` (12–128 chars), `company_name`, `country_code`, `[company_type]`, `[store_name]` | `201 Created` (`user_id`, `company_id`, `[supplier_id]`, `role`) · `400 INVALID_INPUT` · `409 ACCOUNT_CONFLICT` · `429 RATE_LIMITED` |
+| `POST` | `/api/v1/auth/login` | `rateLimit` (5 req / 15 min) + `requireTrustedMutation` | JSON `{ email, password }` + header `X-AeroRUL-Request: 1` | `200 OK` (`data.user` only; no JWT in JSON) + sets `aerorul_session` · `401 INVALID_CREDENTIALS` · `403 ACCOUNT_DISABLED` / `UNTRUSTED_*` |
+| `GET` | `/api/v1/auth/me` | `requireAuth` | Cookie `aerorul_session` (`credentials: "include"`) | `200 OK` (`user_id`, `company_id`, `full_name`, `email`, `role`) · `401 AUTH_REQUIRED` |
+| `POST` | `/api/v1/auth/logout` | `requireTrustedMutation` + `requireAuth` | Header `X-AeroRUL-Request: 1` + valid session cookie | `200 OK` (`{ logged_out: true }`) + clears cookie · `401 AUTH_REQUIRED` · `403 UNTRUSTED_*` |
 
-# Required for Batch 4 signing (random, secret, at least 32 bytes):
-AUTH_JWT_SECRET=...
+---
 
-# Web origin and environment settings (PUBLIC_WEB_URL is mandatory for CSRF & apiDoc):
-PUBLIC_WEB_URL=http://localhost:5173
-NODE_ENV=development
-```
+## 3. Session, Cookie & CSRF Contract
 
-`AUTH_JWT_SECRET` must be a securely generated value, not a hardcoded example. Keep the same secret while deployed JWT sessions should remain valid; changing it invalidates existing JWTs. `NODE_ENV=production` makes the JWT cookie `Secure` (HTTPS required). Production traffic must use HTTPS and same-site frontend/API deployment (or a deliberate updated cookie/CORS design). Local Vite `/api` proxy to `localhost:3000` keeps API calls on the frontend origin.
-
-The backend requires `SELECT` on `users` and `suppliers` to authenticate and resolve session roles. The legacy `auth_version` column remains in PostgreSQL schema for compatibility, but the simplified session service does not execute database updates during logout. A DBA/user checks privileges manually in **pgAdmin**; Copilot never connects to or modifies PostgreSQL. Registration and email verification require permissions described in previous batches.
-
-## Authentication HTTP endpoints
-
-The backend mounts `backend/src/routes/auth/index.js` under `/api/v1/auth`.
-
-| Method | URL | Purpose |
-| --- | --- | --- |
-| POST | `/api/v1/auth/register` | Create Buyer or Supplier (no verification email) |
-| POST | `/api/v1/auth/login` | Verify email/password, set HttpOnly JWT cookie |
-| GET | `/api/v1/auth/me` | Read current user using JWT cookie |
-| POST | `/api/v1/auth/logout` | Clear HttpOnly session cookie |
-
-Login request body is `{ "email": "user@example.test", "password": "..." }`. The backend looks up `users.email` (schema does **not** contain `username`) and checks `password_hash` with Argon2id. Login returns limited user data **without a JWT in JSON**; the browser stores the cookie automatically. `GET /me` checks signature, expiration and current database account state. Active users can log in immediately; in this academic MVP, email ownership is not verified, and `email_verified_at` is not required. Supplier routes additionally require `role=SUPPLIER` and an `APPROVED` supplier profile connected by `company_id`. No `supplier_id` from request input is trusted.
-
-On login/logout and all Supplier state-changing requests, send `X-AeroRUL-Request: 1`. With an `Origin` header, it must exactly match `PUBLIC_WEB_URL`. This custom-header + origin checking is a **CSRF mitigation** for cookie-authenticated JSON APIs; do not use wildcard credentialed CORS. Example (for a later React API client):
+- **Password Security:** Argon2id hashing (`argon2`); login queries `LOWER(email)` and rejects disabled accounts (`is_active = FALSE`).
+- **JWT Cookie (`aerorul_session`):** `HS256`, `1h` expiry, `{ sub: user_id }` only, signed/verified with `AUTH_JWT_SECRET` ($\ge 32$ bytes). Flags: `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` when `NODE_ENV=production`.
+- **CSRF Mitigation (`requireTrustedMutation`):** Required on login, logout, and all non-`GET`/`HEAD`/`OPTIONS` protected routes:
+  - Header `X-AeroRUL-Request: 1` mandatory.
+  - `Origin` header (when present) must strictly match `PUBLIC_WEB_URL`.
+  - Requests with `Sec-Fetch-Site: cross-site` are rejected (`403 UNTRUSTED_ORIGIN`).
+- **Session Lifecycle:** Logout immediately clears the browser cookie (`path: "/"`). No refresh tokens or server-side revocation table are used; copied tokens expire after 1 hour.
 
 ```js
 fetch("/api/v1/auth/login", {
-  method: "POST", credentials: "include",
+  method: "POST",
+  credentials: "include",
   headers: { "Content-Type": "application/json", "X-AeroRUL-Request": "1" },
-  body: JSON.stringify({ email, password })
+  body: JSON.stringify({ email, password }),
 });
 ```
 
-The custom header is not a secret or a bearer token. JWT is held in a host-only HttpOnly, SameSite=Lax cookie with a one-hour expiry. The `HttpOnly` flag prevents client-side JavaScript (`document.cookie`) from directly reading the cookie value. In this simplified JWT implementation, logout clears the cookie from the browser; any copied token expires naturally after its 1-hour lifetime. No refresh token exists in this phase. Supplier demo remains enabled by default and needs later frontend integration to use the live API.
+---
 
-## Source layout
+## 4. Express RBAC Middleware
 
-The React Login, Register and Verify Email screens, session context and protected routes use the frontend's existing dependencies. For frontend setup and implementation details, see [the Frontend Authentication Guide](./FRONTEND_GUIDE.md). On a fresh checkout, install the existing frontend dependencies with `cd frontend && npm ci`; no additional Authentication npm package is required.
+| Middleware | Protected Route Groups | Server-Side Checks | Failure Codes |
+|---|---|---|---|
+| `requireAuth` | `/api/v1/auth/me`, `/logout` | Verifies `aerorul_session` JWT + reloads active user from `public.users` | `401 AUTH_REQUIRED`, `503 AUTH_UNAVAILABLE` |
+| `requireBuyer` | `/cart`, `/checkout`, `/orders`, `/dashboard`, `/engines`, `/rul` | `requireAuth` $\to$ `role === "BUYER"` $\to$ `requireTrustedMutation` | `403 BUYER_REQUIRED`, `403 UNTRUSTED_*` |
+| `requireSupplier` | `/api/v1/supplier/*` (`overview`, `listings`, `inventory`, `orders`) | `requireAuth` $\to$ `role === "SUPPLIER"` $\to$ `suppliers.status = 'APPROVED'` (derives `req.supplierId`) $\to$ `requireTrustedMutation` | `403 FORBIDDEN`, `403 SUPPLIER_NOT_APPROVED` |
+| `requireAdmin` | `/api/v1/admin/*` (`dashboard`, `suppliers`, `payments`, `rul`) | `requireAuth` $\to$ `role === "ADMIN"` $\to$ `requireTrustedMutation` | `403 ADMIN_REQUIRED`, `403 UNTRUSTED_*` |
+
+---
+
+## 5. Setup, Environment & Source Layout
+
+### Backend Dependencies (`cd backend && npm ci`)
+
+| Package | Role | Package | Role |
+|---|---|---|---|
+| `express`, `pg` | REST routing & Neon PostgreSQL pool/TX | `express-rate-limit` | 5 req / 15 min throttle on register & login |
+| `argon2` | Argon2id password hashing & verification | `dotenv` | Local `.env` loading |
+| `jsonwebtoken`, `cookie-parser` | 1h HS256 JWT + `HttpOnly` cookie parsing | `apidoc`, `nodemon` (dev) | `/docs/` API build (`npm run doc`) & dev reload |
+
+### Required Environment Variables (Names Only — Private Values in `.env` / Render)
+
+- **Database (`pg.Pool`):** `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (+ `PGSSLMODE=require` on Neon). Needs `SELECT` on `users`, `suppliers` and `INSERT` on `companies`, `users`, `suppliers`.
+- **Auth & Origin:** `AUTH_JWT_SECRET` ($\ge 32$ random chars), `PUBLIC_WEB_URL` (`http://localhost:5173` local / `https://www.aerotradehub.top` prod), `NODE_ENV` (`development` / `production`).
+- **Frontend Auth Integration:** See [Frontend Authentication Guide](./FRONTEND_GUIDE.md) and [Frontend README](../../frontend/README.md) (`VITE_SUPPLIER_DEMO_MODE=false` in prod).
+
+### Backend Source Files
 
 ```text
 backend/src/
-  routes/auth/index.js                      # Register, login, me, logout
-  controllers/auth/register.controller.js
-  controllers/auth/session.controller.js     # Login, /me, logout responses
-  services/auth/register.service.js
-  services/auth/register.validation.js
-  services/auth/session.service.js          # Argon2 verification, JWT, DB checks
-  middleware/require-auth.js                # Validate cookie + JWT and load user
-  middleware/require-trusted-mutation.js    # CSRF header and origin check
-  middleware/require-supplier.js            # Resolve owned approved Supplier
+  routes/auth/index.js                    # POST /register, POST /login, GET /me, POST /logout
+  controllers/auth/register.controller.js # Registration transaction & conflict mapping
+  controllers/auth/session.controller.js  # Login, /me, logout HTTP handlers
+  services/auth/register.service.js       # Atomic companies + users + suppliers insert
+  services/auth/register.validation.js    # Field rules (blocks ADMIN role & client IDs)
+  services/auth/session.service.js        # Argon2id check, JWT issue/verify, publicUser()
+  middleware/require-auth.js              # Cookie JWT verification + live user lookup
+  middleware/require-trusted-mutation.js  # X-AeroRUL-Request + PUBLIC_WEB_URL Origin CSRF gate
+  middleware/require-buyer.js             # BUYER guard + CSRF
+  middleware/require-supplier.js          # SUPPLIER + APPROVED company check + CSRF
+  middleware/require-admin.js             # ADMIN guard + CSRF
 ```
 
-## Verification and scope boundaries
+---
 
-Static tests do not touch PostgreSQL. After installing dependencies, run `node --check`, `node --test tests/auth-*.test.cjs`, `npm run doc`, and `git diff --check`. Sample requests for state-changing endpoints remain documented with `@apiHeader {String} X-AeroRUL-Request=1`.
+## 6. Verification & Scope Boundaries
 
-**Implemented:** The MVP provides React Login and Register screens, Auth Context, and role-protected routes. Registration creates an active account without an email verification step. Users log in with their email and password; suppliers remain in PENDING status until approved by an administrator.
-
-**Still pending:** Real PostgreSQL integration testing, browser end-to-end testing, and production deployment. There is no email provider, no email verification, and no automated password reset. Supplier demo mode remains enabled by default. Never call a live POST endpoint or run database SQL from Copilot without explicit user approval. Historical verification columns in PostgreSQL are retained for schema compatibility but are not used by the MVP.
+- **Offline Checks (`backend/`):** `node --check`, `node --test tests/auth-*.test.cjs`, `npm run doc`, and `git diff --check`.
+- **Production Acceptance:** Verified end-to-end on Vercel + Render + Neon at `https://www.aerotradehub.top` on **November 16, 2026** (Registration, Login, `/me`, Role/Approval Guards, Logout). Automated browser E2E suites (Playwright/Cypress) and email/password-reset flows are out of scope.
+- **Related Design Details:** [AUTHENTICATION_DESIGN.md](./AUTHENTICATION_DESIGN.md) · [FRONTEND_GUIDE.md](./FRONTEND_GUIDE.md)

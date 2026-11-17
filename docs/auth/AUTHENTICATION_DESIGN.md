@@ -19,7 +19,7 @@
 | `companies` | `company_id` PK | Company created during buyer/supplier registration |
 | `users` | `user_id` PK, `company_id` FK, `email` UNIQUE, `password_hash`, `role`, `is_active` | Primary identity; add `email_verified_at` and `auth_version` |
 | `suppliers` | `supplier_id` PK, unique `company_id` FK, `status` | Map authenticated supplier user to supplier company; approval separate from email verification |
-| `account_tokens` | NEW: FK `user_id`; `purpose`, `token_hash`, expiry, consumption | Email verification and password reset |
+| `account_tokens` | Historical schema table (FK `user_id`) | Retained for migration compatibility; unused by active no-email MVP runtime |
 
 Registering a **new** Supplier: within ONE database transaction, insert a `companies` row (`company_type='SUPPLIER'`), insert a `users` row (`role='SUPPLIER'` and Argon2id `password_hash`), and insert a `suppliers` row with status `PENDING`. Never let a public request claim an existing company or choose the `ADMIN` role. Buyer registration similarly creates its company/user transaction, without a Supplier row. In this MVP, active registered users can log in immediately; Supplier private operations additionally require status `APPROVED`.
 
@@ -45,7 +45,7 @@ Response envelope: `{ "success": true, "data": ... }` on success, `{ "success": 
 3. Role must be `SUPPLIER`; derive `company_id` from the server-fetched user record.
 4. Query `suppliers` where `suppliers.company_id = users.company_id`. Require approved Supplier for protected management operations.
 5. Set `req.supplierId` **on the server**, using the verified supplier row. Supplier service SQL already scopes by that ID.
-6. After integration tests pass, use `VITE_SUPPLIER_DEMO_MODE=false`. Never disable the fail-closed middleware to bypass auth.
+6. Production Vercel deploys with `VITE_SUPPLIER_DEMO_MODE=false` so live Supplier API authorization and operations execute end-to-end. Never disable the fail-closed middleware to bypass auth.
 
 Frontend distinguishes `401` (not authenticated → Login) from `403` (authenticated but no permission / supplier not approved).
 
