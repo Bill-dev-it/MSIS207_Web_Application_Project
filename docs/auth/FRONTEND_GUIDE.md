@@ -27,8 +27,8 @@ Uses the existing React 18 + React Router v6 + Vite + Tailwind stack. **No addit
 
 ## Verification
 
-Run `node --test tests/auth-pure.test.mjs` and `npm run build` from `frontend/`. Inspect route matches for Buyer, Supplier and Admin deep links; check 375px, keyboard focus and screen reader labels. Verify no token storage use (`localStorage`, `sessionStorage`). Confirm the `getSupplierApproval` check is not skipped when demo mode is true. These are not substitutes for live PostgreSQL/SMTP/end-to-end browser tests, which require user authorization and credentials configured manually.
+Run `node --test tests/auth-pure.test.mjs` and `npm run build` from `frontend/`. Inspect route matches for Buyer, Supplier and Admin deep links; check 375px, keyboard focus and screen reader labels. Verify no token storage use (`localStorage`, `sessionStorage`). Confirm the `getSupplierApproval` check is not skipped when demo mode is true. Note that automated browser E2E CI suites are not configured; production authentication flows were verified manually during owner end-to-end acceptance testing at `https://www.aerotradehub.top` on November 16, 2026.
 
 ### Security and deployment notes
 
-JWT `AUTH_JWT_SECRET` belongs only in backend secret configuration. Do not commit `.env`. In this academic MVP, email ownership is not verified, and the backend lacks automated password reset. Approved Supplier live-data integration remains available when demo mode is toggled off.
+JWT `AUTH_JWT_SECRET` belongs only in backend secret configuration (Render environment variables in production). Do not commit `.env`. In this academic MVP, email ownership is not verified, and the backend lacks automated password reset. Production Vercel builds set `VITE_SUPPLIER_DEMO_MODE=false` for live Supplier API integration.
