@@ -5,7 +5,7 @@ This checklist documents manual integration and runtime verification cases for t
 > [!IMPORTANT]
 > - **Demonstration Boundary**: `SIMULATION` is a development-only immediate-success payment method. `BANK_TRANSFER` is a manual reconciliation demonstration where an authorized `ADMIN` confirms or cancels a pending payment record.
 > - **No Real Financial Processing**: AeroRUL does **not** collect cardholder data, integrate live card acquiring or banking rails, transfer funds, or claim PCI DSS compliance.
-> - **Migration Prerequisite**: Apply [`database/migrations/04_b2b_payment_mvp.sql`](../../database/migrations/04_b2b_payment_mvp.sql) to the target PostgreSQL database before running these test cases.
+> - **Migration Prerequisite**: Apply [`database/migrations/04_b2b_payment_mvp.sql`](../../../database/migrations/04_b2b_payment_mvp.sql) to the target PostgreSQL database before running these test cases.
 
 ---
 
@@ -62,7 +62,7 @@ This checklist documents manual integration and runtime verification cases for t
 
 - [ ] **4.1 Competing Confirm and Cancel Requests**
   - Issue concurrent `confirm` and `cancel` requests for the same `PENDING` `BANK_TRANSFER` order.
-  - Verify row-level serialization (`SELECT ... FOR UPDATE OF p` in [`payments.repository.js`](../../backend/src/services/admin/payments.repository.js)): exactly one transition succeeds first, and the competing transition receives `409 Conflict` (`PAYMENT_ALREADY_SUCCEEDED` or `PAYMENT_ALREADY_CANCELLED`).
+  - Verify row-level serialization (`SELECT ... FOR UPDATE OF p` in [`payments.repository.js`](../../../backend/src/services/admin/payments.repository.js)): exactly one transition succeeds first, and the competing transition receives `409 Conflict` (`PAYMENT_ALREADY_SUCCEEDED` or `PAYMENT_ALREADY_CANCELLED`).
 
 ---
 
