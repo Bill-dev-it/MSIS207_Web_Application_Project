@@ -12,10 +12,10 @@ The architecture consists of four interconnected domains: **Reference ETL (A)**,
 
 This data engineering section maps to the following synchronized architecture diagrams:
 
-- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall runtime and ETL boundaries.
-- [04 — PostgreSQL OLTP](<../architecture/diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>) — operational tables and schema domains.
-- [05 — AI/RUL & Recommendation](<../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — how RUL predictions and recommendation data are produced and stored.
-- [06 — Deployment & Runtime](<../architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>) — ETL and runtime hosting separation.
+- [00 — Master System Architecture](<../architecture/diagrams/Final system-design-00 Master System Architecture.drawio.png>) — overall runtime and ETL boundaries.
+- [04 — PostgreSQL OLTP](<../architecture/diagrams/Final system-design-04 PostgreSQL OLTP (26 tables).drawio.png>) — operational tables and schema domains.
+- [05 — AI/RUL & Recommendation](<../architecture/diagrams/Final system-design-05 AI-RUL & Recommendation.drawio.png>) — how RUL predictions and recommendation data are produced and stored.
+- [06 — Deployment & Runtime](<../architecture/diagrams/Final system-design-06 Deployment & Runtime.drawio.png>) — ETL and runtime hosting separation.
 
 For the full system context, see [docs/architecture/README.md](../architecture/README.md).
 

@@ -17,10 +17,11 @@ This directory contains deployment, containerization, and CI/CD documentation fo
 ## Related Architecture Diagrams
 
 > [!NOTE]
-> The SVG diagrams below are synchronized with the verified production architecture (iNET/Cloudflare DNS Only, Vercel rewrites, Render Express, Neon PostgreSQL, Google Cloud Run, cookie auth, and `BANK_TRANSFER` / Replace & Buy flows).
+> The PNG diagrams below are synchronized with the verified production architecture (iNET/Cloudflare DNS Only, Vercel rewrites, Render Express, Neon PostgreSQL, Google Cloud Run, cookie auth, and `BANK_TRANSFER` / Replace & Buy flows).
 
-- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall service boundaries.
-- [06 — Deployment & Runtime](<../architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>) — hosting, runtime, and infrastructure boundaries.
-- [07 — End-to-End Integration](<../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — cross-component request and data flows.
+- [00 — Master System Architecture](<../architecture/diagrams/Final system-design-00 Master System Architecture.drawio.png>) — overall service boundaries.
+- [06 — Deployment & Runtime](<../architecture/diagrams/Final system-design-06 Deployment & Runtime.drawio.png>) — hosting, runtime, and infrastructure boundaries.
+- [07 — End-to-End Integration](<../architecture/diagrams/Final system-design-07 End-to-End Integration.drawio.png>) — cross-component request and data flows.
+- [08 — Physical Infrastructure & Scalability](<../architecture/diagrams/Final system-design-08 Physical Infrastructure & Scalability.drawio.png>) — AS-IS deployed topology and TO-BE horizontal scaling architecture.
 
 See also: [Architecture overview](../architecture/README.md).

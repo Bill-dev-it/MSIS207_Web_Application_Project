@@ -13,9 +13,9 @@ This directory documents user interface and experience design rules for **AeroRU
 
 The user experience and frontend structure map to the following synchronized architecture views:
 
-- [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall user journeys and platform boundaries.
-- [01 — Business & User Workflows](<../architecture/diagrams/System_Design_ver 1.0-01 Business & User Workflows.drawio.svg>) — role-based business flows and buyer actions.
-- [02 — Frontend Architecture](<../architecture/diagrams/System_Design_ver 1.0-02 Frontend Architecture.drawio.svg>) — React screens, router guard, and frontend service boundaries.
-- [07 — End-to-End Integration](<../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — how the frontend participates in the end-to-end purchase flow.
+- [00 — Master System Architecture](<../architecture/diagrams/Final system-design-00 Master System Architecture.drawio.png>) — overall user journeys and platform boundaries.
+- [01 — Business & User Workflows](<../architecture/diagrams/Final system-design-01 Business & User Workflows.drawio.png>) — role-based business flows and buyer actions.
+- [02 — Frontend Architecture](<../architecture/diagrams/Final system-design-02 Frontend Architecture.drawio.png>) — React screens, router guard, and frontend service boundaries.
+- [07 — End-to-End Integration](<../architecture/diagrams/Final system-design-07 End-to-End Integration.drawio.png>) — how the frontend participates in the end-to-end purchase flow.
 
 See also: [Architecture overview](../architecture/README.md).

@@ -2,198 +2,164 @@
 
 ## 1. Overview
 
-AeroRUL is an AI-enhanced B2B aviation parts marketplace that connects airlines
-and Maintenance, Repair, and Overhaul (MRO) organizations with aviation parts
-suppliers.
+AeroRUL is an AI-enhanced B2B aviation engine and parts marketplace that connects airlines and Maintenance, Repair, and Overhaul (MRO) organizations with aviation parts suppliers.
 
-The platform integrates conventional B2B procurement with a simulated
-Remaining Useful Life (RUL) workflow for educational maintenance planning.
-RUL-based replacement recommendations are deferred.
+The platform integrates B2B procurement (catalog, cart, multi-seller checkout, and simulated/bank-transfer payment workflows) with a Remaining Useful Life (RUL) simulation workflow and a **Replace & Buy** engine-listing recommendation MVP.
 
-The system is organized around a **React/Vite frontend, a
-Node.js/Express modular monolith, PostgreSQL transactional storage, and a
-private Python/FastAPI inference service for the integrated RUL model**.
+The system is organized around a **React 18 / Vite frontend (Vercel), a Node.js / Express 5 modular monolith (Render Web Service), a managed PostgreSQL database (Neon), and a containerized Python 3.11 / FastAPI inference service (Google Cloud Run)**. The architecture separates user interfaces, transactional business logic, persistent data, and deep-learning inference while keeping Express as the single API gateway for application operations.
 
-The architecture separates user interfaces, business logic, persistent data,
-and AI inference while maintaining a single backend entry point for application
-operations.
+**Production Status:** Verified and live at `https://www.aerotradehub.top` (owner end-to-end acceptance testing passed on November 16, 2026).
+
+---
 
 ## 2. Master System Architecture
 
-The diagram illustrates the primary system components, their responsibilities,
-and communication boundaries.
-
-The complete architecture is maintained in one editable draw.io file:
+The editable diagram source is maintained in one draw.io file:
 
 [**Open System Design — draw.io**](./system-design.drawio)
 
-The diagram exports for direct review are available in [./diagrams](./diagrams):
+> [!NOTE]
+> All nine pages in [`system-design.drawio`](./system-design.drawio) and their exported PNG diagrams below are synchronized with the verified production architecture (iNET + Cloudflare DNS Only, Vercel same-origin rewrites, Render Express monolith, Neon PostgreSQL, Google Cloud Run, HttpOnly cookie auth, `BANK_TRANSFER`, and implemented Replace & Buy recommendations).
 
-- [00 — Master System Architecture](<./diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>)
-- [01 — Business & User Workflows](<./diagrams/System_Design_ver 1.0-01 Business & User Workflows.drawio.svg>)
-- [02 — Frontend Architecture](<./diagrams/System_Design_ver 1.0-02 Frontend Architecture.drawio.svg>)
-- [03 — REST API & Backend](<./diagrams/System_Design_ver 1.0-03 REST API & Backend.drawio.svg>)
-- [04 — PostgreSQL OLTP](<./diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>)
-- [05 — AI/RUL & Recommendation](<./diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>)
-- [06 — Deployment & Runtime](<./diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>)
-- [07 — End-to-End Integration](<./diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>)
+Diagram exports in [./diagrams](./diagrams):
 
-![AeroRUL master system architecture](./legacy/System_stucture.png)
+- [00 — Master System Architecture](<./diagrams/Final system-design-00 Master System Architecture.drawio.png>)
+- [01 — Business & User Workflows](<./diagrams/Final system-design-01 Business & User Workflows.drawio.png>)
+- [02 — Frontend Architecture](<./diagrams/Final system-design-02 Frontend Architecture.drawio.png>)
+- [03 — REST API & Backend](<./diagrams/Final system-design-03 REST API & Backend.drawio.png>)
+- [04 — PostgreSQL OLTP](<./diagrams/Final system-design-04 PostgreSQL OLTP (26 tables).drawio.png>)
+- [05 — AI/RUL & Recommendation](<./diagrams/Final system-design-05 AI-RUL & Recommendation.drawio.png>)
+- [06 — Deployment & Runtime](<./diagrams/Final system-design-06 Deployment & Runtime.drawio.png>)
+- [07 — End-to-End Integration](<./diagrams/Final system-design-07 End-to-End Integration.drawio.png>)
+- [08 — Physical Infrastructure & Scalability](<./diagrams/Final system-design-08 Physical Infrastructure & Scalability.drawio.png>)
+
+### Final System Architecture Overview
+
+*High-level production system overview diagram ([`./legacy/final_system_architecture.png`](./legacy/final_system_architecture.png)):*
+
+![AeroRUL Final System Architecture Overview](./legacy/final_system_architecture.png)
+
+This overview summarizes the deployed end-to-end architecture across all runtime and delivery layers:
+
+- **Users (Client Layer):** Connects **Buyer Organizations** (Airlines, MROs, Operators), **Supplier Organizations** (Parts Manufacturers, Distributors), and **Administrators** (platform oversight, supplier approvals, payment reconciliation, RUL service health) over **HTTPS**.
+- **Edge Layer (`aerotradehub.top` / iNET + Cloudflare):** Custom domain registered at **iNET** (`aerotradehub.top`) using **Cloudflare** for authoritative DNS and domain security controls before routing traffic to **Vercel**. *(Note: While the overview graphic groups DNS/TLS/caching/security under Cloudflare conceptually, verified production keeps Cloudflare in **DNS Only** mode with HTTP proxy/caching disabled so **Vercel Edge** terminates TLS directly.)*
+- **Frontend Layer (React SPA on Vercel):** Delivers the 12 core UI functional capabilities—Authentication, Product Catalog, Product Details, Search & Filtering, Cart & Checkout, Order Management, Buyer Portal, Supplier Portal, Admin Workspace, Aircraft & Engines, RUL Analysis, and Recommendations—communicating via same-origin **REST API (HTTPS)** and receiving **JSON Responses**.
+- **Backend Layer (Node.js / Express Modular Monolith on Render):** Consolidates Auth & Sessions, User & Company Management, Product Catalog, Supplier Management, Inventory Management, Order & Payment Management, Aircraft & Engine Management, Recommendation Engine, Admin Tools, and built API Docs (`/docs/`).
+- **AI RUL Service (Python FastAPI on Google Cloud Run):** Invoked by Express (`Prediction Request` $\leftrightarrow$ `Predicted RUL` over HTTPS) to run Input Validation, Sensor Data Preprocessing, Trained iTransformer Model inference, and RUL prediction output.
+- **Database Layer (Neon Managed PostgreSQL):** Accessed exclusively from Express via parameterized `pg` queries across six logical data groups: Identity & Organization (`Users`, `Companies`, `Suppliers`, `Addresses`), Product & Marketplace (`Categories`, `Products`, `Seller Listings`, `Product Compatibility`), Aviation Assets (`Aircraft`, `Engines`, `Engine Models`, `Sensor Data (metadata)`), Commerce & Transactions (`Cart`, `Orders`, `Payments`, `Shipments`), Customer Interaction (`Wishlist`, `Ratings`, `Reviews`), and Predictive Maintenance (`RUL Predictions`, `Replacement Recommendations`, plus conceptual maintenance tracking). *(Note: Legacy schema compatibility tables such as `account_tokens` and `notifications`/`ml_model_versions` are detailed in Diagram 04 above.)*
+- **Development, Integration & Deployment Environment:** Highlights Dockerized RUL packaging (`rul-service/Dockerfile`), GitHub Actions CI checks, Bronze $\to$ Silver $\to$ Gold dataset preparation, modular codebase separation, and the five cloud infrastructure pillars (**Vercel**, **Render**, **Neon**, **Google Cloud Run**, **Cloudflare**).
+
+---
 
 ## 3. Core Business Flows
 
-AeroRUL supports two procurement paths that converge into the same cart and
-checkout process.
+AeroRUL supports two procurement paths that converge into the same cart and checkout process.
 
 ### Path A — Standard B2B Procurement
 
-**Buyer → Marketplace → Product & Supplier Listings → Shared Cart → Checkout
-→ Order Fulfillment**
+**Buyer $\to$ Marketplace $\to$ Product & Approved Supplier Listings $\to$ Shared Cart $\to$ Checkout (`SIMULATION` or `BANK_TRANSFER`) $\to$ Order Fulfillment**
 
-Buyers browse aviation parts, compare available supplier listings, and place
-orders through the marketplace.
+Buyers browse aviation parts, compare active offers from approved suppliers, and place multi-supplier orders through a single transactional checkout.
 
-### Path B — Buyer RUL Simulation
+### Path B — Buyer RUL Analysis & Replace & Buy Procurement
 
-**Buyer → Company Engine → FD002 Simulation CSV → RUL Inference → Saved
-Prediction History**
+**Buyer $\to$ Company Engine $\to$ FD002-Compatible Sensor CSV $\to$ RUL Inference (Cloud Run) $\to$ Saved Prediction History $\to$ Replace & Buy Recommendations $\to$ Shared Cart $\to$ Checkout**
 
-Buyers associate a selected company-owned engine with one simulated NASA
-C-MAPSS FD002 unit. The Express backend invokes the frozen Python model and
-stores the successful prediction. This association does not establish that the
-CSV is real aircraft telemetry or that a marketplace listing is compatible.
-RUL-based replacement recommendations are deferred.
+Buyers select a company-owned engine and submit a compatible 19-column sensor CSV along with a declared source classification (`X-RUL-Source`). Express sends the CSV to the FastAPI model on Google Cloud Run, saves the prediction in PostgreSQL, derives a project demo urgency label (`NORMAL`, `MONITOR`, `PREPARE`, `PRIORITIZE`), and can generate up to five ranked replacement `ENGINE` listings based on exact `product_engine_compatibility` evidence, approved Supplier status, and positive stock. Selected listings enter the shared Buyer cart and follow the standard Path A checkout transaction.
 
-Standard procurement uses the shared cart and checkout. RUL results do not
-automatically create orders, supplier recommendations, or compatibility
-claims.
+---
 
 ## 4. Architecture Components
 
-### Frontend — React/Vite
+### Frontend — React 18 / Vite 5 (Vercel)
 
-The frontend provides role-based interfaces for buyers, suppliers, and
-administrators.
+The frontend provides role-based workspaces for Public visitors, Buyers, Suppliers, and Administrators:
+- **Public:** Catalog browsing, product detail, supplier offer comparison, Login, and Register (no email verification step in MVP).
+- **Buyer:** Dashboard, engine inventory CRUD, RUL CSV analysis & history, Replace & Buy recommendations, cart, checkout (`SIMULATION` and `BANK_TRANSFER`), and order tracking.
+- **Supplier:** Store overview, listings CRUD, inventory management, and seller-order fulfillment (`CONFIRMED` $\to$ `PROCESSING` $\to$ `SHIPPED` $\to$ `DELIVERED`, gated on `SUCCEEDED` payment).
+- **Admin:** Marketplace dashboard, Supplier approval (`PENDING` $\to$ `APPROVED`), Bank Transfer payment reconciliation (`confirm` / `cancel`), and RUL service health monitoring.
 
-Core functionality includes marketplace browsing, supplier listings, cart and
-checkout, order management, engine management, and RUL analysis. RUL-based
-replacement recommendations remain future work.
+The React application communicates strictly with same-origin `/api/v1/*` endpoints (via Vite dev proxy locally or Vercel rewrites in production) using `credentials: "include"` and `X-AeroRUL-Request: 1` on state-changing requests. It never connects directly to PostgreSQL or Google Cloud Run.
 
-The React application communicates with the Express backend through HTTP REST
-APIs. It does not connect directly to PostgreSQL or invoke the Python model.
+### Backend — Node.js / Express 5 (Render Web Service)
 
-### Backend — Node.js/Express
+The backend follows a **modular monolith** architecture using an MVC-inspired layered structure (Routes $\to$ Middleware $\to$ Controllers $\to$ Services $\to$ SQL Repositories via `pg.Pool`). All business modules operate within one Express application rather than separate microservices.
 
-The backend follows a **modular monolith** architecture. All business modules
-operate within one Express application rather than independently deployed
-microservices.
+Key responsibilities:
+- Cookie-based HS256 JWT authentication (1-hour TTL, `HttpOnly; SameSite=Lax`, `Secure` in production), Argon2id password verification, server-side role/company ownership enforcement, and CSRF header + `Origin` (`PUBLIC_WEB_URL`) validation.
+- Catalog discovery, Supplier listing/inventory/order operations, and Admin supplier/payment/RUL-health endpoints.
+- Transactional cart/checkout (`SIMULATION` immediate success; `BANK_TRANSFER` pending with Admin confirmation/cancellation stock restoration).
+- RUL orchestration, private CSV persistence, `replacement_recommendations` ranking, and serving generated apiDoc at `/docs/`.
 
-Its responsibilities include authentication, organization-based access
-control, catalog and supplier listings, inventory, cart and checkout, order
-fulfillment, fleet management, and RUL orchestration. RUL-based replacement
-recommendations are not part of the current runtime.
+### Database — Managed PostgreSQL (Neon)
 
-The backend is the main application API and coordinates database operations
-and internal FastAPI HTTP inference for RUL requests.
+PostgreSQL provides persistent OLTP storage across all application domains:
+- **Baseline Schema ([`database/schema/01_schema.sql`](../../database/schema/01_schema.sql)):** **26 tables** covering identity/organizations, fleet, catalog/stock, shopping, orders/payments/fulfillment, AI/RUL, and engagement.
+- **Additive Auth Extension ([`database/authentication/01_authentication_setup.sql`](../../database/authentication/01_authentication_setup.sql)):** Adds `account_tokens` (making **27 tables** total) and `users.email_verified_at` / `users.auth_version`, retained for historical schema compatibility and unused by the active no-email MVP runtime.
+- **Payment MVP Migration ([`database/migrations/04_b2b_payment_mvp.sql`](../../database/migrations/04_b2b_payment_mvp.sql)):** Enforces `SIMULATION` and `BANK_TRANSFER` payment state constraints.
 
-### Database — PostgreSQL
+Express accesses Neon PostgreSQL over TLS (`PGSSLMODE=require`) using parameterized SQL queries and `pg.Pool`.
 
-PostgreSQL provides persistent OLTP storage for the marketplace and
-aviation-related application data.
+### AI Inference — FastAPI Container (Google Cloud Run)
 
-The database design contains **26 tables** grouped into identity and
-organizations, catalog and stock, shopping, fleet, orders and fulfillment,
-AI/RUL, and engagement domains.
-
-The backend manages database access using parameterized SQL and a PostgreSQL
-connection pool. Checkout operations use a shared database transaction to
-coordinate order creation and inventory updates.
-
-For schema details, see the [Database Documentation](../database/README.md).
-
-### AI Inference — Internal FastAPI Service
-
-The current RUL request path is:
+The RUL request path is:
 
 ```text
-React Buyer UI -> Express Buyer REST API -> internal FastAPI REST API -> model
+React Buyer UI -> Vercel (/api/v1/rul/...) -> Render Express API -> Google Cloud Run FastAPI -> Condition-Aware iTransformer v3
 ```
 
-Express enforces session authorization and engine-company ownership, validates
-the public upload contract, handles idempotency, and persists successful
-uploads/predictions in the existing PostgreSQL schema. It sends raw CSV to
-`rul-service/api.py` over an authenticated internal HTTP request. FastAPI loads
-the frozen checkpoint and scaler once per worker at startup, validates the
-model-specific inputs, preprocesses them and runs the existing
-Condition-Aware iTransformer. It has no Buyer database or authentication
-responsibility. The standalone `predict_cli.py` remains for offline use and is
-not invoked by the normal web prediction path.
+Express enforces Buyer session authorization, engine-company ownership, `Idempotency-Key`, and `X-RUL-Source` provenance labeling before posting the raw `text/csv` payload over **HTTPS** to Google Cloud Run with `X-RUL-Service-Token`. FastAPI (`rul-service/api.py`) loads the frozen FD002 checkpoint (`checkpoints/best_model.weights.h5`) and scaler (`preprocessing/scaler_artifacts.json`) at container startup, validates the 19 required columns and $\ge 30$ observations, and returns the predicted RUL cycles. FastAPI has no database connection and no end-user authentication responsibility.
 
-The internal FastAPI endpoints are `GET /health`, `GET /v1/model-info`, and
-`POST /v1/predict`. They require the shared `RUL_SERVICE_TOKEN`. Locally the
-service binds to `127.0.0.1:8000`; deployments must keep it on a private service
-network and use HTTPS for remote service-to-service traffic. React calls only
-the public Express API.
+### Replacement Recommendations & Academic Scope Limits
 
-### Replacement Recommendations
+The Replace & Buy MVP recommends up to five `ENGINE` listings after a successful Buyer RUL prediction using exact `engine_model_id` compatibility evidence, an active product, an `ACTIVE` listing, an `APPROVED` supplier, and positive stock, ranked deterministically by lower actual listing price, shorter lead time, then listing ID.
 
-The Replace & Buy MVP recommends up to five ENGINE listings after a successful
-Buyer RUL prediction, using exact engine-model compatibility records,
-approved Supplier listings, positive stock, and deterministic price/lead-time
-ranking. Evidence may be demo-only and is not certified installation
-approval. Trade-in, buyback, old-asset collection, valuation, and exchange
-credit remain out of scope.
+**Scope Limits:**
+- Predictions and 20/40/80-cycle urgency rules are academic simulation support features, **not** certified FAA/EASA airworthiness guidance or verified real-aircraft telemetry.
+- Compatibility evidence is demo-constrained and does not certify aircraft installation approval.
+- Trade-in, buyback, old-engine collection, fair-market valuation, and exchange credit remain **out of scope**.
 
-The C-MAPSS FD002 RUL workflow uses simulated data and must not be interpreted
-as actual aircraft telemetry or a certified maintenance diagnosis.
+### Data Engineering (Offline Preparation)
 
-### Data Engineering
+An offline Python ETL pipeline prepares initial catalog and demonstration data:
 
-A separate offline data pipeline prepares aviation reference data and
-marketplace seed records. The process follows:
+**Bronze $\to$ Silver $\to$ Gold $\to$ PostgreSQL Seed Initialization (`database/seed/load_gold.py`)**
 
-**Bronze → Silver → Gold → PostgreSQL Seed Initialization**
+This pipeline does not run during marketplace runtime requests. Detailed documentation is in [Data Engineering](../data/README.md).
 
-This pipeline is separate from the runtime request flow and does not execute
-during ordinary marketplace operations.
+---
 
-Detailed processing and dataset documentation are maintained in
-[Data Engineering](../data/README.md).
+## 5. Architecture Diagrams Summary
 
-## 5. Architecture Diagrams
+| Page | Diagram | Focus | Alignment Status |
+|---|---|---|---|
+| 00 | [Master System Architecture](<./diagrams/Final system-design-00 Master System Architecture.drawio.png>) | System boundaries and core flows | Synchronized |
+| 01 | [Business & User Workflows](<./diagrams/Final system-design-01 Business & User Workflows.drawio.png>) | Buyer, supplier, admin, and AI workflows | Synchronized |
+| 02 | [Frontend Architecture](<./diagrams/Final system-design-02 Frontend Architecture.drawio.png>) | React workspaces, cookie auth, and API client | Synchronized |
+| 03 | [REST API & Backend](<./diagrams/Final system-design-03 REST API & Backend.drawio.png>) | Middleware, backend modules, and endpoints | Synchronized |
+| 04 | [PostgreSQL OLTP](<./diagrams/Final system-design-04 PostgreSQL OLTP (26 tables).drawio.png>) | 26 core + 1 legacy auth table (`account_tokens`), domains & FKs | Synchronized |
+| 05 | [AI/RUL & Recommendation](<./diagrams/Final system-design-05 AI-RUL & Recommendation.drawio.png>) | Inference and Replace & Buy pipeline | Synchronized |
+| 06 | [Deployment & Runtime](<./diagrams/Final system-design-06 Deployment & Runtime.drawio.png>) | Hosting and runtime boundaries | Synchronized |
+| 07 | [End-to-End Integration](<./diagrams/Final system-design-07 End-to-End Integration.drawio.png>) | Cross-component request sequences & traceability | Synchronized |
+| 08 | [Physical Infrastructure & Scalability](<./diagrams/Final system-design-08 Physical Infrastructure & Scalability.drawio.png>) | AS-IS deployed topology & TO-BE horizontal scaling architecture | Synchronized |
 
-The editable draw.io source contains eight pages, and each page has a matching SVG export in [./diagrams](./diagrams):
+---
 
-| Page | Diagram | Focus |
+## 6. Verified Production Deployment Topology
+
+| Component | Technology / Hosting | Role |
 |---|---|---|
-| 00 | [Master System Architecture](<./diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) | System boundaries and major components |
-| 01 | [Business & User Workflows](<./diagrams/System_Design_ver 1.0-01 Business & User Workflows.drawio.svg>) | Buyer, supplier, admin, and AI-assisted procurement flows |
-| 02 | [Frontend Architecture](<./diagrams/System_Design_ver 1.0-02 Frontend Architecture.drawio.svg>) | React application structure and user interfaces |
-| 03 | [REST API & Backend](<./diagrams/System_Design_ver 1.0-03 REST API & Backend.drawio.svg>) | Middleware, backend modules, and dependencies |
-| 04 | [PostgreSQL OLTP](<./diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>) | Database domains, tables, and relationships |
-| 05 | [AI/RUL & Recommendation](<./diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) | Inference and recommendation integration |
-| 06 | [Deployment & Runtime](<./diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>) | Hosting and runtime boundaries |
-| 07 | [End-to-End Integration](<./diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) | Cross-component request and data flows |
+| **Domain Registrar** | `aerotradehub.top` — **iNET** | Domain registration and Cloudflare nameserver delegation |
+| **Authoritative DNS** | **Cloudflare Free (DNS Only)** | DNS resolution (HTTP proxy disabled; Vercel handles TLS) |
+| **Frontend & API Proxy** | React 18 / Vite — **Vercel** (`https://www.aerotradehub.top`) | Static SPA, apex HTTP 308 $\to$ `www`, same-origin `/api/*` and `/docs/*` rewrites |
+| **Application Backend** | Node.js / Express 5 — **Render Web Service** | Modular monolith API + generated apiDoc at `/docs/` |
+| **Database** | Managed PostgreSQL — **Neon** | Persistent OLTP relational database over TLS |
+| **AI Inference** | Python 3.11 / FastAPI / TensorFlow — **Google Cloud Run** | Containerized inference (`rul-service/Dockerfile`), HTTPS + `X-RUL-Service-Token` |
+| **RUL CSV Storage** | Private Render filesystem (`backend/storage/rul/`) | Ephemeral across restarts/redeploys; external object storage not provisioned |
 
-Offline ETL and data-init details are documented separately under [Data Engineering](../data/README.md).
+For operational runbooks, environment variable tables, and cold-start/recovery details, see [Deployment Architecture & Runbook](../devops/deployment/README.md).
 
-## 6. Deployment Architecture
-
-The architecture separates frontend hosting, backend execution, database
-persistence, and Python inference. Express communicates with the internal
-FastAPI inference service over HTTP.
-
-| Component | Technology / Hosting |
-|---|---|
-| Frontend | React/Vite — Vercel |
-| Backend | Node.js/Express — Render |
-| Database | PostgreSQL — managed database hosting |
-| AI Inference | Private Python/FastAPI HTTP service called by Express |
-| Edge | Cloudflare DNS/TLS |
-| RUL files | Private backend filesystem path; external object storage is future deployment work |
-
-Hosting and storage configurations are documented separately in
-[DevOps](../devops/README.md).
+---
 
 ## 7. Related Documentation
 
@@ -201,18 +167,6 @@ Hosting and storage configurations are documented separately in
 - [REST API](../api/README.md)
 - [Database Design](../database/README.md)
 - [Data Engineering](../data/README.md)
-- [RUL System Design](../rul/SYSTEM_DESIGN.md)
+- [RUL System Design](../rul/architecture/SYSTEM_DESIGN.md)
 - [UI/UX Design](../ui-ux/README.md)
 - [DevOps & Deployment](../devops/README.md)
-
-## 8. Maintaining the Architecture
-
-The editable [system-design.drawio](./system-design.drawio) file is the
-authoritative source for system architecture diagrams.
-
-When an architectural change is made, update the corresponding draw.io page,
-regenerate its exported image, and revise any affected documentation in the
-same commit.
-
-The diagrams describe the intended system design; implementation details
-should be verified against the source code and deployment configuration.

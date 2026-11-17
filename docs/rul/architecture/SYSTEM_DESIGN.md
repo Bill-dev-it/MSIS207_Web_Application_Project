@@ -29,9 +29,9 @@ Node.js / Express backend through a REST API.
 
 The system diagrams below are synchronized with the implemented RUL inference and Replace & Buy recommendation architecture:
 
-- [00 — Master System Architecture](<../../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall system boundary for the RUL workflow.
-- [05 — AI/RUL & Recommendation](<../../architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — inference pipeline, model input/output, and recommendation process.
-- [07 — End-to-End Integration](<../../architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — end-to-end request flow from UI through business logic to RUL and cart checkout.
+- [00 — Master System Architecture](<../../architecture/diagrams/Final system-design-00 Master System Architecture.drawio.png>) — overall system boundary for the RUL workflow.
+- [05 — AI/RUL & Recommendation](<../../architecture/diagrams/Final system-design-05 AI-RUL & Recommendation.drawio.png>) — inference pipeline, model input/output, and recommendation process.
+- [07 — End-to-End Integration](<../../architecture/diagrams/Final system-design-07 End-to-End Integration.drawio.png>) — end-to-end request flow from UI through business logic to RUL and cart checkout.
 
 See also: [Architecture overview](../../architecture/README.md).
 

@@ -19,13 +19,14 @@ Project documentation is organized by system area. The verified production syste
 The editable architecture source is maintained under [docs/architecture](./architecture/README.md).
 
 > [!NOTE]
-> The eight draw.io pages and exported SVG diagrams below are synchronized with the verified production architecture (iNET/Cloudflare DNS Only, Vercel same-origin rewrites, Render Express monolith, Neon PostgreSQL, Google Cloud Run, cookie auth, `BANK_TRANSFER`, and implemented Replace & Buy recommendations).
+> The nine draw.io pages and exported PNG diagrams below are synchronized with the verified production architecture (iNET/Cloudflare DNS Only, Vercel same-origin rewrites, Render Express monolith, Neon PostgreSQL, Google Cloud Run, cookie auth, `BANK_TRANSFER`, and implemented Replace & Buy recommendations).
 
-- [00 — Master System Architecture](<./architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — system boundaries and core business flows.
-- [01 — Business & User Workflows](<./architecture/diagrams/System_Design_ver 1.0-01 Business & User Workflows.drawio.svg>) — buyer, supplier, admin, and AI-assisted procurement flows.
-- [02 — Frontend Architecture](<./architecture/diagrams/System_Design_ver 1.0-02 Frontend Architecture.drawio.svg>) — React screens, routing, and role-based navigation.
-- [03 — REST API & Backend](<./architecture/diagrams/System_Design_ver 1.0-03 REST API & Backend.drawio.svg>) — Express backend modules and API dependencies.
-- [04 — PostgreSQL OLTP](<./architecture/diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>) — data domains and relational schema structure.
-- [05 — AI/RUL & Recommendation](<./architecture/diagrams/System_Design_ver 1.0-05 AI-RUL & Recommendation.drawio.svg>) — inference and recommendation logic.
-- [06 — Deployment & Runtime](<./architecture/diagrams/System_Design_ver 1.0-06 Deployment & Runtime.drawio.svg>) — hosting and runtime boundaries.
-- [07 — End-to-End Integration](<./architecture/diagrams/System_Design_ver 1.0-07 End-to-End Integration.drawio.svg>) — cross-system request and data flow.
+- [00 — Master System Architecture](<./architecture/diagrams/Final system-design-00 Master System Architecture.drawio.png>) — system boundaries and core business flows.
+- [01 — Business & User Workflows](<./architecture/diagrams/Final system-design-01 Business & User Workflows.drawio.png>) — buyer, supplier, admin, and AI-assisted procurement flows.
+- [02 — Frontend Architecture](<./architecture/diagrams/Final system-design-02 Frontend Architecture.drawio.png>) — React screens, routing, and role-based navigation.
+- [03 — REST API & Backend](<./architecture/diagrams/Final system-design-03 REST API & Backend.drawio.png>) — Express backend modules and API dependencies.
+- [04 — PostgreSQL OLTP](<./architecture/diagrams/Final system-design-04 PostgreSQL OLTP (26 tables).drawio.png>) — data domains and relational schema structure.
+- [05 — AI/RUL & Recommendation](<./architecture/diagrams/Final system-design-05 AI-RUL & Recommendation.drawio.png>) — inference and recommendation logic.
+- [06 — Deployment & Runtime](<./architecture/diagrams/Final system-design-06 Deployment & Runtime.drawio.png>) — hosting and runtime boundaries.
+- [07 — End-to-End Integration](<./architecture/diagrams/Final system-design-07 End-to-End Integration.drawio.png>) — cross-system request and data flow.
+- [08 — Physical Infrastructure & Scalability](<./architecture/diagrams/Final system-design-08 Physical Infrastructure & Scalability.drawio.png>) — AS-IS deployed topology and TO-BE horizontal scaling architecture.
