@@ -10,7 +10,7 @@ The architecture consists of four interconnected domains: **Reference ETL (A)**,
 
 ## Architecture diagram references
 
-This data engineering section maps to the following architecture diagrams:
+This data engineering section maps to the following synchronized architecture diagrams:
 
 - [00 — Master System Architecture](<../architecture/diagrams/System_Design_ver 1.0-00 Master System Architecture.drawio.svg>) — overall runtime and ETL boundaries.
 - [04 — PostgreSQL OLTP](<../architecture/diagrams/System_Design_ver 1.0-04 PostgreSQL OLTP (26 tables).drawio.svg>) — operational tables and schema domains.
@@ -96,7 +96,7 @@ The Persistence domain provides the storage foundation for reference data, marke
 
 **PostgreSQL — Operational Relational Database**
 
-PostgreSQL is the primary operational source of truth for the application. Its schema contains **26 relational tables** supporting company and user management, aviation assets, product catalogs, supplier listings, commerce transactions, and RUL-related records.
+PostgreSQL (**Neon** managed PostgreSQL in production) is the primary operational source of truth for the application. Its baseline schema contains **26 relational tables** (`database/schema/01_schema.sql`), expanded to **27 tables** by the additive authentication setup (`account_tokens`, retained for migration compatibility and unused by the active no-email MVP runtime), supporting company and user management, aviation assets, product catalogs, supplier listings, commerce transactions, and RUL-related records.
 
 The database receives initial reference and demonstration data through the ETL bootstrap process. During normal operation, Express manages database reads and writes according to application business rules and authorization policies.
 
@@ -108,7 +108,7 @@ Trained RUL model artifacts are maintained separately from marketplace transacti
 
 **Sensor File Storage**
 
-Uploaded sensor files are managed through a separate storage mechanism appropriate for file-based inputs. PostgreSQL maintains the related application metadata and references needed to associate uploads with engines, processing requests, and prediction results.
+Uploaded sensor CSV files are written privately by the Express backend under `backend/storage/rul/<user_id>/` (ephemeral on Render's Free tier across restarts/redeploys; external object storage is unimplemented). PostgreSQL maintains the related `sensor_uploads` metadata and references needed to associate uploads with engines, processing requests, and prediction results.
 
 ## Cross-Domain Data Flow and Ownership
 
