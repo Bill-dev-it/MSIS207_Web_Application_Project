@@ -62,7 +62,9 @@ The Supplier workspace supports two operating modes controlled by `VITE_SUPPLIER
 
 ## Production Deployment (Vercel)
 
-Production builds are configured via `vercel.json`:
-- `/api/*` requests are proxied/rewritten to the Render Express backend.
-- `/docs/*` requests route to the public apiDoc reference.
-- All client-side SPA navigation routes fall back to `/index.html`.
+Live production origin: `https://www.aerotradehub.top` (apex `aerotradehub.top` redirects via HTTP 308 to `www`; Cloudflare Free operates in **DNS Only** mode with Vercel terminating TLS; `VITE_SUPPLIER_DEMO_MODE=false`).
+
+Production routing is configured via [`vercel.json`](./vercel.json):
+- `/docs` redirects (HTTP 307, `permanent: false`) to `/docs/`.
+- `/api/:path*`, `/docs/`, and `/docs/:path*` rewrite same-origin to the Render Express backend (`https://aerorul-backend.onrender.com/...`).
+- All remaining client-side SPA navigation routes fall back to `/index.html`.
