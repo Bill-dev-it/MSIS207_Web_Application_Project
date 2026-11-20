@@ -65,7 +65,47 @@ async def require_service_token(request: Request):
     return None
 
 
+def _validate_csv_headers(csv_text: str):
+    """Validate raw CSV header uniqueness and block ground-truth target columns."""
+    try:
+        raw_headers = next(csv.reader(io.StringIO(csv_text)))
+    except (csv.Error, StopIteration):
+        return error_response(422, "INVALID_SENSOR_CSV", "Unable to parse the uploaded CSV header.")
+
+    raw_headers = [column.strip() for column in raw_headers]
+    if len(raw_headers) != len(set(raw_headers)):
+        return error_response(422, "INVALID_SENSOR_CSV", "CSV header columns must be unique.")
+
+    # Reject target/label columns so uploaded telemetry cannot pass ground-truth answers as features.
+    normalized_columns = [column.strip().lower().replace("_", "").replace("-", "").replace(" ", "") for column in raw_headers]
+    ground_truth_prefixes = (
+        "truerul", "actualrul", "predictedrul", "rul", "target", "label",
+        "remaininglife", "remainingusefullife", "groundtruth",
+    )
+    if any(column.startswith(ground_truth_prefixes) and not column.startswith("rule")
+           for column in normalized_columns):
+        return error_response(422, "INVALID_SENSOR_CSV", "Ground-truth RUL and target label columns are not accepted.")
+    return None
+
+
+def _validate_sensor_dataframe(dataframe: pd.DataFrame):
+    """Enforce the 19 required columns, minimum 30-row HTTP history, and positive IDs."""
+    dataframe.columns = [str(column).strip() for column in dataframe.columns]
+    columns = [str(column) for column in dataframe.columns]
+    if any(column not in columns for column in REQUIRED_COLUMNS):
+        return error_response(422, "INVALID_SENSOR_CSV", "CSV must contain all 19 required sensor input columns.")
+    if len(dataframe) < MIN_OBSERVATIONS:
+        return error_response(422, "INSUFFICIENT_HISTORY", "Provide 30 or more observations.")
+    for column in ("unit", "cycle"):
+        values = pd.to_numeric(dataframe[column], errors="coerce")
+        if values.isna().any() or (values <= 0).any() or ((values % 1) != 0).any():
+            return error_response(422, "INVALID_SENSOR_CSV",
+                                        f"'{column}' must contain positive integers.")
+    return None
+
+
 async def read_csv(request: Request):
+    """Stream, decode, and validate an incoming UTF-8 sensor CSV request."""
     content_type = request.headers.get("content-type", "")
     parts = [part.strip() for part in content_type.split(";")]
     if not parts or parts[0].lower() != "text/csv":
@@ -74,6 +114,7 @@ async def read_csv(request: Request):
         if parameter.lower().startswith("charset=") and parameter.split("=", 1)[1].strip('"').lower() != "utf-8":
             return None, error_response(415, "UNSUPPORTED_MEDIA_TYPE", "Upload CSV as UTF-8 text/csv.")
 
+    # Check both Content-Length and actual streamed bytes because Content-Length may be omitted or spoofed.
     content_length = request.headers.get("content-length")
     if content_length:
         try:
@@ -97,37 +138,19 @@ async def read_csv(request: Request):
         return None, error_response(422, "INVALID_SENSOR_CSV", "CSV must use valid UTF-8 encoding.")
     if csv_text.startswith("\ufeff") or "\x00" in csv_text:
         return None, error_response(422, "INVALID_SENSOR_CSV", "CSV must not contain a BOM or null bytes.")
-    try:
-        raw_headers = next(csv.reader(io.StringIO(csv_text)))
-    except (csv.Error, StopIteration):
-        return None, error_response(422, "INVALID_SENSOR_CSV", "Unable to parse the uploaded CSV header.")
-    raw_headers = [column.strip() for column in raw_headers]
-    if len(raw_headers) != len(set(raw_headers)):
-        return None, error_response(422, "INVALID_SENSOR_CSV", "CSV header columns must be unique.")
-    normalized_columns = [column.strip().lower().replace("_", "").replace("-", "").replace(" ", "") for column in raw_headers]
-    ground_truth_prefixes = (
-        "truerul", "actualrul", "predictedrul", "rul", "target", "label",
-        "remaininglife", "remainingusefullife", "groundtruth",
-    )
-    if any(column.startswith(ground_truth_prefixes) and not column.startswith("rule")
-           for column in normalized_columns):
-        return None, error_response(422, "INVALID_SENSOR_CSV", "Ground-truth RUL and target label columns are not accepted.")
+
+    header_error = _validate_csv_headers(csv_text)
+    if header_error:
+        return None, header_error
+
     try:
         dataframe = pd.read_csv(io.StringIO(csv_text))
     except (pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeError, ValueError):
         return None, error_response(422, "INVALID_SENSOR_CSV", "Unable to parse the uploaded CSV.")
 
-    dataframe.columns = [str(column).strip() for column in dataframe.columns]
-    columns = [str(column) for column in dataframe.columns]
-    if any(column not in columns for column in REQUIRED_COLUMNS):
-        return None, error_response(422, "INVALID_SENSOR_CSV", "CSV must contain all 19 required sensor input columns.")
-    if len(dataframe) < MIN_OBSERVATIONS:
-        return None, error_response(422, "INSUFFICIENT_HISTORY", "Provide 30 or more observations.")
-    for column in ("unit", "cycle"):
-        values = pd.to_numeric(dataframe[column], errors="coerce")
-        if values.isna().any() or (values <= 0).any() or ((values % 1) != 0).any():
-            return None, error_response(422, "INVALID_SENSOR_CSV",
-                                        f"'{column}' must contain positive integers.")
+    dataframe_error = _validate_sensor_dataframe(dataframe)
+    if dataframe_error:
+        return None, dataframe_error
     return dataframe, None
 
 
@@ -167,6 +190,7 @@ async def model_info(request: Request):
 
 @app.post("/v1/predict")
 async def predict(request: Request):
+    # Authenticate before reading or parsing any CSV bytes to reject unauthorized payloads cheaply.
     unauthorized = await require_service_token(request)
     if unauthorized:
         return unauthorized
@@ -174,6 +198,7 @@ async def predict(request: Request):
     if error:
         return error
     try:
+        # Serialize synchronous TensorFlow CPU inference off the event loop to avoid blocking ASGI requests.
         async with inference_lock:
             result = await run_in_threadpool(request.app.state.engine.predict_from_dataframe, dataframe)
     except PreprocessingValidationError as exc:
