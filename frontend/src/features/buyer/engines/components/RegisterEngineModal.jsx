@@ -150,6 +150,7 @@ export function RegisterEngineModal({ isOpen, onClose, onSuccess }) {
     };
   }, [isOpen]);
 
+  // Keep this early return below all hooks to preserve React hook call order when toggling isOpen.
   if (!isOpen) return null;
 
   async function handleSearchModels(e) {
