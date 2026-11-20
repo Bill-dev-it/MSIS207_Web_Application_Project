@@ -40,7 +40,6 @@ frontend/src/
   layouts/AdminLayout.jsx     # Shared Admin sidebar, mobile drawer, breadcrumb & Sign Out
   features/admin/services/
     adminApi.js               # Admin HTTP client (/v1/admin/*, credentials: "include", CSRF header)
-  services/adminService.js    # Re-export facade
   screens/admin/
     AdminDashboardLive.jsx
     AdminSuppliersLive.jsx
@@ -48,7 +47,7 @@ frontend/src/
     AdminRULHealthLive.jsx
 ```
 
-Legacy static reference files under `frontend/src/screens/admin/Admin_frontend_Code/` are not routed by `frontend/src/app/router.jsx`; all live Admin pages render under `ProtectedRoute` (`roles={["ADMIN"]}`) and `AdminLayout`:
+All live Admin pages render under `ProtectedRoute` (`roles={["ADMIN"]}`) and `AdminLayout` in `frontend/src/app/router.jsx`:
 
 | Frontend Route | Screen / Redirect | Purpose |
 |---|---|---|
