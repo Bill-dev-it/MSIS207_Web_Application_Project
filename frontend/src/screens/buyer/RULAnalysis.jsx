@@ -89,20 +89,72 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+const RECOMMENDATION_STATUS_LABELS = {
+  NO_MATCH: "No matching listings",
+  READY: "Options available",
+  SUCCEEDED: "Options available",
+  FAILED: "Unavailable",
+  NOT_RUN: "Not generated",
+};
+
 function formatRecommendationStatus(status) {
-  switch (status) {
-    case "NO_MATCH":
-      return "No matching listings";
-    case "READY":
-    case "SUCCEEDED":
-      return "Options available";
-    case "FAILED":
-      return "Unavailable";
-    case "NOT_RUN":
-      return "Not generated";
-    default:
-      return status ? String(status) : "Not generated";
+  if (!status) return "Not generated";
+  return RECOMMENDATION_STATUS_LABELS[status] || String(status);
+}
+
+function validateSelectedCsv(file) {
+  if (!file) return "";
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    return "Invalid file type: Please upload a file with a .csv extension.";
   }
+  if (file.size > 1024 * 1024) {
+    return "File too large: CSV must be 1 MiB or smaller.";
+  }
+  if (file.size === 0) {
+    return "Invalid file: Selected CSV file is empty.";
+  }
+  return "";
+}
+
+function getEngineDisplayName(engines, engineId) {
+  if (!engineId) return "";
+  const selected = engines.find(e => String(e.engineId) === String(engineId));
+  if (!selected) return `Engine #${engineId}`;
+  return selected.engineCode || selected.serialNumber || `Engine #${selected.engineId}`;
+}
+
+function findActivePrediction(predictionId, result, selectedPrediction, history) {
+  const targetId = String(predictionId);
+  if (result && String(result.prediction_id) === targetId) return result;
+  if (selectedPrediction && String(selectedPrediction.prediction_id) === targetId) return selectedPrediction;
+  return history.find(item => String(item.prediction_id) === targetId) || null;
+}
+
+function resolvePredictionRecord(predictionRecordOrId, history, result) {
+  if (typeof predictionRecordOrId === "object" && predictionRecordOrId !== null) {
+    return predictionRecordOrId;
+  }
+  const targetId = String(predictionRecordOrId);
+  const fromHistory = history.find(item => String(item.prediction_id) === targetId);
+  if (fromHistory) return fromHistory;
+  if (String(result?.prediction_id || "") === targetId) return result;
+  return null;
+}
+
+function getRecommendationActionPrompt(status, predictionId) {
+  if (status === "FAILED") {
+    return {
+      message: `Recommendations are currently unavailable for prediction #${predictionId}.`,
+      buttonLabel: "Retry recommendations",
+    };
+  }
+  if (status === "NOT_RUN") {
+    return {
+      message: `Recommendations have not been generated for prediction #${predictionId}.`,
+      buttonLabel: "Generate recommendations",
+    };
+  }
+  return null;
 }
 
 function buildPredictionContext(record) {
@@ -139,7 +191,9 @@ export default function RULAnalysis() {
   const [addingListingId, setAddingListingId] = useState("");
   const [cartStatus, setCartStatus] = useState({ listingId: "", type: "", message: "" });
   const [showSpecDetails, setShowSpecDetails] = useState(false);
+  // Keep one idempotency key for retries of the same prediction request.
   const requestKeyRef = useRef("");
+  // Track the latest recommendation request so stale async responses cannot overwrite the view.
   const recommendationRequestRef = useRef(0);
 
   useEffect(() => {
@@ -196,6 +250,7 @@ export default function RULAnalysis() {
     return () => abort.abort();
   }, [engineId]);
 
+  // Reset prediction-specific state and invalidate any in-flight recommendation request.
   function resetPredictionView() {
     recommendationRequestRef.current += 1;
     setResult(null);
@@ -220,22 +275,11 @@ export default function RULAnalysis() {
   function onFileChange(event) {
     const selected = event.target.files?.[0] || null;
     resetPredictionView();
-    if (selected) {
-      if (!selected.name.toLowerCase().endsWith(".csv")) {
-        setError("Invalid file type: Please upload a file with a .csv extension.");
-        setFile(null);
-        return;
-      }
-      if (selected.size > 1024 * 1024) {
-        setError("File too large: CSV must be 1 MiB or smaller.");
-        setFile(null);
-        return;
-      }
-      if (selected.size === 0) {
-        setError("Invalid file: Selected CSV file is empty.");
-        setFile(null);
-        return;
-      }
+    const validationError = validateSelectedCsv(selected);
+    if (validationError) {
+      setError(validationError);
+      setFile(null);
+      return;
     }
     setFile(selected);
   }
@@ -254,6 +298,7 @@ export default function RULAnalysis() {
     setRecommendationError("");
     setCartStatus({ listingId: "", type: "", message: "" });
     let prediction;
+    // Step 1: Run and persist RUL prediction first with a stable idempotency key.
     try {
       if (!requestKeyRef.current) {
         if (!globalThis.crypto?.randomUUID) throw new Error("Secure request IDs are unavailable in this browser.");
@@ -273,6 +318,7 @@ export default function RULAnalysis() {
     }
     setBusy(false);
 
+    // Step 2: Generate replacement options separately so recommendation errors never hide a saved prediction.
     setLoadingRecommendations(true);
     try {
       const generated = await generateReplacementRecommendations(prediction.prediction_id);
@@ -288,6 +334,7 @@ export default function RULAnalysis() {
         setLoadingRecommendations(false);
       }
     }
+    // Step 3: Refresh history afterward so the new row reflects both RUL and recommendation statuses.
     try {
       setHistory(await getRulHistory(engineId));
     } catch (e) {
@@ -295,15 +342,10 @@ export default function RULAnalysis() {
     }
   }
 
+  // Show saved recommendations for a historical prediction without running model inference again.
   async function loadSavedRecommendations(predictionRecordOrId) {
-    const record =
-      typeof predictionRecordOrId === "object" && predictionRecordOrId !== null
-        ? predictionRecordOrId
-        : history.find(item => String(item.prediction_id) === String(predictionRecordOrId)) ||
-          (String(result?.prediction_id || "") === String(predictionRecordOrId) ? result : null);
-    const targetPredictionId = String(
-      record ? record.prediction_id : predictionRecordOrId
-    );
+    const record = resolvePredictionRecord(predictionRecordOrId, history, result);
+    const targetPredictionId = String(record ? record.prediction_id : predictionRecordOrId);
     recommendationRequestRef.current += 1;
     const currentRecReq = recommendationRequestRef.current;
 
@@ -389,27 +431,19 @@ export default function RULAnalysis() {
     }
   }
 
-  const selectedEngine = engines.find(e => String(e.engineId) === String(engineId));
-  const engineDisplayName = selectedEngine
-    ? (selectedEngine.engineCode || selectedEngine.serialNumber || `Engine #${selectedEngine.engineId}`)
-    : (engineId ? `Engine #${engineId}` : "");
-
-  const activePrediction =
-    (result && String(result.prediction_id) === String(recommendationPredictionId)
-      ? result
-      : null) ||
-    (selectedPrediction && String(selectedPrediction.prediction_id) === String(recommendationPredictionId)
-      ? selectedPrediction
-      : null) ||
-    history.find(item => String(item.prediction_id) === String(recommendationPredictionId)) ||
-    null;
-
+  const engineDisplayName = getEngineDisplayName(engines, engineId);
+  const activePrediction = findActivePrediction(recommendationPredictionId, result, selectedPrediction, history);
   const activeUrgency = activePrediction?.urgency || "";
   const urgencyGuidance = URGENCY_GUIDANCE[activeUrgency] || FALLBACK_GUIDANCE;
   const isProminentUrgency = urgencyGuidance.isProminent;
+  // Render recommendation items only when they match the currently selected prediction ID.
   const activeRecommendationData =
     recommendationData && String(recommendationData.prediction_id) === String(recommendationPredictionId)
       ? recommendationData
+      : null;
+  const recommendationAction =
+    !loadingRecommendations && !recommendationError
+      ? getRecommendationActionPrompt(activeRecommendationData?.recommendation_status, recommendationPredictionId)
       : null;
 
   return (
@@ -700,24 +734,13 @@ export default function RULAnalysis() {
             </div>
           )}
 
-          {!loadingRecommendations && !recommendationError && activeRecommendationData?.recommendation_status === "FAILED" && (
+          {recommendationAction && (
             <div className="card p-5">
               <p className="text-sm font-medium text-primary-800">
-                Recommendations are currently unavailable for prediction #{recommendationPredictionId}.
+                {recommendationAction.message}
               </p>
               <button type="button" className="btn btn-secondary mt-3" onClick={retryRecommendations}>
-                Retry recommendations
-              </button>
-            </div>
-          )}
-
-          {!loadingRecommendations && !recommendationError && activeRecommendationData?.recommendation_status === "NOT_RUN" && (
-            <div className="card p-5">
-              <p className="text-sm font-medium text-primary-800">
-                Recommendations have not been generated for prediction #{recommendationPredictionId}.
-              </p>
-              <button type="button" className="btn btn-secondary mt-3" onClick={retryRecommendations}>
-                Generate recommendations
+                {recommendationAction.buttonLabel}
               </button>
             </div>
           )}
