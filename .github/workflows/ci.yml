@@ -6,11 +6,13 @@ on:
       - Bao_Chinh_main
       - week-3
       - main
+      - deployment
   pull_request:
     branches:
       - Bao_Chinh_main
       - week-3
       - main
+      - deployment
   workflow_dispatch:
 
 permissions:
