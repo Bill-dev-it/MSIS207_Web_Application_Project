@@ -16,15 +16,12 @@ function formatPrice(price) {
 
 // Missing or blank specification values must fall back safely rather than coercing to misleading values.
 export function getShelfLifeDisplay(rawValue) {
-  const shelfLifeNum = Number(rawValue);
-  const hasValidShelfLife =
-    rawValue !== null &&
-    rawValue !== undefined &&
-    rawValue !== "" &&
-    Number.isFinite(shelfLifeNum) &&
-    shelfLifeNum > 0;
+  if (rawValue === null || rawValue === undefined || rawValue === "") {
+    return "Not specified — confirm with supplier.";
+  }
 
-  if (!hasValidShelfLife) {
+  const shelfLifeNum = Number(rawValue);
+  if (!Number.isFinite(shelfLifeNum) || shelfLifeNum <= 0) {
     return "Not specified — confirm with supplier.";
   }
 
@@ -39,6 +36,29 @@ export function getMaintenanceClassification(rawValue) {
     return "Not designated as repairable";
   }
   return "Not specified — confirm with supplier";
+}
+
+function getConditionBadgeInfo(condition) {
+  const normalized = String(condition || "").toUpperCase().trim();
+  if (normalized === "NEW" || normalized === "FN" || normalized === "NE") {
+    return {
+      label: "NEW",
+      className:
+        "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide shrink-0",
+    };
+  }
+  if (normalized.includes("REFURB") || normalized.includes("OH") || normalized === "SV") {
+    return {
+      label: "REFURBISHED",
+      className:
+        "text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-wide shrink-0",
+    };
+  }
+  return {
+    label: normalized || "USED",
+    className:
+      "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wide shrink-0",
+  };
 }
 
 /**
@@ -70,6 +90,7 @@ function SupplierOffersPanel({ productId, onSelectOffer }) {
           const list = Array.isArray(data) ? data : [];
           setOffers(list);
           if (list.length > 0) {
+            // Prefer an in-stock offer when selecting the initial supplier listing.
             const inStock = list.find((o) => Number(o.stock_quantity) > 0) || list[0];
             setSelectedId(inStock.listing_id);
           }
@@ -93,6 +114,7 @@ function SupplierOffersPanel({ productId, onSelectOffer }) {
     (offer) => String(offer.listing_id) === String(selectedId)
   );
 
+  // Notify the parent when the selected supplier offer changes.
   useEffect(() => {
     if (onSelectOffer) {
       onSelectOffer(selectedOffer || null);
@@ -114,26 +136,8 @@ function SupplierOffersPanel({ productId, onSelectOffer }) {
   }
 
   function renderConditionBadge(condition) {
-    const cond = String(condition || "").toUpperCase().trim();
-    if (cond === "NEW" || cond === "FN" || cond === "NE") {
-      return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide shrink-0">
-          NEW
-        </span>
-      );
-    }
-    if (cond.includes("REFURB") || cond.includes("OH") || cond === "SV") {
-      return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-wide shrink-0">
-          REFURBISHED
-        </span>
-      );
-    }
-    return (
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wide shrink-0">
-        {cond || "USED"}
-      </span>
-    );
+    const badge = getConditionBadgeInfo(condition);
+    return <span className={badge.className}>{badge.label}</span>;
   }
 
   return (
