@@ -1,5 +1,7 @@
 # AeroRUL — AI-Enhanced B2B Aviation Engine & Parts Marketplace
 
+[![Architecture diagram of bill-dev-it/msis207_web_application_project](https://gitdiagram.com/bill-dev-it/msis207_web_application_project/diagram.png)](https://gitdiagram.com/bill-dev-it/msis207_web_application_project?utm_source=readme&utm_medium=picture)
+
 - **Production Website:** `https://www.aerotradehub.top`
 - **Production API Reference (apiDoc):** `https://www.aerotradehub.top/docs/`
 - **Repository:** `Bill-dev-it/MSIS207_Web_Application_Project`
