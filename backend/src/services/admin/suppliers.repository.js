@@ -109,6 +109,11 @@ function validSupplierId(id) {
   return typeof id === "string" && /^[1-9]\d*$/.test(id) && BigInt(id) <= MAX_ID;
 }
 
+/**
+ * Atomically approve a PENDING supplier.
+ * Concurrent approvers hit zero updated rows on the conditional UPDATE and inspect
+ * the current status for idempotent replay (APPROVED) or 404/409 error mapping.
+ */
 async function approveSupplier(supplierId) {
   // A conditional UPDATE is atomic; concurrent approvers cannot both perform a transition.
   const result = await pool.query(`
@@ -124,13 +129,17 @@ async function approveSupplier(supplierId) {
   );
   if (!existing.rows.length) {
     const error = new Error("Supplier not found.");
-    error.statusCode = 404; error.code = "SUPPLIER_NOT_FOUND"; throw error;
+    error.statusCode = 404;
+    error.code = "SUPPLIER_NOT_FOUND";
+    throw error;
   }
   if (existing.rows[0].status === "APPROVED") {
     return { supplier_id: String(existing.rows[0].supplier_id), status: "APPROVED", already_approved: true };
   }
   const error = new Error("Only pending suppliers may be approved. Suspended suppliers require a separate review policy.");
-  error.statusCode = 409; error.code = "SUPPLIER_STATUS_CONFLICT"; throw error;
+  error.statusCode = 409;
+  error.code = "SUPPLIER_STATUS_CONFLICT";
+  throw error;
 }
 
 module.exports = {
