@@ -1,3 +1,5 @@
+"use strict";
+
 const pool = require("../../config/db");
 
 const ORDER_COLUMNS = `
@@ -9,8 +11,9 @@ const ORDER_COLUMNS = `
   p.payment_method, p.status AS payment_status, p.paid_at
 `;
 
+// A supplier may retrieve only orders assigned to their account.
 async function getAll(supplierId) {
-  const result = await pool.query(`
+  const ordersResult = await pool.query(`
     SELECT ${ORDER_COLUMNS}
     FROM seller_orders so
     JOIN orders o ON o.order_id = so.order_id
@@ -18,8 +21,9 @@ async function getAll(supplierId) {
     WHERE so.supplier_id = $1
     ORDER BY so.created_at DESC, so.seller_order_id DESC
   `, [supplierId]);
-  if (!result.rowCount) return [];
-  const items = await pool.query(`
+  if (!ordersResult.rowCount) return [];
+
+  const itemsResult = await pool.query(`
     SELECT oi.order_item_id, oi.seller_order_id, oi.listing_id,
            oi.product_name_snapshot, oi.part_number_snapshot,
            oi.seller_sku_snapshot, oi.condition_snapshot,
@@ -29,22 +33,28 @@ async function getAll(supplierId) {
     WHERE so.supplier_id = $1
     ORDER BY oi.order_item_id
   `, [supplierId]);
-  return result.rows.map((order) => ({
+
+  // Attach each order's purchased items without changing their stored order.
+  return ordersResult.rows.map((order) => ({
     ...order,
-    items: items.rows.filter((item) => String(item.seller_order_id) === String(order.seller_order_id)),
+    items: itemsResult.rows.filter(
+      (item) => String(item.seller_order_id) === String(order.seller_order_id)
+    ),
   }));
 }
 
+// Returns null when the order does not exist or belongs to another supplier.
 async function getOne(supplierId, sellerOrderId) {
-  const result = await pool.query(`
+  const ordersResult = await pool.query(`
     SELECT ${ORDER_COLUMNS}
     FROM seller_orders so
     JOIN orders o ON o.order_id = so.order_id
     LEFT JOIN payments p ON p.order_id = o.order_id
     WHERE so.supplier_id = $1 AND so.seller_order_id = $2
   `, [supplierId, sellerOrderId]);
-  if (!result.rowCount) return null;
-  const items = await pool.query(`
+  if (!ordersResult.rowCount) return null;
+
+  const itemsResult = await pool.query(`
     SELECT oi.order_item_id, oi.seller_order_id, oi.listing_id,
            oi.product_name_snapshot, oi.part_number_snapshot,
            oi.seller_sku_snapshot, oi.condition_snapshot,
@@ -53,7 +63,8 @@ async function getOne(supplierId, sellerOrderId) {
     WHERE oi.seller_order_id = $1
     ORDER BY oi.order_item_id
   `, [sellerOrderId]);
-  return { ...result.rows[0], items: items.rows };
+
+  return { ...ordersResult.rows[0], items: itemsResult.rows };
 }
 
 // Only allows forward transitions for this supplier when the order's payment is SUCCEEDED.

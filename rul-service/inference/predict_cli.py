@@ -42,7 +42,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 
-
 def main():
     parser = argparse.ArgumentParser(
         description="AeroRUL Condition-Aware iTransformer RUL Prediction CLI"
@@ -75,7 +74,6 @@ def main():
 
     try:
         from inference.runner import RULInferenceEngine
-        from preprocessing.preprocessor import PreprocessingValidationError
 
         engine = RULInferenceEngine(package_root=PACKAGE_ROOT)
         result = engine.predict_from_csv(input_path, clip_max_rul=args.clip_max_rul)
@@ -98,9 +96,9 @@ def main():
         error_type = type(e).__name__
         error_message = str(e)
 
-        # Print clean error JSON to stdout for Express consumer
+        # Keep stdout strictly machine-readable JSON and route diagnostics to stderr so automated callers never fail to parse stdout.
         error_payload = {
-            "success": false if False else False,
+            "success": False,
             "error": error_message,
             "error_type": error_type,
             "input_file": str(input_path.name)

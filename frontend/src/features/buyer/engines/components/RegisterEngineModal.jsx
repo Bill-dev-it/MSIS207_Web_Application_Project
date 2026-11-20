@@ -5,6 +5,69 @@ import {
   createEngine,
 } from "../services/engineApi";
 
+// Validation order determines which inline field error appears first on submit.
+export function validateEngineForm({
+  engineCode,
+  serialNumber,
+  selectedModel,
+  aircraftMode,
+  selectedAircraftId,
+  newAircraftReg,
+  newAircraftMfr,
+  newAircraftModel,
+}) {
+  if (!engineCode.trim()) return "Engine code is required.";
+  if (!serialNumber.trim()) return "Serial number is required.";
+  if (!selectedModel) return "Please search and select an engine model from the catalog.";
+
+  if (aircraftMode === "existing" && !selectedAircraftId) {
+    return "Please select an existing company aircraft.";
+  }
+
+  if (aircraftMode === "new") {
+    if (!newAircraftReg.trim()) return "Aircraft registration / tail number is required.";
+    if (!newAircraftMfr.trim()) return "Aircraft manufacturer is required.";
+    if (!newAircraftModel.trim()) return "Aircraft model is required.";
+  }
+
+  return "";
+}
+
+export function buildCreateEnginePayload({
+  engineCode,
+  serialNumber,
+  selectedModel,
+  currentCycle,
+  aircraftMode,
+  selectedAircraftId,
+  newAircraftReg,
+  newAircraftMfr,
+  newAircraftModel,
+  newAircraftType,
+  newAircraftYear,
+}) {
+  const payload = {
+    engine_code: engineCode.trim(),
+    serial_number: serialNumber.trim(),
+    engine_model_id: selectedModel.engineModelId,
+    current_cycle: Math.max(0, parseInt(currentCycle, 10) || 0),
+  };
+
+  if (aircraftMode === "existing") {
+    payload.aircraft_id = selectedAircraftId;
+  } else {
+    payload.new_aircraft = {
+      registration_number: newAircraftReg.trim(),
+      manufacturer: newAircraftMfr.trim(),
+      model: newAircraftModel.trim(),
+      aircraft_type: newAircraftType.trim() || "Commercial Fixed-Wing",
+      year: newAircraftYear ? parseInt(newAircraftYear, 10) : null,
+    };
+  }
+
+  return payload;
+}
+
 export function RegisterEngineModal({ isOpen, onClose, onSuccess }) {
   // Engine basic fields
   const [engineCode, setEngineCode] = useState("");
@@ -87,6 +150,7 @@ export function RegisterEngineModal({ isOpen, onClose, onSuccess }) {
     };
   }, [isOpen]);
 
+  // Keep this early return below all hooks to preserve React hook call order when toggling isOpen.
   if (!isOpen) return null;
 
   async function handleSearchModels(e) {
@@ -108,57 +172,27 @@ export function RegisterEngineModal({ isOpen, onClose, onSuccess }) {
     e.preventDefault();
     setSubmitError("");
 
-    if (!engineCode.trim()) {
-      setSubmitError("Engine code is required.");
-      return;
-    }
-    if (!serialNumber.trim()) {
-      setSubmitError("Serial number is required.");
-      return;
-    }
-    if (!selectedModel) {
-      setSubmitError("Please search and select an engine model from the catalog.");
-      return;
-    }
-
-    if (aircraftMode === "existing" && !selectedAircraftId) {
-      setSubmitError("Please select an existing company aircraft.");
-      return;
-    }
-
-    if (aircraftMode === "new") {
-      if (!newAircraftReg.trim()) {
-        setSubmitError("Aircraft registration / tail number is required.");
-        return;
-      }
-      if (!newAircraftMfr.trim()) {
-        setSubmitError("Aircraft manufacturer is required.");
-        return;
-      }
-      if (!newAircraftModel.trim()) {
-        setSubmitError("Aircraft model is required.");
-        return;
-      }
-    }
-
-    const payload = {
-      engine_code: engineCode.trim(),
-      serial_number: serialNumber.trim(),
-      engine_model_id: selectedModel.engineModelId,
-      current_cycle: Math.max(0, parseInt(currentCycle, 10) || 0),
+    const formValues = {
+      engineCode,
+      serialNumber,
+      selectedModel,
+      currentCycle,
+      aircraftMode,
+      selectedAircraftId,
+      newAircraftReg,
+      newAircraftMfr,
+      newAircraftModel,
+      newAircraftType,
+      newAircraftYear,
     };
 
-    if (aircraftMode === "existing") {
-      payload.aircraft_id = selectedAircraftId;
-    } else {
-      payload.new_aircraft = {
-        registration_number: newAircraftReg.trim(),
-        manufacturer: newAircraftMfr.trim(),
-        model: newAircraftModel.trim(),
-        aircraft_type: newAircraftType.trim() || "Commercial Fixed-Wing",
-        year: newAircraftYear ? parseInt(newAircraftYear, 10) : null,
-      };
+    const validationError = validateEngineForm(formValues);
+    if (validationError) {
+      setSubmitError(validationError);
+      return;
     }
+
+    const payload = buildCreateEnginePayload(formValues);
 
     setSubmitting(true);
     try {

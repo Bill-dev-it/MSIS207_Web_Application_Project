@@ -14,6 +14,53 @@ function formatPrice(price) {
   }).format(price);
 }
 
+// Missing or blank specification values must fall back safely rather than coercing to misleading values.
+export function getShelfLifeDisplay(rawValue) {
+  if (rawValue === null || rawValue === undefined || rawValue === "") {
+    return "Not specified — confirm with supplier.";
+  }
+
+  const shelfLifeNum = Number(rawValue);
+  if (!Number.isFinite(shelfLifeNum) || shelfLifeNum <= 0) {
+    return "Not specified — confirm with supplier.";
+  }
+
+  return `${shelfLifeNum} ${shelfLifeNum === 1 ? "calendar day" : "calendar days"}`;
+}
+
+export function getMaintenanceClassification(rawValue) {
+  if (rawValue === true) {
+    return "Repairable / Overhaulable Unit";
+  }
+  if (rawValue === false) {
+    return "Not designated as repairable";
+  }
+  return "Not specified — confirm with supplier";
+}
+
+function getConditionBadgeInfo(condition) {
+  const normalized = String(condition || "").toUpperCase().trim();
+  if (normalized === "NEW" || normalized === "FN" || normalized === "NE") {
+    return {
+      label: "NEW",
+      className:
+        "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide shrink-0",
+    };
+  }
+  if (normalized.includes("REFURB") || normalized.includes("OH") || normalized === "SV") {
+    return {
+      label: "REFURBISHED",
+      className:
+        "text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-wide shrink-0",
+    };
+  }
+  return {
+    label: normalized || "USED",
+    className:
+      "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wide shrink-0",
+  };
+}
+
 /**
  * Supplier Offers Panel
  * Handles offer selection, pricing presentation, and cart integration.
@@ -43,6 +90,7 @@ function SupplierOffersPanel({ productId, onSelectOffer }) {
           const list = Array.isArray(data) ? data : [];
           setOffers(list);
           if (list.length > 0) {
+            // Prefer an in-stock offer when selecting the initial supplier listing.
             const inStock = list.find((o) => Number(o.stock_quantity) > 0) || list[0];
             setSelectedId(inStock.listing_id);
           }
@@ -66,6 +114,7 @@ function SupplierOffersPanel({ productId, onSelectOffer }) {
     (offer) => String(offer.listing_id) === String(selectedId)
   );
 
+  // Notify the parent when the selected supplier offer changes.
   useEffect(() => {
     if (onSelectOffer) {
       onSelectOffer(selectedOffer || null);
@@ -87,26 +136,8 @@ function SupplierOffersPanel({ productId, onSelectOffer }) {
   }
 
   function renderConditionBadge(condition) {
-    const cond = String(condition || "").toUpperCase().trim();
-    if (cond === "NEW" || cond === "FN" || cond === "NE") {
-      return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide shrink-0">
-          NEW
-        </span>
-      );
-    }
-    if (cond.includes("REFURB") || cond.includes("OH") || cond === "SV") {
-      return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-wide shrink-0">
-          REFURBISHED
-        </span>
-      );
-    }
-    return (
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wide shrink-0">
-        {cond || "USED"}
-      </span>
-    );
+    const badge = getConditionBadgeInfo(condition);
+    return <span className={badge.className}>{badge.label}</span>;
   }
 
   return (
@@ -334,27 +365,8 @@ export default function ProductDetail() {
   const name = product?.name ?? product?.product_name ?? "Aviation Component";
   const specs = product?.technical_specs;
 
-  // Process Shelf Life Limit
-  const shelfLifeRaw = specs?.source_shelf_life_days;
-  const shelfLifeNum = Number(shelfLifeRaw);
-  const hasValidShelfLife =
-    shelfLifeRaw !== null &&
-    shelfLifeRaw !== undefined &&
-    shelfLifeRaw !== "" &&
-    Number.isFinite(shelfLifeNum) &&
-    shelfLifeNum > 0;
-  const shelfLifeDisplay = hasValidShelfLife
-    ? `${shelfLifeNum} ${shelfLifeNum === 1 ? "calendar day" : "calendar days"}`
-    : "Not specified — confirm with supplier.";
-
-  // Process Maintenance Classification
-  const repairableRaw = specs?.source_is_repairable;
-  const maintenanceClassification =
-    repairableRaw === true
-      ? "Repairable / Overhaulable Unit"
-      : repairableRaw === false
-      ? "Not designated as repairable"
-      : "Not specified — confirm with supplier";
+  const shelfLifeDisplay = getShelfLifeDisplay(specs?.source_shelf_life_days);
+  const maintenanceClassification = getMaintenanceClassification(specs?.source_is_repairable);
 
   // Retrieve gallery images deterministically
   const gallery = product ? getProductGalleryImages(product) : [];

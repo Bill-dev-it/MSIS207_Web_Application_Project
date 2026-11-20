@@ -4,16 +4,23 @@ const pool = require("../../../config/db");
 
 const STATUSES = ["CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED"];
 
+/**
+ * Fetch paginated buyer orders, status-tab counts, and derived primary statuses.
+ * Status-tab counts include the text search filter but exclude the active status
+ * tab filter so tab badges stay accurate while browsing a specific status.
+ */
 async function getBuyerOrders({ companyId, status, search, page, limit }) {
-  const baseValues = [companyId];
-  const conditions = ["o.buyer_company_id = $1"];
-  let nextParameter = 2;
+  const offset = (page - 1) * limit;
+  const searchValues = [companyId];
+  const searchConditions = ["o.buyer_company_id = $1"];
+
   if (search) {
-    conditions.push(`(o.order_number ILIKE $${nextParameter} OR o.purchase_reference ILIKE $${nextParameter})`);
-    baseValues.push(`%${search}%`);
-    nextParameter++;
+    searchValues.push(`%${search}%`);
+    searchConditions.push(
+      `(o.order_number ILIKE $${searchValues.length} OR o.purchase_reference ILIKE $${searchValues.length})`
+    );
   }
-  const searchClause = conditions.join(" AND ");
+  const searchClause = searchConditions.join(" AND ");
 
   const countsResult = await pool.query(`
     SELECT COUNT(DISTINCT o.order_id)::INT AS total_all,
@@ -24,25 +31,27 @@ async function getBuyerOrders({ companyId, status, search, page, limit }) {
     FROM orders o
     LEFT JOIN seller_orders so ON so.order_id = o.order_id
     WHERE ${searchClause}
-  `, baseValues);
+  `, searchValues);
 
-  const listConditions = [...conditions];
-  const listValues = [...baseValues];
+  const listValues = [...searchValues];
+  const listConditions = [...searchConditions];
   if (status && status !== "ALL") {
+    listValues.push(status);
     listConditions.push(`EXISTS (
       SELECT 1 FROM seller_orders filter_so
-      WHERE filter_so.order_id = o.order_id AND filter_so.status = $${nextParameter}
+      WHERE filter_so.order_id = o.order_id AND filter_so.status = $${listValues.length}
     )`);
-    listValues.push(status);
-    nextParameter++;
   }
   const whereClause = listConditions.join(" AND ");
+
   const totalResult = await pool.query(`
     SELECT COUNT(*)::INT AS total FROM orders o WHERE ${whereClause}
   `, listValues);
   const total = totalResult.rows[0].total;
 
-  const result = await pool.query(`
+  // Multi-seller orders report the earliest active stage as primary_status:
+  // PROCESSING -> CONFIRMED -> SHIPPED -> DELIVERED (defaulting to CONFIRMED).
+  const ordersResult = await pool.query(`
     SELECT o.order_id, o.order_number, o.purchase_reference, o.created_at,
            o.grand_total, o.currency,
            p.payment_method, p.status AS payment_status, p.paid_at,
@@ -68,12 +77,12 @@ async function getBuyerOrders({ companyId, status, search, page, limit }) {
     LEFT JOIN payments p ON p.order_id = o.order_id
     WHERE ${whereClause}
     ORDER BY o.created_at DESC, o.order_id DESC
-    LIMIT $${nextParameter} OFFSET $${nextParameter + 1}
-  `, [...listValues, limit, (page - 1) * limit]);
+    LIMIT $${listValues.length + 1} OFFSET $${listValues.length + 2}
+  `, [...listValues, limit, offset]);
 
   const counts = countsResult.rows[0];
   return {
-    orders: result.rows,
+    orders: ordersResult.rows,
     counts: {
       ALL: counts.total_all,
       CONFIRMED: counts.confirmed,

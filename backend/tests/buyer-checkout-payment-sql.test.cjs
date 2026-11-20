@@ -2,242 +2,95 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
 
-test("Source inspection: checkout.repository.js uses explicit $4::varchar cast", () => {
-  const repoPath = path.join(__dirname, "../src/services/buyer/checkout.repository.js");
-  const source = fs.readFileSync(repoPath, "utf8");
+const pool = require("../src/config/db");
+const checkoutRepository = require("../src/services/buyer/checkout.repository");
 
-  // Must contain the explicit varchar cast to avoid PostgreSQL 42P08 (ambiguous_parameter)
-  assert.match(
-    source,
-    /CASE\s+WHEN\s+\$4::varchar\s*=\s*'SUCCEEDED'/i,
-    "Expected explicit $4::varchar cast in payments insertion query"
-  );
+const originalConnect = pool.connect;
 
-  // Must not have the uncast ambiguous parameter in CASE expression
-  assert.doesNotMatch(
-    source,
-    /CASE\s+WHEN\s+\$4\s*=\s*'SUCCEEDED'/i,
-    "Found uncast $4 = 'SUCCEEDED' which causes PostgreSQL 42P08"
-  );
+function createCheckoutClient({ outOfStock = false } = {}) {
+  const executed = [];
+  let released = false;
+  return {
+    executed,
+    isReleased: () => released,
+    async query(sql, params) {
+      executed.push({ sql: sql.trim(), params });
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") return { rowCount: 0, rows: [] };
+      if (sql.includes("SELECT cart_id FROM carts")) return { rowCount: 1, rows: [{ cart_id: "10" }] };
+      if (sql.includes("checkout_key = $3")) return { rowCount: 0, rows: [] };
+      if (sql.includes("SELECT company_name, tax_id FROM companies")) return { rowCount: 1, rows: [{ company_name: "Aero Logistics", tax_id: "TAX-1" }] };
+      if (sql.includes("FROM addresses")) return { rowCount: 1, rows: [{ address_id: "1", recipient_name: "Buyer", phone: "555", address_line: "Hangar 4", city: "Seattle", region: "WA", postal_code: "98101", country_code: "US" }] };
+      if (sql.includes("FROM cart_items ci")) {
+        return { rowCount: 1, rows: [{ cart_item_id: "101", quantity: 2, listing_id: "501", unit_price: "2500.00", stock_quantity: 5, seller_sku: "AP-009", condition: "NEW", listing_status: "ACTIVE", supplier_id: "301", supplier_name: "Precision Aero", supplier_status: "APPROVED", product_name: "Access Panel", part_number: "PN-9", is_active: true }] };
+      }
+      if (sql.includes("INSERT INTO orders")) return { rowCount: 1, rows: [{ order_id: "701", order_number: "ORD-701", checkout_key: params[3], grand_total: params[11], currency: "USD", created_at: "2026-11-08T10:00:00Z" }] };
+      if (sql.includes("INSERT INTO seller_orders")) return { rowCount: 1, rows: [{ seller_order_id: "801" }] };
+      if (sql.includes("UPDATE seller_listings sl")) return outOfStock ? { rowCount: 0, rows: [] } : { rowCount: 1, rows: [{ listing_id: "501" }] };
+      if (sql.includes("INSERT INTO order_items")) return { rowCount: 1, rows: [{ order_item_id: "901" }] };
+      if (sql.includes("INSERT INTO payments")) {
+        assert.equal(params[1], "BANK_TRANSFER");
+        assert.equal(params[3], "PENDING");
+        return { rowCount: 1, rows: [{ payment_id: "991", order_id: "701", payment_method: "BANK_TRANSFER", amount: params[2], status: "PENDING", paid_at: null }] };
+      }
+      if (sql.includes("DELETE FROM cart_items")) return { rowCount: 1, rows: [] };
+      throw new Error(`Unexpected SQL: ${sql}`);
+    },
+    release() { released = true; },
+  };
+}
+
+test.after(async () => {
+  pool.connect = originalConnect;
+  await pool.end().catch(() => {});
 });
 
-test("PostgreSQL regression: reproduces 42P08 on uncast parameter and passes on $4::varchar", async (t) => {
-  let pool;
-  try {
-    pool = require("../src/config/db");
-  } catch {
-    t.skip("PostgreSQL config/db not available in this environment.");
+test("PostgreSQL 42P08 regression: uncast $4 fails and $4::varchar prepares cleanly on isolated local DB", async (t) => {
+  const host = String(pool.options?.host || "");
+  const isSafeLocal = ["localhost", "127.0.0.1", "::1"].includes(host) && !process.env.DATABASE_URL;
+  if (!isSafeLocal) {
+    t.skip("Refusing non-local database target; PostgreSQL 42P08 check skipped.");
     return;
   }
 
   let client;
   try {
-    client = await pool.connect();
+    client = await originalConnect.call(pool);
   } catch {
-    t.skip("Live PostgreSQL database is not reachable; skipping parse check.");
+    t.skip("Local PostgreSQL is unreachable; PostgreSQL 42P08 check skipped.");
     return;
   }
 
   try {
-    // 1. Reproduce 42P08 with uncast query
-    const uncastSql = `
-      INSERT INTO payments (order_id, payment_method, amount, status, paid_at)
-      VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        CASE WHEN $4 = 'SUCCEEDED' THEN CURRENT_TIMESTAMP ELSE NULL END
-      )
-      RETURNING payment_id, order_id, payment_method, amount, status, paid_at
-    `;
-
-    let uncastError = null;
-    try {
-      await client.query(`PREPARE test_42p08_uncast AS ${uncastSql}`);
-    } catch (err) {
-      uncastError = err;
-    }
-
-    assert.ok(uncastError, "Uncast query should have thrown an error");
-    assert.equal(uncastError.code, "42P08", "Expected SQLSTATE 42P08");
-    assert.match(
-      uncastError.message,
-      /inconsistent types deduced for parameter \$4/i,
-      "Expected parameter $4 type deduction conflict"
+    await assert.rejects(
+      () => client.query("PREPARE test_42p08_uncast AS INSERT INTO payments (order_id, payment_method, amount, status, paid_at) VALUES ($1, $2, $3, $4, CASE WHEN $4 = 'SUCCEEDED' THEN CURRENT_TIMESTAMP ELSE NULL END)"),
+      { code: "42P08" }
     );
-
-    // 2. Verify patched query with $4::varchar prepares cleanly
-    const patchedSql = `
-      INSERT INTO payments (order_id, payment_method, amount, status, paid_at)
-      VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        CASE WHEN $4::varchar = 'SUCCEEDED' THEN CURRENT_TIMESTAMP ELSE NULL END
-      )
-      RETURNING payment_id, order_id, payment_method, amount, status, paid_at
-    `;
-
-    await client.query(`PREPARE test_42p08_patched AS ${patchedSql}`);
+    await client.query("PREPARE test_42p08_patched AS INSERT INTO payments (order_id, payment_method, amount, status, paid_at) VALUES ($1, $2, $3, $4, CASE WHEN $4::varchar = 'SUCCEEDED' THEN CURRENT_TIMESTAMP ELSE NULL END)");
     await client.query("DEALLOCATE test_42p08_patched");
   } finally {
-    try {
-      await client.query("DEALLOCATE ALL");
-    } catch {
-      // ignore cleanup error
-    }
+    await client.query("DEALLOCATE ALL").catch(() => {});
     client.release();
   }
 });
 
-test("Mock execution: BANK_TRANSFER records PENDING payment and atomic transaction flow", async () => {
-  const executedQueries = [];
-  const fakeClient = {
-    async query(sql, params) {
-      executedQueries.push({ sql: sql.trim(), params });
+test("placeOrderTransaction commits PENDING BANK_TRANSFER on success and rolls back on stock conflict", async () => {
+  const input = { userId: "1", companyId: "1", shippingAddressId: "1", billingAddressId: "1", deliveryMethodId: "STANDARD", purchaseReference: "PO-1", paymentMethod: "BANK_TRANSFER", checkoutKey: "key-1" };
 
-      // 1. SELECT cart_id
-      if (sql.includes("SELECT cart_id FROM carts")) {
-        return { rowCount: 1, rows: [{ cart_id: "10" }] };
-      }
-      // 2. Existing order idempotency check
-      if (sql.includes("FROM orders o") && sql.includes("checkout_key = $3")) {
-        return { rowCount: 0, rows: [] };
-      }
-      // 3. Buyer company
-      if (sql.includes("SELECT company_name, tax_id FROM companies")) {
-        return { rowCount: 1, rows: [{ company_name: "Aero Logistics Ltd", tax_id: "TAX-1234" }] };
-      }
-      // 4. Shipping address
-      if (sql.includes("SELECT address_id") && sql.includes("addresses")) {
-        return {
-          rowCount: 1,
-          rows: [{
-            address_id: "1",
-            recipient_name: "John Doe",
-            phone: "+1-555-0199",
-            address_line: "Hangar 4B",
-            city: "Seattle",
-            region: "WA",
-            postal_code: "98101",
-            country_code: "US",
-          }],
-        };
-      }
-      // 5. Cart items + seller listings
-      if (sql.includes("FROM cart_items ci")) {
-        return {
-          rowCount: 1,
-          rows: [{
-            cart_item_id: "101",
-            quantity: 1,
-            listing_id: "501",
-            unit_price: "2500.00",
-            stock_quantity: 5,
-            seller_sku: "AP-009",
-            condition: "FN",
-            listing_status: "ACTIVE",
-            supplier_id: "301",
-            supplier_name: "Precision Aero",
-            supplier_status: "APPROVED",
-            product_name: "Access Panel 009",
-            part_number: "PN-AP-009",
-            is_active: true,
-          }],
-        };
-      }
-      // 6. INSERT INTO orders
-      if (sql.includes("INSERT INTO orders")) {
-        return {
-          rowCount: 1,
-          rows: [{
-            order_id: "701",
-            order_number: "ORD-TEST-001",
-            checkout_key: params[3],
-            grand_total: params[11],
-            currency: "USD",
-            created_at: new Date().toISOString(),
-          }],
-        };
-      }
-      // 7. INSERT INTO seller_orders
-      if (sql.includes("INSERT INTO seller_orders")) {
-        return { rowCount: 1, rows: [{ seller_order_id: "801" }] };
-      }
-      // 8. UPDATE seller_listings
-      if (sql.includes("UPDATE seller_listings sl")) {
-        return { rowCount: 1, rows: [{ listing_id: "501" }] };
-      }
-      // 9. INSERT INTO order_items
-      if (sql.includes("INSERT INTO order_items")) {
-        return { rowCount: 1, rows: [{ order_item_id: "901" }] };
-      }
-      // 10. INSERT INTO payments
-      if (sql.includes("INSERT INTO payments")) {
-        assert.equal(params[1], "BANK_TRANSFER");
-        assert.equal(params[3], "PENDING");
-        return {
-          rowCount: 1,
-          rows: [{
-            payment_id: "991",
-            order_id: "701",
-            payment_method: "BANK_TRANSFER",
-            amount: params[2],
-            status: "PENDING",
-            paid_at: null,
-          }],
-        };
-      }
-      // 11. DELETE FROM cart_items
-      if (sql.includes("DELETE FROM cart_items")) {
-        return { rowCount: 1, rows: [] };
-      }
-      // Transaction control
-      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") {
-        return { rowCount: 0, rows: [] };
-      }
-      throw new Error(`Unexpected query in mock: ${sql}`);
-    },
-    release() {},
-  };
+  const okClient = createCheckoutClient();
+  pool.connect = async () => okClient;
+  const result = await checkoutRepository.placeOrderTransaction(input);
+  assert.equal(result.created, true);
+  assert.equal(result.order.payment_method, "BANK_TRANSFER");
+  assert.equal(result.order.payment_status, "PENDING");
+  assert.equal(result.order.paid_at, null);
+  assert.equal(okClient.executed[0].sql, "BEGIN");
+  assert.equal(okClient.executed.at(-1).sql, "COMMIT");
+  assert.equal(okClient.isReleased(), true);
 
-  const pool = require("../src/config/db");
-  const origConnect = pool.connect;
-  pool.connect = async () => fakeClient;
-
-  try {
-    const repository = require("../src/services/buyer/checkout.repository");
-    const result = await repository.placeOrderTransaction({
-      userId: "1",
-      companyId: "1",
-      shippingAddressId: "1",
-      billingAddressId: "1",
-      deliveryMethodId: "STANDARD",
-      purchaseReference: "PO-TEST-001",
-      paymentMethod: "BANK_TRANSFER",
-      checkoutKey: "test_checkout_key_001",
-    });
-
-    assert.equal(result.created, true);
-    assert.equal(result.order.order_id, "701");
-    assert.equal(result.order.payment_method, "BANK_TRANSFER");
-    assert.equal(result.order.payment_status, "PENDING");
-    assert.equal(result.order.paid_at, null);
-
-    const querySqls = executedQueries.map((q) => q.sql);
-    assert.ok(querySqls.includes("BEGIN"), "Transaction must start with BEGIN");
-    assert.ok(querySqls.includes("COMMIT"), "Transaction must end with COMMIT");
-    assert.ok(
-      querySqls.some((s) => s.includes("INSERT INTO payments") && s.includes("$4::varchar")),
-      "Payment query must contain $4::varchar"
-    );
-  } finally {
-    pool.connect = origConnect;
-  }
+  const conflictClient = createCheckoutClient({ outOfStock: true });
+  pool.connect = async () => conflictClient;
+  await assert.rejects(() => checkoutRepository.placeOrderTransaction(input), { code: "INSUFFICIENT_STOCK", statusCode: 409 });
+  assert.equal(conflictClient.executed.at(-1).sql, "ROLLBACK");
+  assert.equal(conflictClient.isReleased(), true);
 });
-

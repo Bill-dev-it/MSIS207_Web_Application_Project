@@ -12,6 +12,18 @@ const SORT_VALUES = {
   PART_NUMBER: "part_number",
 };
 
+// Use the filter keys expected by the backend product API.
+export function buildMarketplaceFilters(category, manufacturer) {
+  const filter = [];
+  if (category && category !== "ALL") {
+    filter.push({ key: "category_name", operator: "=", value: category });
+  }
+  if (manufacturer && manufacturer !== "ALL") {
+    filter.push({ key: "manufacturer", operator: "=", value: manufacturer });
+  }
+  return filter;
+}
+
 export default function Marketplace() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
@@ -52,13 +64,7 @@ export default function Marketplace() {
   // Load products catalog with async/await
   useEffect(() => {
     const controller = new AbortController();
-    const filter = [];
-    if (category !== "ALL") {
-      filter.push({ key: "category_name", operator: "=", value: category });
-    }
-    if (manufacturer !== "ALL") {
-      filter.push({ key: "manufacturer", operator: "=", value: manufacturer });
-    }
+    const filter = buildMarketplaceFilters(category, manufacturer);
 
     async function fetchProducts() {
       setLoading(true);
