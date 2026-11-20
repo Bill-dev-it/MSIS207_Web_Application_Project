@@ -1,7 +1,13 @@
+"use strict";
+
 const express = require("express");
 const cartController = require("../../controllers/buyer/cart.controller");
 
 const router = express.Router();
+
+// Mounted under /api/v1/cart with requireBuyer upstream (enforces BUYER role + CSRF on mutations).
+// Controller handlers are plain standalone functions (no `this` binding), so Express 5 receives
+// the returned Promise directly and forwards any unexpected async rejections to error middleware.
 
 /**
  * @api {get} /api/v1/cart Get buyer cart
@@ -18,7 +24,7 @@ const router = express.Router();
  * @apiSuccessExample {json} 200 OK:
  *     { "success": true, "data": { "items": [], "subtotal": 0, "total_items": 0 } }
  */
-router.get("/", (req, res) => cartController.getCart(req, res));
+router.get("/", cartController.getCart);
 
 /**
  * @api {post} /api/v1/cart/items Add listing to buyer cart
@@ -42,7 +48,7 @@ router.get("/", (req, res) => cartController.getCart(req, res));
  *     { "success": true, "data": { "items": [], "subtotal": 0, "total_items": 0 } }
  * @apiError (409 Conflict) INSUFFICIENT_STOCK Requested quantity exceeds available stock.
  */
-router.post("/items", (req, res) => cartController.addItem(req, res));
+router.post("/items", cartController.addItem);
 
 /**
  * @api {put} /api/v1/cart/items/:cartItemId Update buyer cart quantity
@@ -64,7 +70,7 @@ router.post("/items", (req, res) => cartController.addItem(req, res));
  * @apiError (403 Forbidden) BUYER_REQUIRED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Buyer role, trusted mutation header or allowed origin is required.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Cart could not be updated.
  */
-router.put("/items/:cartItemId", (req, res) => cartController.updateQuantity(req, res));
+router.put("/items/:cartItemId", cartController.updateQuantity);
 
 /**
  * @api {delete} /api/v1/cart/items/:cartItemId Remove buyer cart item
@@ -83,7 +89,7 @@ router.put("/items/:cartItemId", (req, res) => cartController.updateQuantity(req
  * @apiError (403 Forbidden) BUYER_REQUIRED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Buyer role, trusted mutation header or allowed origin is required.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Cart item could not be removed.
  */
-router.delete("/items/:cartItemId", (req, res) => cartController.removeItem(req, res));
+router.delete("/items/:cartItemId", cartController.removeItem);
 
 /**
  * @api {delete} /api/v1/cart Clear buyer cart
@@ -99,6 +105,6 @@ router.delete("/items/:cartItemId", (req, res) => cartController.removeItem(req,
  * @apiError (403 Forbidden) BUYER_REQUIRED, UNTRUSTED_REQUEST or UNTRUSTED_ORIGIN Buyer role, trusted mutation header or allowed origin is required.
  * @apiError (500 Internal Server Error) INTERNAL_SERVER_ERROR Cart could not be cleared.
  */
-router.delete("/", (req, res) => cartController.clearCart(req, res));
+router.delete("/", cartController.clearCart);
 
 module.exports = router;
