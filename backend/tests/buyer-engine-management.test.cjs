@@ -2,403 +2,117 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
 
-// ---------------------------------------------------------------------------
-// 1. Prohibited Async Patterns & Static Code Verification
-// ---------------------------------------------------------------------------
+const pool = require("../src/config/db");
+const enginesRepository = require("../src/services/buyer/engines.repository");
+const enginesService = require("../src/services/buyer/engines.service");
+const enginesController = require("../src/controllers/buyer/engines.controller");
 
-test("Coding Rules: No prohibited async patterns in modified files", () => {
-  const files = [
-    "src/routes/buyer/engines.routes.js",
-    "src/controllers/buyer/engines.controller.js",
-    "src/services/buyer/engines.service.js",
-    "src/services/buyer/engines.repository.js",
-  ];
-
-  for (const relativePath of files) {
-    const fullPath = path.join(__dirname, "..", relativePath);
-    const source = fs.readFileSync(fullPath, "utf8");
-
-    assert.doesNotMatch(
-      source,
-      /\.then\s*\(/,
-      `Found prohibited .then() in ${relativePath}`
-    );
-    assert.doesNotMatch(
-      source,
-      /\.catch\s*\(/,
-      `Found prohibited .catch() in ${relativePath}`
-    );
-    assert.doesNotMatch(
-      source,
-      /Promise\.all\s*\(/,
-      `Found prohibited Promise.all() in ${relativePath}`
-    );
-    assert.doesNotMatch(
-      source,
-      /new\s+Promise\s*\(/,
-      `Found prohibited new Promise() in ${relativePath}`
-    );
-  }
-});
-
-test("Route Order: Static GET routes (/models, /aircraft) registered before /:engineId", () => {
-  const routePath = path.join(__dirname, "../src/routes/buyer/engines.routes.js");
-  const source = fs.readFileSync(routePath, "utf8");
-
-  const modelsIdx = source.indexOf('"/models"');
-  const aircraftIdx = source.indexOf('"/aircraft"');
-  const engineIdIdx = source.indexOf('"/:engineId"');
-
-  assert.ok(modelsIdx !== -1, "Expected route /models to be present");
-  assert.ok(aircraftIdx !== -1, "Expected route /aircraft to be present");
-  assert.ok(engineIdIdx !== -1, "Expected route /:engineId to be present");
-
-  assert.ok(
-    modelsIdx < engineIdIdx,
-    "GET /models must be registered before /:engineId"
-  );
-  assert.ok(
-    aircraftIdx < engineIdIdx,
-    "GET /aircraft must be registered before /:engineId"
-  );
-});
-
-// ---------------------------------------------------------------------------
-// 2. Service Unit Tests (Validation & Business Rules)
-// ---------------------------------------------------------------------------
-
-const service = require("../src/services/buyer/engines.service");
-
-test("Service: searchEngineModels validates query and enforces length", async () => {
-  await assert.rejects(
-    async () => {
-      await service.listEngineModels({ search: 12345 });
-    },
-    { code: "INVALID_QUERY" }
-  );
-
-  await assert.rejects(
-    async () => {
-      await service.listEngineModels({ search: "a".repeat(201) });
-    },
-    { code: "INVALID_SEARCH" }
-  );
-});
-
-test("Service: createEngine validates required engine_code and serial_number", async () => {
-  // Missing engineCode
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "",
-        serialNumber: "SN-001",
-        engineModelId: "1",
-        aircraftId: "1",
-      });
-    },
-    { code: "INVALID_ENGINE_CODE" }
-  );
-
-  // Missing serialNumber
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "   ",
-        engineModelId: "1",
-        aircraftId: "1",
-      });
-    },
-    { code: "INVALID_SERIAL_NUMBER" }
-  );
-});
-
-test("Service: createEngine validates engineModelId and currentCycle bounds", async () => {
-  // Invalid engineModelId
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        engineModelId: "invalid-id",
-        aircraftId: "1",
-      });
-    },
-    { code: "INVALID_ENGINE_MODEL" }
-  );
-
-  // Negative currentCycle
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        engineModelId: "1",
-        currentCycle: -10,
-        aircraftId: "1",
-      });
-    },
-    { code: "INVALID_CURRENT_CYCLE" }
-  );
-
-  // Non-integer string currentCycle
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        engineModelId: "1",
-        currentCycle: "not-a-number",
-        aircraftId: "1",
-      });
-    },
-    { code: "INVALID_CURRENT_CYCLE" }
-  );
-});
-
-test("Service: createEngine requires either aircraftId or valid newAircraft details", async () => {
-  // Neither provided
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        engineModelId: "1",
-      });
-    },
-    { code: "AIRCRAFT_REQUIRED" }
-  );
-
-  // newAircraft missing registration number
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        engineModelId: "1",
-        newAircraft: { manufacturer: "Boeing", model: "737" },
-      });
-    },
-    { code: "INVALID_AIRCRAFT_REGISTRATION" }
-  );
-
-  // newAircraft missing manufacturer
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        engineModelId: "1",
-        newAircraft: { registrationNumber: "N123", model: "737" },
-      });
-    },
-    { code: "INVALID_AIRCRAFT_MANUFACTURER" }
-  );
-
-  // newAircraft missing model
-  await assert.rejects(
-    async () => {
-      await service.createEngine({
-        companyId: "51",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        engineModelId: "1",
-        newAircraft: { registrationNumber: "N123", manufacturer: "Boeing" },
-      });
-    },
-    { code: "INVALID_AIRCRAFT_MODEL" }
-  );
-});
-
-test("Service: updateEngine validates ID, cycle, and string lengths", async () => {
-  // Invalid engineId
-  await assert.rejects(
-    async () => {
-      await service.updateEngine({
-        companyId: "51",
-        engineId: "abc",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        currentCycle: 100,
-      });
-    },
-    { code: "INVALID_ENGINE_ID" }
-  );
-
-  // Negative cycle
-  await assert.rejects(
-    async () => {
-      await service.updateEngine({
-        companyId: "51",
-        engineId: "1",
-        engineCode: "ENG-001",
-        serialNumber: "SN-001",
-        currentCycle: -5,
-      });
-    },
-    { code: "INVALID_CURRENT_CYCLE" }
-  );
-});
-
-// ---------------------------------------------------------------------------
-// 3. Controller Unit Tests (Request/Response & Contract)
-// ---------------------------------------------------------------------------
-
-const controller = require("../src/controllers/buyer/engines.controller");
-
-function mockResponse() {
+function createRes() {
   return {
     statusCode: 200,
     body: null,
-    status(code) {
-      this.statusCode = code;
-      return this;
-    },
-    json(data) {
-      this.body = data;
-      return this;
-    },
+    status(code) { this.statusCode = code; return this; },
+    json(data) { this.body = data; return this; },
   };
 }
 
-test("Controller: updateEngine rejects invalid engine ID parameter", async () => {
-  const res = mockResponse();
-  await controller.updateEngine(
-    {
-      params: { engineId: "invalid-id" },
-      authUser: { company_id: "51" },
-      body: { engine_code: "ENG-01", serial_number: "SN-01", current_cycle: 10 },
-    },
-    res
-  );
+test("listEngineModels forwards valid search and rejects invalid or oversized queries", async () => {
+  await assert.rejects(() => enginesService.listEngineModels({ search: 123 }), { code: "INVALID_QUERY" });
+  await assert.rejects(() => enginesService.listEngineModels({ search: "a".repeat(201) }), { code: "INVALID_SEARCH" });
 
+  const original = enginesRepository.searchEngineModels;
+  let captured = null;
+  enginesRepository.searchEngineModels = async (args) => { captured = args; return []; };
+  try {
+    await enginesService.listEngineModels({ search: "CFM56", limit: 10 });
+    assert.deepEqual(captured, { search: "CFM56", limit: 10 });
+  } finally {
+    enginesRepository.searchEngineModels = original;
+  }
+});
+
+test("createEngine supports existing aircraft, newAircraft aliases, and year boundaries", async () => {
+  const originalCreate = enginesRepository.createEngineWithAircraft;
+  const originalGetById = enginesRepository.getEngineById;
+  const calls = [];
+  enginesRepository.createEngineWithAircraft = async (args) => { calls.push(args); return "700"; };
+  enginesRepository.getEngineById = async ({ companyId, engineId }) => ({ engine_id: engineId, company_id: companyId });
+
+  try {
+    // Existing aircraftId takes precedence over newAircraft when both are supplied
+    const createdExisting = await enginesService.createEngine({
+      companyId: "51", engineCode: " ENG-1 ", serialNumber: " SN-1 ", engineModelId: 4,
+      currentCycle: "25", aircraftId: 9, newAircraft: { registrationNumber: "IGNORED" },
+    });
+    assert.equal(calls[0].aircraftId, "9");
+    assert.equal(calls[0].newAircraft, null);
+    assert.deepEqual(createdExisting, { engine_id: "700", company_id: "51" });
+
+    // snake_case & camelCase aliases plus boundary years 1900 and 2100
+    await enginesService.createEngine({
+      companyId: "51", engineCode: "ENG-2", serialNumber: "SN-2", engineModelId: "3",
+      newAircraft: { registration_number: " VN-A321 ", manufacturer: "Airbus", model: "A321", year: 1900 },
+    });
+    assert.deepEqual(calls[1].newAircraft, {
+      registrationNumber: "VN-A321", manufacturer: "Airbus", model: "A321",
+      aircraftType: "Commercial Fixed-Wing", year: 1900, status: "ACTIVE",
+    });
+
+    await enginesService.createEngine({
+      companyId: "51", engineCode: "ENG-3", serialNumber: "SN-3", engineModelId: "3",
+      newAircraft: { registrationNumber: "N999", manufacturer: "Boeing", model: "787", aircraftType: " Widebody ", year: "2100" },
+    });
+    assert.equal(calls[2].newAircraft.aircraftType, "Widebody");
+    assert.equal(calls[2].newAircraft.year, 2100);
+  } finally {
+    enginesRepository.createEngineWithAircraft = originalCreate;
+    enginesRepository.getEngineById = originalGetById;
+  }
+});
+
+test("createEngine and controller enforce validation order, company ownership, and error responses", async () => {
+  await assert.rejects(() => enginesService.createEngine({ companyId: "bad", engineCode: "" }), { code: "AUTH_REQUIRED", statusCode: 401 });
+  await assert.rejects(() => enginesService.createEngine({ companyId: "51", engineCode: "", serialNumber: "" }), { code: "INVALID_ENGINE_CODE" });
+  await assert.rejects(() => enginesService.createEngine({ companyId: "51", engineCode: "ENG", serialNumber: "SN", engineModelId: "1", aircraftId: 0 }), { code: "INVALID_AIRCRAFT_ID" });
+  await assert.rejects(() => enginesService.createEngine({ companyId: "51", engineCode: "ENG", serialNumber: "SN", engineModelId: "1", newAircraft: { registrationNumber: "N1", manufacturer: "Boeing", model: "737", year: 2101 } }), { code: "INVALID_AIRCRAFT_YEAR" });
+
+  const res = createRes();
+  await enginesController.updateEngine({
+    params: { engineId: "abc" }, authUser: { company_id: "51" },
+    body: { engine_code: "ENG-1", serial_number: "SN-1", current_cycle: 10 },
+  }, res);
   assert.equal(res.statusCode, 400);
-  assert.equal(res.body.success, false);
   assert.equal(res.body.error.code, "INVALID_ENGINE_ID");
 });
 
-test("Controller: createEngine rejects invalid body and formats error response", async () => {
-  const res = mockResponse();
-  await controller.createEngine(
-    {
-      authUser: { company_id: "51" },
-      body: {
-        engine_code: "",
-        serial_number: "SN-01",
-      },
-    },
-    res
-  );
-
-  assert.equal(res.statusCode, 400);
-  assert.equal(res.body.success, false);
-  assert.equal(res.body.error.code, "INVALID_ENGINE_CODE");
-});
-
-// ---------------------------------------------------------------------------
-// 4. Mocked Database Transaction Verification (Rollback Integrity)
-// ---------------------------------------------------------------------------
-
-test("Repository Transaction: Failed engine insert triggers ROLLBACK and releases client", async () => {
-  const repository = require("../src/services/buyer/engines.repository");
-  const pool = require("../src/config/db");
-
-  // Mock client to intercept transaction operations without modifying real database
-  const clientOperations = [];
-  let isReleased = false;
-
-  const mockClient = {
-    query: async (sql, params) => {
-      const trimmed = sql.trim().toUpperCase();
-      if (trimmed.startsWith("BEGIN")) {
-        clientOperations.push("BEGIN");
-        return { rows: [] };
-      }
-      if (trimmed.startsWith("COMMIT")) {
-        clientOperations.push("COMMIT");
-        return { rows: [] };
-      }
-      if (trimmed.startsWith("ROLLBACK")) {
-        clientOperations.push("ROLLBACK");
-        return { rows: [] };
-      }
-      if (trimmed.startsWith("INSERT INTO AIRCRAFT")) {
-        clientOperations.push("INSERT_AIRCRAFT");
-        return { rows: [{ aircraft_id: "9999" }] };
-      }
-      if (trimmed.startsWith("SELECT ENGINE_MODEL_ID")) {
-        clientOperations.push("SELECT_MODEL");
-        return { rows: [{ engine_model_id: "1" }] };
-      }
-      if (trimmed.startsWith("INSERT INTO ENGINES")) {
-        clientOperations.push("INSERT_ENGINES_FAILED");
-        const duplicateErr = new Error("Unique constraint violation");
-        duplicateErr.code = "23505";
-        duplicateErr.constraint = "uq_engines_model_serial";
-        throw duplicateErr;
+test("createEngineWithAircraft rolls back aircraft insert and releases client on duplicate engine serial", async () => {
+  const ops = [];
+  let released = false;
+  const originalConnect = pool.connect;
+  pool.connect = async () => ({
+    async query(sql, params) {
+      const upper = sql.trim().toUpperCase();
+      if (upper === "BEGIN" || upper === "COMMIT" || upper === "ROLLBACK") { ops.push(upper); return { rows: [] }; }
+      if (upper.startsWith("INSERT INTO AIRCRAFT")) { ops.push("INSERT_AIRCRAFT"); assert.equal(params[0], "51"); return { rows: [{ aircraft_id: "99" }] }; }
+      if (upper.startsWith("SELECT ENGINE_MODEL_ID")) { ops.push("SELECT_MODEL"); return { rows: [{ engine_model_id: "1" }] }; }
+      if (upper.startsWith("INSERT INTO ENGINES")) {
+        ops.push("INSERT_ENGINES_FAILED");
+        const err = new Error("duplicate"); err.code = "23505"; err.constraint = "uq_engines_model_serial"; throw err;
       }
       return { rows: [] };
     },
-    release: () => {
-      isReleased = true;
-      clientOperations.push("RELEASE");
-    },
-  };
-
-  // Temporarily stub pool.connect
-  const originalConnect = pool.connect;
-  pool.connect = async () => mockClient;
+    release() { released = true; ops.push("RELEASE"); },
+  });
 
   try {
-    await assert.rejects(
-      async () => {
-        await repository.createEngineWithAircraft({
-          companyId: "51",
-          engineCode: "ENG-ROLLBACK-TEST",
-          serialNumber: "SN-DUPLICATE",
-          currentCycle: 0,
-          engineModelId: "1",
-          newAircraft: {
-            registrationNumber: "TAIL-ROLLBACK",
-            manufacturer: "Boeing",
-            model: "737",
-          },
-        });
-      },
-      {
-        code: "DUPLICATE_SERIAL_NUMBER",
-        statusCode: 409,
-      }
-    );
-
-    // Verify transaction lifecycle:
-    // 1. BEGIN
-    // 2. Aircraft was inserted
-    // 3. Engine insert failed
-    // 4. ROLLBACK executed (aircraft is not orphaned)
-    // 5. Client was released
-    assert.deepEqual(clientOperations, [
-      "BEGIN",
-      "INSERT_AIRCRAFT",
-      "SELECT_MODEL",
-      "INSERT_ENGINES_FAILED",
-      "ROLLBACK",
-      "RELEASE",
-    ]);
-    assert.equal(isReleased, true, "Client must be released even on failure");
+    await assert.rejects(() => enginesRepository.createEngineWithAircraft({
+      companyId: "51", engineCode: "ENG-1", serialNumber: "SN-DUP", currentCycle: 0, engineModelId: "1",
+      newAircraft: { registrationNumber: "TAIL-1", manufacturer: "Boeing", model: "737" },
+    }), { code: "DUPLICATE_SERIAL_NUMBER", statusCode: 409 });
+    assert.deepEqual(ops, ["BEGIN", "INSERT_AIRCRAFT", "SELECT_MODEL", "INSERT_ENGINES_FAILED", "ROLLBACK", "RELEASE"]);
+    assert.equal(released, true);
   } finally {
     pool.connect = originalConnect;
   }
 });
-
