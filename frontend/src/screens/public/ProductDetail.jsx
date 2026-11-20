@@ -14,6 +14,33 @@ function formatPrice(price) {
   }).format(price);
 }
 
+// Missing or blank specification values must fall back safely rather than coercing to misleading values.
+export function getShelfLifeDisplay(rawValue) {
+  const shelfLifeNum = Number(rawValue);
+  const hasValidShelfLife =
+    rawValue !== null &&
+    rawValue !== undefined &&
+    rawValue !== "" &&
+    Number.isFinite(shelfLifeNum) &&
+    shelfLifeNum > 0;
+
+  if (!hasValidShelfLife) {
+    return "Not specified — confirm with supplier.";
+  }
+
+  return `${shelfLifeNum} ${shelfLifeNum === 1 ? "calendar day" : "calendar days"}`;
+}
+
+export function getMaintenanceClassification(rawValue) {
+  if (rawValue === true) {
+    return "Repairable / Overhaulable Unit";
+  }
+  if (rawValue === false) {
+    return "Not designated as repairable";
+  }
+  return "Not specified — confirm with supplier";
+}
+
 /**
  * Supplier Offers Panel
  * Handles offer selection, pricing presentation, and cart integration.
@@ -334,27 +361,8 @@ export default function ProductDetail() {
   const name = product?.name ?? product?.product_name ?? "Aviation Component";
   const specs = product?.technical_specs;
 
-  // Process Shelf Life Limit
-  const shelfLifeRaw = specs?.source_shelf_life_days;
-  const shelfLifeNum = Number(shelfLifeRaw);
-  const hasValidShelfLife =
-    shelfLifeRaw !== null &&
-    shelfLifeRaw !== undefined &&
-    shelfLifeRaw !== "" &&
-    Number.isFinite(shelfLifeNum) &&
-    shelfLifeNum > 0;
-  const shelfLifeDisplay = hasValidShelfLife
-    ? `${shelfLifeNum} ${shelfLifeNum === 1 ? "calendar day" : "calendar days"}`
-    : "Not specified — confirm with supplier.";
-
-  // Process Maintenance Classification
-  const repairableRaw = specs?.source_is_repairable;
-  const maintenanceClassification =
-    repairableRaw === true
-      ? "Repairable / Overhaulable Unit"
-      : repairableRaw === false
-      ? "Not designated as repairable"
-      : "Not specified — confirm with supplier";
+  const shelfLifeDisplay = getShelfLifeDisplay(specs?.source_shelf_life_days);
+  const maintenanceClassification = getMaintenanceClassification(specs?.source_is_repairable);
 
   // Retrieve gallery images deterministically
   const gallery = product ? getProductGalleryImages(product) : [];
