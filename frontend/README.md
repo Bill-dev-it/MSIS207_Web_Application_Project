@@ -28,8 +28,8 @@ src/
 ├── features/     # Feature-specific modules (buyer cart/checkout/engines, supplier listings/inventory, admin)
 ├── layouts/      # Role-specific chrome (PublicLayout, BuyerLayout, SupplierLayout, AdminLayout)
 ├── mocks/        # Local demonstration fixtures and offline fallback adapters
-├── screens/      # Page-level components grouped by role (public, buyer, supplier, admin)
-├── services/     # Centralized API service clients (authApi, buyerApi, supplierService, adminService)
+├── screens/      # Page-level components grouped by role (public, buyer, supplier, admin) and UI-UX reference PNGs
+├── services/     # Centralized API service clients (authApi, buyerApi, productApi, supplierService, supplierOfferService, supplierOrderService)
 ├── styles/       # Global styles and Tailwind CSS entry point
 └── main.jsx      # React DOM entry point
 ```
